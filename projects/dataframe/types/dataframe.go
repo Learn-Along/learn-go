@@ -1,0 +1,75 @@
+package types
+
+type Dataframe struct {
+	cols map[string]*Column;
+	pkFields []string;
+}
+
+// Constructs a Dataframe from an array of maps and returns a pointer to it
+func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataframe, error) {
+	return &Dataframe{}, nil
+}
+
+// Constructs a Dataframe from a map of maps and returns a pointer to it
+func FromMap(records map[interface{}]map[string]interface{}, primaryFields []string) (*Dataframe, error) {
+	return &Dataframe{}, nil
+}
+
+// Creates a Key to be used to identify the given record
+func createKey(record map[string]interface{}, primaryFields []string) (string, error)  {
+	return "", nil
+}
+
+
+// Gets the pointer to a given column, or creates it if it does not exist
+func (d *Dataframe) Col(name string) *Column {
+	col := d.cols[name]
+
+	if col == nil {
+		newCol := Column{}
+		d.cols[name] = &newCol 
+		return &newCol
+	}
+
+	return col
+}
+
+// Inserts items passed as a list of maps into the Dataframe,
+// It will overwrite any record whose primary field values match with the new records
+func (d *Dataframe) Insert(records []map[string]interface{}) error {
+	return nil	
+}
+
+// Deletes the items that fulfill the filter
+func (d *Dataframe) Delete(filter Filter) error {
+	return nil
+}
+
+// Updates the items that fulfill the given filter with the new value
+func (d *Dataframe) Update(filter Filter, value map[string]interface{}) error  {
+	return nil
+}
+
+// Selects a given number of fields, and returns a Query instance of the same
+func (d *Dataframe) Select(fields ...string) *Query {
+	return nil
+}
+
+// Merges the dataframe df to d
+func (d *Dataframe) Merge(df *Dataframe) error {
+	return nil
+}
+
+// Copies the dataframe and returns the new copy
+func (d *Dataframe) Copy() (Dataframe, error) {
+	return Dataframe{}, nil
+}
+
+func (d *Dataframe) ToArray() ([]map[string]interface{}, error) {
+	return nil, nil
+}
+
+// Frees the memory held by the dataframe by nilling all pointers in it
+func (d *Dataframe) Free() error {
+	return nil	
+}
