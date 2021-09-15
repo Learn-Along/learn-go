@@ -2,41 +2,59 @@ package utils
 
 import "testing"
 
-// MergeSlices should combine two slices into one slice
-func TestMergeSlices(t *testing.T)  {
-	a := []interface{}{"foo", "bar", "hi"}
-	b := []interface{}{"heyya", "woohoo"}
+// AreStringSliceEqual should check if two slices of string arrays are equal, and return an false if they are not
+func TestAreStringSliceEqual(t *testing.T)  {
+	a := []string{"foo", "bar", "hi"}
+	b := []string{"heyya", "woohoo"}
+	c := []string{"heyya", "woohoo"}
 
-	ab := MergeSlices(a, b)
-	expected := []interface{}{"foo", "bar", "hi", "heyya", "woohoo"}
-	for i, item := range expected {
-		if ab[i] != item {
-			t.Fatalf("ab: index %d, expected: '%s', got '%s'", i, item, ab[i])
-		}
+	if !AreStringSliceEqual(c, b) {
+		t.Fatal("c should be equal to b")
 	}
 
-	ba := MergeSlices(b, a)
-	expected = []interface{}{"heyya", "woohoo", "foo", "bar", "hi"}
-	for i, item := range expected {
-		if ba[i] != item {
-			t.Fatalf("ba: index %d, expected: '%s', got '%s'", i, item, ba[i])
-		}
+	if AreStringSliceEqual(a, b) {
+		t.Fatal("a should not be equal to b")
 	}
 }
 
-// SliceEquals should check if two slices are equal, and return an error if they are not
-func TestSliceEquals(t *testing.T)  {
+// AreSliceEqual should check if two slices are equal, and return an false if they are not
+func TestAreSliceEqual(t *testing.T)  {
 	a := []interface{}{"foo", "bar", "hi"}
 	b := []interface{}{"heyya", "woohoo"}
 	c := []interface{}{"heyya", "woohoo"}
 
-	err := SliceEquals(c, b)
-	if err != nil {
-		t.Fatalf("c should be equal to b: error: %s", err)
+	if !AreSliceEqual(c, b) {
+		t.Fatal("c should be equal to b")
 	}
 
-	err = SliceEquals(a, b)
-	if err == nil {
+	if AreSliceEqual(a, b) {
 		t.Fatal("a should not be equal to b")
+	}
+}
+
+// ExtractFieldFromMapList should extract a given field from a list of maps and return
+// a list fo the values for that given field
+func TestExtractFieldFromMapList(t *testing.T)  {
+	data := []map[string]interface{}{
+		{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+		{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+		{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+		{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+		{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+		{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+	}
+	testTable := map[string][]interface{}{
+		"first name": {"John", "Jane", "Paul", "Richard", "Reyna", "Ruth",},
+		"last name": {"Doe", "Doe", "Doe", "Roe", "Roe", "Roe"},
+		"age": {30, 50, 19, 34, 45, 60},
+		"location": {"Kampala", "Lusaka", "Kampala", "Nairobi", "Nairobi", "Kampala"},
+	}
+
+	for field, expected := range testTable {
+		got := ExtractFieldFromMapList(data, field)
+
+		if !AreSliceEqual(expected, got) {
+			t.Fatalf("for field: '%s', expected: %v, got %v", field, expected, got)
+		}
 	}
 }

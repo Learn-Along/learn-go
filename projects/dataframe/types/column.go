@@ -8,17 +8,12 @@ type arrayFunc func([]interface{}) []interface{}
 
 type Column struct {
 	Name string
-	items []*item
+	Items []interface{}
 	Dtype Datatype
 	keys []string
 }
 
 type colTransform func() Column
-
-type item struct {
-	pk string
-	value interface{}
-}
 
 const (
 	IntType Datatype = iota
@@ -73,9 +68,4 @@ func (c *Column) Tx(op arrayFunc) colTransform {
 // Returns a Sort Option that is attached to this column, for the given order
 func (c *Column) Order(option SortOrder) sortOption {
 	return sortOption{Col: c, Order: option}
-}
-
-// Returns a list a function that extracts the list of values of the given items
-func (c *Column) Items() []interface{} {
-	return nil
 }

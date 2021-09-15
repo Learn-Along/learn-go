@@ -34,6 +34,16 @@ func (d *Dataframe) Col(name string) *Column {
 	return col
 }
 
+// Utility to return all column names
+func (d *Dataframe) getColNames() []string {
+	names := []string{}
+	for _, col := range d.cols {
+		names = append(names, col.Name)
+	}
+
+	return names
+}
+
 // Inserts items passed as a list of maps into the Dataframe,
 // It will overwrite any record whose primary field values match with the new records
 func (d *Dataframe) Insert(records []map[string]interface{}) error {

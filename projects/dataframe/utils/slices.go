@@ -1,25 +1,51 @@
 package utils
 
-import "fmt"
+// Extracts a given field from n list of maps, returning a list f the values for that field,
+// where the field does not exist, a nil is added
+func ExtractFieldFromMapList(data []map[string]interface{}, field string) []interface{} {
+	extracted := []interface{}{}
 
-// Merges two slices into one
-func MergeSlices(first []interface{}, second []interface{}) []interface{} {
-	return nil
+	for _, record := range data {
+		if value, ok := record[field]; ok {
+			extracted = append(extracted, value)
+		} else {
+			extracted = append(extracted, nil)
+		}
+	}
+
+	return extracted
 }
 
-// Checks to see if slices are equal to each other, return error if they are not
-func SliceEquals(first []interface{}, second []interface{}) error {
+// Checks to see if the string slices are equal to each other, returning false or true
+func AreStringSliceEqual(first []string, second []string) bool {
 	length := len(first)
 
 	if length != len(second) {
-		return fmt.Errorf("length mismatch")
+		return false
 	}
 
 	for i := 0; i < length; i++ {
 		if(first[i] != second[i]){
-			return fmt.Errorf("index %d values don't match", i)
+			return false
 		}
 	}
 
-	return nil
+	return true
+}
+
+// Checks to see if slices are equal to each other, returning false or true
+func AreSliceEqual(first []interface{}, second []interface{}) bool {
+	length := len(first)
+
+	if length != len(second) {
+		return false
+	}
+
+	for i := 0; i < length; i++ {
+		if(first[i] != second[i]){
+			return false
+		}
+	}
+
+	return true
 }
