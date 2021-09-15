@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type Dataframe struct {
 	cols map[string]*Column;
 	pkFields []string;
@@ -7,7 +9,21 @@ type Dataframe struct {
 
 // Constructs a Dataframe from an array of maps and returns a pointer to it
 func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataframe, error) {
-	return &Dataframe{}, nil
+	df := Dataframe{pkFields: primaryFields, cols: map[string]*Column{}}
+
+	for i, record := range records {
+		key, err := createKey(record, primaryFields)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create key for %v using field %v", record, primaryFields)
+		}
+
+		for fieldName, value := range record {
+			col := df.Col(fieldName)			
+			col.insert(i, key, value)
+		}
+	}
+
+	return &df, nil
 }
 
 // Constructs a Dataframe from a map of maps and returns a pointer to it
@@ -26,7 +42,7 @@ func (d *Dataframe) Col(name string) *Column {
 	col := d.cols[name]
 
 	if col == nil {
-		newCol := Column{}
+		newCol := Column{Name: name, Items: []interface{}{}, keys: []string{}, Dtype: ObjectType}
 		d.cols[name] = &newCol 
 		return &newCol
 	}

@@ -24,7 +24,7 @@ var (
 		"Ruth Roe": {"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
 	}
 	primaryFields = []string{"first name", "last name"}
-	expectedCols = []string{"first name", "last name", "age", "location"}
+	expectedCols = utils.SortStringSlice([]string{"first name", "last name", "age", "location"}, utils.ASC)
 	keys = []string{"John_Doe", "Jane_Doe", "Paul_Doe", "Richard_Roe", "Reyna_Roe", "Ruth_Roe"}
 )
 
@@ -36,10 +36,10 @@ func TestFromArray(t *testing.T)  {
 	}
 
 	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
-		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
+		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
 	}
 
-	colNames := df.getColNames()
+	colNames := utils.SortStringSlice(df.getColNames(), utils.ASC)
 	if !utils.AreStringSliceEqual(colNames, expectedCols){
 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
 	}
@@ -56,7 +56,7 @@ func TestFromMap(t *testing.T)  {
 		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
 	}
 
-	colNames := df.getColNames()
+	colNames := utils.SortStringSlice(df.getColNames(), utils.ASC)
 	if !utils.AreStringSliceEqual(colNames, expectedCols){
 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
 	}

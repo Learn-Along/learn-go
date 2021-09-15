@@ -58,3 +58,20 @@ func TestExtractFieldFromMapList(t *testing.T)  {
 		}
 	}
 }
+
+// SortStringSlice sorts a slice of strings in either ascending or descending order, immutably
+func TestSortStringSlice(t *testing.T)  {
+	a := []string{"foo", "bar", "hi", "heyya", "woohoo"}
+
+	expected := []string{"bar", "foo", "heyya", "hi", "woohoo"}
+	got := SortStringSlice(a, ASC)
+	if !AreStringSliceEqual(expected, got) {
+		t.Fatalf("expected %v, got %v", expected, got)
+	}
+
+	expected = []string{"woohoo", "hi", "heyya", "foo", "bar",}
+	got = SortStringSlice(a, DESC)
+	if !AreStringSliceEqual(expected, got) {
+		t.Fatalf("expected %v, got %v", expected, got)
+	}
+}

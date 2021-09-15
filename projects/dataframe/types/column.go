@@ -24,6 +24,23 @@ const (
 	ArrayType
 )
 
+// Inserts a given value at the given index.
+// If the index is beyond the length of keys,
+// it fills the gap in both Items and keys with nil and "" respectively
+func (c *Column) insert(index int, key string, value interface{}) {
+	nextIndex := len(c.keys)
+
+	if nextIndex < index {
+		for i := nextIndex; i < index; i++ {
+			c.keys = append(c.keys, "")	
+			c.Items = append(c.Items, nil)		
+		}
+	}
+
+	c.keys = append(c.keys, key)
+	c.Items = append(c.Items, value)
+}
+
 // Returns a filter function that gets only values greater than the operand
 // The operand can reference a constant, or a Col
 func (c *Column) GreaterThan(operand interface{}) Filter {

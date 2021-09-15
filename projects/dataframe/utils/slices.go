@@ -1,5 +1,14 @@
 package utils
 
+import "sort"
+
+type SortOrder int 
+
+const (
+	ASC SortOrder = iota
+	DESC
+)
+
 // Extracts a given field from n list of maps, returning a list f the values for that field,
 // where the field does not exist, a nil is added
 func ExtractFieldFromMapList(data []map[string]interface{}, field string) []interface{} {
@@ -48,4 +57,23 @@ func AreSliceEqual(first []interface{}, second []interface{}) bool {
 	}
 
 	return true
+}
+
+// Sorts a given string slice in a given order
+func SortStringSlice(slice []string, order SortOrder) []string {
+	copyOfSlice := append([]string{}, slice...)
+
+	sortFunc := func(i, j int) bool {
+		return copyOfSlice[i] < copyOfSlice[j]
+	}
+
+	if order == DESC {
+		sortFunc = func(i, j int) bool {
+			return copyOfSlice[i] > copyOfSlice[j]
+		}	
+	}
+
+	sort.Slice(copyOfSlice, sortFunc)
+
+	return copyOfSlice
 }
