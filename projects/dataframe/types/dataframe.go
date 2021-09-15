@@ -28,7 +28,24 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 
 // Constructs a Dataframe from a map of maps and returns a pointer to it
 func FromMap(records map[interface{}]map[string]interface{}, primaryFields []string) (*Dataframe, error) {
-	return &Dataframe{}, nil
+	df := Dataframe{pkFields: primaryFields, cols: map[string]*Column{}}
+
+	i := 0
+	for _, record := range records {
+		key, err := createKey(record, primaryFields)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create key for %v using field %v", record, primaryFields)
+		}
+
+		for fieldName, value := range record {
+			col := df.Col(fieldName)			
+			col.insert(i, key, value)
+		}
+
+		i++
+	}
+
+	return &df, nil
 }
 
 // Creates a Key to be used to identify the given record
