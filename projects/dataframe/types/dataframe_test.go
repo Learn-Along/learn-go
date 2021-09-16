@@ -32,7 +32,7 @@ var (
 func TestFromArray(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
-		t.Fatalf("error: %s", err)
+		t.Fatalf("error is: %s", err)
 	}
 
 	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
@@ -43,13 +43,17 @@ func TestFromArray(t *testing.T)  {
 	if !utils.AreStringSliceEqual(colNames, expectedCols){
 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
 	}
+
+	if !utils.AreStringSliceEqual(keys, df.cols[colNames[0]].keys) {
+		t.Fatalf("keys expected: %v, got: %v", keys, df.cols[colNames[0]].keys)
+	}
 }
 
 // fromMap should create a dataframe from a map of maps
 func TestFromMap(t *testing.T)  {
 	df, err := FromMap(dataMap, primaryFields)
 	if err != nil {
-		t.Fatalf("error: %s", err)
+		t.Fatalf("error is: %s", err)
 	}
 
 	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
@@ -59,6 +63,13 @@ func TestFromMap(t *testing.T)  {
 	colNames := utils.SortStringSlice(df.getColNames(), utils.ASC)
 	if !utils.AreStringSliceEqual(colNames, expectedCols){
 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
+	}
+
+	// since the map has disorganized order, we will sort them out first
+	expectedKeys := utils.SortStringSlice(keys, utils.ASC)
+	sortedKeys := utils.SortStringSlice(df.cols[colNames[0]].keys, utils.ASC)
+	if !utils.AreStringSliceEqual(expectedKeys, sortedKeys) {
+		t.Fatalf("keys expected: %v, got: %v", expectedKeys, sortedKeys)
 	}
 }
 

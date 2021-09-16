@@ -1,6 +1,9 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Dataframe struct {
 	cols map[string]*Column;
@@ -50,7 +53,18 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 
 // Creates a Key to be used to identify the given record
 func createKey(record map[string]interface{}, primaryFields []string) (string, error)  {
-	return "", nil
+	key := ""
+	separator := "_"
+
+	for _, pkField := range primaryFields {
+		if value, ok := record[pkField]; ok {
+			key += fmt.Sprintf("%s_", value)
+		} else {
+			return "", fmt.Errorf("key error: %s in record %v", pkField, record)
+		}
+	}
+	
+	return strings.TrimRight(key, separator), nil
 }
 
 
