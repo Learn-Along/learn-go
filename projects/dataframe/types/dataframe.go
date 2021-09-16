@@ -138,8 +138,25 @@ func (d *Dataframe) Copy() (Dataframe, error) {
 	return Dataframe{}, nil
 }
 
+// Converts that dataframe into a slice of records (maps)
 func (d *Dataframe) ToArray() ([]map[string]interface{}, error) {
-	return nil, nil
+	data := []map[string]interface{}{}
+
+	for i := range d.pks {
+		record := map[string]interface{}{}
+
+		for _, col := range d.cols {
+			if i < len(col.Items) {
+				record[col.Name] = col.Items[i]
+			} else {
+				record[col.Name] = nil
+			}			
+		}
+		
+		data = append(data, record)
+	}
+
+	return data, nil
 }
 
 // Frees the memory held by the dataframe by nilling all pointers in it
