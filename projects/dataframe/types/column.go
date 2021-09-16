@@ -12,6 +12,8 @@ type Column struct {
 	Dtype Datatype
 }
 
+type Filter map[string][]bool
+
 type colTransform func() Column
 
 const (
@@ -38,44 +40,44 @@ func (c *Column) insert(index int, value interface{}) {
 	c.Items[index] = value
 }
 
-// Returns an array of booleans corresponding in position to each item,
+// Returns a map of an array of booleans corresponding in position to each item,
 // true if item is greater than operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) GreaterThan(operand interface{}) []bool {
+func (c *Column) GreaterThan(operand interface{}) Filter {
 	return nil
 }
 
-// Returns an array of booleans corresponding in position to each item,
+// Returns a map of an array of booleans corresponding in position to each item,
 // true if item is greater than or equal to the operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) GreaterOrEquals(operand interface{}) []bool {
+func (c *Column) GreaterOrEquals(operand interface{}) Filter {
 	return nil
 }
 
-// Returns an array of booleans corresponding in position to each item,
+// Returns a map of an array of booleans corresponding in position to each item,
 // true if item is less than operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) LessThan(operand interface{}) []bool {
+func (c *Column) LessThan(operand interface{}) Filter {
 	return nil
 }
 
-// Returns an array of booleans corresponding in position to each item,
+// Returns a map of an array of booleans corresponding in position to each item,
 // true if item is less than or equal to the operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) LessOrEquals(operand interface{}) []bool {
+func (c *Column) LessOrEquals(operand interface{}) Filter {
 	return nil
 }
 
-// Returns an array of booleans corresponding in position to each item,
+// Returns a map of an array of booleans corresponding in position to each item,
 // true if item is equal to operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) Equals(operand interface{}) []bool {
+func (c *Column) Equals(operand interface{}) Filter {
 	return nil
 }
 
-// Returns an array of booleans corresponding in position to each item,
+// Returns a map of an array of booleans corresponding in position to each item,
 // true if item is like the regex expression or else false
-func (c *Column) IsLike(pattern *regexp.Regexp) []bool  {
+func (c *Column) IsLike(pattern *regexp.Regexp) Filter  {
 	return nil
 }
 

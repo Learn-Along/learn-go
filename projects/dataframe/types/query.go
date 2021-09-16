@@ -30,7 +30,7 @@ func (q *Query) Execute() ([]map[string]interface{}, error) {
 // Given a list of boolean corresponding to indices of the items,
 // true meaning the item should be included, false meaning that item should be excluded
 // the method then returns a query instance
-func (q *Query) Where(filter []bool) *Query {
+func (q *Query) Where(filter Filter) *Query {
 	return q
 }
 
@@ -52,74 +52,84 @@ func (q *Query) Apply(ops ...colTransform) *Query {
 
 // Logic combinations
 
-// Combines a list of filters to produce a combined AND logical filter
-func AND(filters ...[]bool) []bool {
-	combinedFilters := []bool{}
-	filterLengths := []int{}
+// Combines a list of maps of filters to produce a combined AND logical filter
+func AND(filters ...Filter) Filter{
+	combinedFilters := Filter{}
 
-	maxLength := 0
 	for _, filter := range filters {
-		filterLength := len(filter)
-		filterLengths = append(filterLengths, filterLength)
 
-		if maxLength < filterLength {
-			maxLength = filterLength
-		}
-	}
+		for field, newArray := range filter {
 
-	for row := 0; row < maxLength; row++ {
-		value := true
+			oldArray, ok := combinedFilters[field]
+			if !ok {
+				combinedFilters[field] = newArray
+				continue
+			}
+			
+			oldArrayLength := len(oldArray)
+			newArrayLength := len(newArray)
 
-		for i, filter := range filters {
-			if row < filterLengths[i] {
-				value = value && filter[row]				
-			} else {
-				value = false
-				break
+			for row, value := range oldArray {	
+				if row < newArrayLength {
+					combinedFilters[field][row] = value && newArray[row]
+				} else {
+					combinedFilters[field][row] = false
+				}
+			}
+
+			// fill up any new rows that didn't exist originally, with false
+			for row := oldArrayLength; row < newArrayLength; row++ {
+				combinedFilters[field] = append(combinedFilters[field], false)
 			}
 		}
-
-		combinedFilters = append(combinedFilters, value)
 	}
 
 	return combinedFilters
 }
 
 // Combines a list of filters to produce a combined OR logical filter
-func OR(filters ...[]bool) []bool {
-	combinedFilters := []bool{}
-	filterLengths := []int{}
+func OR(filters ...Filter) Filter {
+	combinedFilters := Filter{}
 
-	maxLength := 0
 	for _, filter := range filters {
-		filterLength := len(filter)
-		filterLengths = append(filterLengths, filterLength)
 
-		if maxLength < filterLength {
-			maxLength = filterLength
-		}
-	}
+		for field, newArray := range filter {
 
-	for row := 0; row < maxLength; row++ {
-		value := false
+			oldArray, ok := combinedFilters[field]
+			if !ok {
+				combinedFilters[field] = newArray
+				continue
+			}
+			
+			oldArrayLength := len(oldArray)
+			newArrayLength := len(newArray)
 
-		for i, filter := range filters {
-			if row < filterLengths[i] {
-				value = value || filter[row]				
+			for row, value := range oldArray {	
+				if row < newArrayLength {
+					combinedFilters[field][row] = value || newArray[row]
+				}
+			}
+
+			// fill up any new rows that didn't exist originally, with the new value
+			for row := oldArrayLength; row < newArrayLength; row++ {
+				combinedFilters[field] = append(combinedFilters[field], newArray[row])
 			}
 		}
-
-		combinedFilters = append(combinedFilters, value)
 	}
 
 	return combinedFilters
 }
 
 // Inverts a given filter to produce a NOT logical filter
-func NOT(filter []bool) []bool {
-	combinedFilters := []bool{}
-	for _, value := range filter {
-		combinedFilters = append(combinedFilters, !value)
+func NOT(filter Filter) Filter {
+	combinedFilters := Filter{}
+
+	for field, data := range filter {
+		combinedFilters[field] = []bool{}
+
+		for _, value := range data {
+			combinedFilters[field] = append(combinedFilters[field], !value)
+		}
 	}
 
 	return combinedFilters

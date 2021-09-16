@@ -114,7 +114,7 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 }
 
 // Deletes the items that fulfill the filters
-func (d *Dataframe) Delete(filters []bool) error {
+func (d *Dataframe) Delete(filters Filter) error {
 	return nil
 }
 
