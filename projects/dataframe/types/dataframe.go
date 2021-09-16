@@ -113,13 +113,13 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 	return nil
 }
 
-// Deletes the items that fulfill the filter
-func (d *Dataframe) Delete(filter Filter) error {
+// Deletes the items that fulfill the filters
+func (d *Dataframe) Delete(filters []bool) error {
 	return nil
 }
 
-// Updates the items that fulfill the given filter with the new value
-func (d *Dataframe) Update(filter Filter, value map[string]interface{}) error  {
+// Updates the items that fulfill the given filters with the new value
+func (d *Dataframe) Update(filters []bool, value map[string]interface{}) error  {
 	return nil
 }
 

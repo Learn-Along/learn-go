@@ -190,7 +190,7 @@ func TestDelete(t *testing.T)  {
 	}
 
 	type testRecord struct {
-		filter Filter;
+		filter []bool;
 		expected []map[string]interface{};
 	}
 

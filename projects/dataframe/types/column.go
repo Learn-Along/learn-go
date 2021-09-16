@@ -38,39 +38,45 @@ func (c *Column) insert(index int, value interface{}) {
 	c.Items[index] = value
 }
 
-// Returns a filter function that gets only values greater than the operand
+// Returns an array of booleans corresponding in position to each item,
+// true if item is greater than operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) GreaterThan(operand interface{}) Filter {
-	return func() []string {return nil}
+func (c *Column) GreaterThan(operand interface{}) []bool {
+	return nil
 }
 
-// Returns a filter function that gets only values greater than or equal to the operand
+// Returns an array of booleans corresponding in position to each item,
+// true if item is greater than or equal to the operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) GreaterOrEquals(operand interface{}) Filter {
-	return func() []string {return nil}
+func (c *Column) GreaterOrEquals(operand interface{}) []bool {
+	return nil
 }
 
-// Returns a filter function that gets only values less than the operand
+// Returns an array of booleans corresponding in position to each item,
+// true if item is less than operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) LessThan(operand interface{}) Filter {
-	return func() []string {return nil}
+func (c *Column) LessThan(operand interface{}) []bool {
+	return nil
 }
 
-// Returns a filter function that gets only values less than or equal to the operand
+// Returns an array of booleans corresponding in position to each item,
+// true if item is less than or equal to the operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) LessOrEquals(operand interface{}) Filter {
-	return func() []string {return nil}
+func (c *Column) LessOrEquals(operand interface{}) []bool {
+	return nil
 }
 
-// Returns a filter function that gets only values equal to the operand
+// Returns an array of booleans corresponding in position to each item,
+// true if item is equal to operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) Equals(operand interface{}) Filter {
-	return func() []string {return nil}
+func (c *Column) Equals(operand interface{}) []bool {
+	return nil
 }
 
-// Returns a filter function that gets only values that are like the regex expression
-func (c *Column) IsLike(pattern *regexp.Regexp) Filter  {
-	return func() []string {return nil}
+// Returns an array of booleans corresponding in position to each item,
+// true if item is like the regex expression or else false
+func (c *Column) IsLike(pattern *regexp.Regexp) []bool  {
+	return nil
 }
 
 // Returns a transformer method to transform the column from one form to another

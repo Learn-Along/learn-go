@@ -4,7 +4,7 @@ type Query struct{
 	ops []colTransform
 }
 
-type Filter func() []string
+type Filter func() bool
 
 type SortOrder int
 
@@ -53,16 +53,74 @@ func (q *Query) Apply(ops ...colTransform) *Query {
 // Logic combinations
 
 // Combines a list of filters to produce a combined AND logical filter
-func AND(filters ...Filter) Filter {
-	return func() []string {return nil}
+func AND(filters ...[]bool) []bool {
+	combinedFilters := []bool{}
+	filterLengths := []int{}
+
+	maxLength := 0
+	for _, filter := range filters {
+		filterLength := len(filter)
+		filterLengths = append(filterLengths, filterLength)
+
+		if maxLength < filterLength {
+			maxLength = filterLength
+		}
+	}
+
+	for row := 0; row < maxLength; row++ {
+		value := true
+
+		for i, filter := range filters {
+			if row < filterLengths[i] {
+				value = value && filter[row]				
+			} else {
+				value = false
+				break
+			}
+		}
+
+		combinedFilters = append(combinedFilters, value)
+	}
+
+	return combinedFilters
 }
 
 // Combines a list of filters to produce a combined OR logical filter
-func OR(filters ...Filter) Filter {
-	return func() []string {return nil}
+func OR(filters ...[]bool) []bool {
+	combinedFilters := []bool{}
+	filterLengths := []int{}
+
+	maxLength := 0
+	for _, filter := range filters {
+		filterLength := len(filter)
+		filterLengths = append(filterLengths, filterLength)
+
+		if maxLength < filterLength {
+			maxLength = filterLength
+		}
+	}
+
+	for row := 0; row < maxLength; row++ {
+		value := false
+
+		for i, filter := range filters {
+			if row < filterLengths[i] {
+				value = value || filter[row]				
+			}
+		}
+
+		combinedFilters = append(combinedFilters, value)
+	}
+
+	return combinedFilters
 }
 
 // Inverts a given filter to produce a NOT logical filter
-func NOT(filter Filter) Filter {
-	return func() []string {return nil}
+func NOT(filter []bool) []bool {
+	combinedFilters := []bool{}
+	for _, value := range filter {
+		combinedFilters = append(combinedFilters, !value)
+	}
+
+	return combinedFilters
 }
