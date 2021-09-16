@@ -1,6 +1,7 @@
 package types
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
@@ -152,4 +153,120 @@ func TestInsertNonExistingCols(t *testing.T)  {
 			t.Errorf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items)
 		}
 	}	
+}
+
+// ToArray should convert the data into an array
+func TestToArray(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
+
+	records, err := df.ToArray()
+	if err != nil {
+		t.Fatalf("error on ToArray is: %s", err)
+	}
+
+	if len(records) != len(dataArray) {
+		t.Fatalf("expected number of records: %d, got %d", len(records), len(dataArray))
+	}
+
+	for i, record := range records {
+		for field, value := range record {
+			expected := dataArray[i][field]
+			if expected != value {
+				t.Fatalf("the record %d expected %v, got %v", i, expected, value)
+			}
+		}
+	}
+
+}
+
+// Delete should delete any records that fulfill a given condition
+func TestDelete(t *testing.T)  {
+	df, err := FromMap(dataMap, primaryFields)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
+
+	type testRecord struct {
+		filter Filter;
+		expected []map[string]interface{};
+	}
+
+	testTable := []testRecord{
+		{
+			filter: df.Col("age").GreaterThan(33), 
+			expected: []map[string]interface{}{
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+		{
+			filter: df.Col("last name").IsLike(regexp.MustCompile("oe$")), 
+			expected: dataArray,
+		},
+		{
+			filter: df.Col("age").IsLike(regexp.MustCompile("D")), 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+			},
+		},
+		{
+			filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)), 
+			expected: []map[string]interface{}{
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+		{
+			filter: OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)), 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+		{
+			filter: NOT(df.Col("location").Equals("Kampala")), 
+			expected: []map[string]interface{}{
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+			},
+		},
+	}
+
+	for _, tr := range testTable {
+		df.Insert(dataArray)
+		if err != nil {
+			t.Fatalf("df error is: %s", err)
+		}
+
+		err = df.Delete(tr.filter)
+		if err != nil {
+			t.Fatalf("df delete error is: %s", err)
+		}
+
+		records, err := df.ToArray()
+		if err != nil {
+			t.Fatalf("error on ToArray is: %s", err)
+		}
+
+		if len(records) != len(tr.expected) {
+			t.Fatalf("expected number of records: %d, got %d", len(records), len(tr.expected))
+		}
+
+		for i, record := range records {
+			for field, value := range record {
+				expectedValue := tr.expected[i][field]
+				if expectedValue != value {
+					t.Fatalf("the record %d expected %v, got %v", i, expectedValue, value)
+				}
+			}
+		}		
+	}
 }
