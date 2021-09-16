@@ -1,8 +1,9 @@
 package types
 
-type Query struct{
-	ops []colTransform
-}
+const (
+	ASC SortOrder = iota
+	DESC
+)
 
 type SortOrder int
 
@@ -11,10 +12,12 @@ type sortOption struct {
 	Order SortOrder
 }
 
-const (
-	ASC SortOrder = iota
-	DESC
-)
+/**
+* Query
+*/
+type Query struct{
+	ops []colTransform
+}
 
 // Actually executes the query
 func (q *Query) Execute() ([]map[string]interface{}, error) {

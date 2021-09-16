@@ -12,8 +12,6 @@ type Column struct {
 	Dtype Datatype
 }
 
-type Filter map[string][]bool
-
 type colTransform func() Column
 
 const (

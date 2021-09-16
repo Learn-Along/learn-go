@@ -179,7 +179,6 @@ func TestToArray(t *testing.T)  {
 			}
 		}
 	}
-
 }
 
 // Delete should delete any records that fulfill a given condition
@@ -257,7 +256,7 @@ func TestDelete(t *testing.T)  {
 		}
 
 		if len(records) != len(tr.expected) {
-			t.Fatalf("expected number of records: %d, got %d", len(records), len(tr.expected))
+			t.Fatalf("expected number of records: %d, got %d", len(tr.expected), len(records))
 		}
 
 		for i, record := range records {
