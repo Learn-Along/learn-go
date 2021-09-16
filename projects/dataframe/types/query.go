@@ -4,8 +4,6 @@ type Query struct{
 	ops []colTransform
 }
 
-type Filter func() bool
-
 type SortOrder int
 
 type sortOption struct {
@@ -29,8 +27,10 @@ func (q *Query) Execute() ([]map[string]interface{}, error) {
 	return newDf.ToArray()
 }
 
-// Narrows down the filter to a given filter and returns a query instance
-func (q *Query) Where(filter Filter) *Query {
+// Given a list of boolean corresponding to indices of the items,
+// true meaning the item should be included, false meaning that item should be excluded
+// the method then returns a query instance
+func (q *Query) Where(filter []bool) *Query {
 	return q
 }
 
