@@ -3,13 +3,15 @@ package types
 import (
 	"fmt"
 	"strings"
+
+	"github.com/learn-along/learn-go/projects/dataframe/utils"
 )
 
 type Dataframe struct {
 	cols map[string]*Column;
 	pkFields []string;
 	index map[string]int;
-	pks []string;
+	pks OrderedMap;
 }
 
 // Constructs a Dataframe from an array of maps and returns a pointer to it
@@ -18,7 +20,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[string]int{},
-		pks: []string{},
+		pks: OrderedMap{},
 	}
 
 	for _, record := range records {
@@ -40,7 +42,7 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[string]int{},
-		pks: []string{},
+		pks: OrderedMap{},
 	}
 
 	for _, record := range records {
@@ -78,7 +80,7 @@ func (d *Dataframe) Col(name string) *Column {
 	col := d.cols[name]
 
 	if col == nil {
-		newCol := Column{Name: name, Items: []interface{}{}, Dtype: ObjectType}
+		newCol := Column{Name: name, items: map[int]interface{}{}, Dtype: ObjectType}
 		d.cols[name] = &newCol 
 		return &newCol
 	}
@@ -86,11 +88,20 @@ func (d *Dataframe) Col(name string) *Column {
 	return col
 }
 
-// Utility to return all column names
-func (d *Dataframe) getColNames() []string {
-	names := []string{}
+// Access method to return the keys in order
+func (d *Dataframe) Keys() []string {
+	return utils.ConvertToStringSlice(d.pks.ToSlice())
+}
+
+// access method to return all column names
+func (d *Dataframe) ColumnNames() []string {
+	count := len(d.cols)
+	names := make([]string, count)
+
+	i := 0
 	for _, col := range d.cols {
-		names = append(names, col.Name)
+		names[i] = col.Name
+		i++
 	}
 
 	return names
@@ -114,7 +125,27 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 }
 
 // Deletes the items that fulfill the filters
-func (d *Dataframe) Delete(filters Filter) error {
+func (d *Dataframe) Delete(filter Filter) error {
+	flags := filter.Coalesce()
+	indicesToDelete := []int{}
+	noOfPks := len(d.pks)
+
+	for i, flag := range flags {
+		// delete where flag is true
+		if flag && i < noOfPks {
+			// delete the pk from pks and index 
+			indicesToDelete = append(indicesToDelete, i)
+			pk := d.pks[i]
+			delete(d.index, pk.(string))	
+			delete(d.pks, i)		
+		}		
+	}
+
+	// delete the items in each col 
+	for _, col := range d.cols {
+		col.deleteMany(indicesToDelete)
+	}
+
 	return nil
 }
 
@@ -141,13 +172,14 @@ func (d *Dataframe) Copy() (Dataframe, error) {
 // Converts that dataframe into a slice of records (maps)
 func (d *Dataframe) ToArray() ([]map[string]interface{}, error) {
 	data := []map[string]interface{}{}
+	count := len(d.pks)
 
-	for i := range d.pks {
+	for i := 0; i < count; i++ {
 		record := map[string]interface{}{}
 
 		for _, col := range d.cols {
-			if i < len(col.Items) {
-				record[col.Name] = col.Items[i]
+			if i < len(col.items) {
+				record[col.Name] = col.items[i]
 			} else {
 				record[col.Name] = nil
 			}			
@@ -175,7 +207,7 @@ func (d *Dataframe) insertRecord(record map[string]interface{}) error {
 	if !ok {
 		row = len(d.index)
 		d.index[key] = row
-		d.pks = append(d.pks, key)
+		d.pks[row] = key
 	}		
 
 	for fieldName, value := range record {
@@ -189,7 +221,7 @@ func (d *Dataframe) insertRecord(record map[string]interface{}) error {
 // Fills up the columns with the given value to reach a given length for all columns
 func (d *Dataframe) fillUpCols(finalLength int, value interface{})  {
 	for _, col := range d.cols {
-		colLength := len(col.Items)
+		colLength := len(col.items)
 		
 		for i := colLength; i < finalLength; i++ {
 			col.insert(i, value)

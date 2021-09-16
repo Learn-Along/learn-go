@@ -77,3 +77,15 @@ func SortStringSlice(slice []string, order SortOrder) []string {
 
 	return copyOfSlice
 }
+
+// Converts a given interface{} slice into a []string
+func ConvertToStringSlice(slice []interface{}) []string {
+	length := len(slice)
+	s := make([]string, length)
+
+	for i, v := range slice {
+		s[i] = v.(string)
+	}
+
+	return s
+}

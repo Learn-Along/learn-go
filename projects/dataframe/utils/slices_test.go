@@ -75,3 +75,29 @@ func TestSortStringSlice(t *testing.T)  {
 		t.Fatalf("expected %v, got %v", expected, got)
 	}
 }
+
+// ConvertToStringSlice converts an []interface{} to []string
+func TestConvertToStringSlice(t *testing.T)  {
+	type testRecord struct {
+		input []interface{};
+		expected []string
+	}
+
+	testData := []testRecord{
+		{
+			input: []interface{}{"hi", "hello", "yoohoo", "salut"},
+			expected: []string{"hi", "hello", "yoohoo", "salut"},
+		},
+		{
+			input: []interface{}{"hi", "hello", "salut"},
+			expected: []string{"hi", "hello", "salut"},
+		},
+	}
+
+	for _, tr := range testData {
+		got := ConvertToStringSlice(tr.input)
+		if !AreStringSliceEqual(got, tr.expected) {
+			t.Fatalf("expected %v; got %v", tr.expected, got)
+		}
+	}
+}

@@ -40,13 +40,13 @@ func TestFromArray(t *testing.T)  {
 		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
 	}
 
-	colNames := utils.SortStringSlice(df.getColNames(), utils.ASC)
+	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
 	if !utils.AreStringSliceEqual(colNames, expectedCols){
 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
 	}
 
-	if !utils.AreStringSliceEqual(keys, df.pks) {
-		t.Fatalf("keys expected: %v, got: %v", keys, df.pks)
+	if !utils.AreStringSliceEqual(keys, df.Keys()) {
+		t.Fatalf("keys expected: %v, got: %v", keys, df.Keys())
 	}
 }
 
@@ -61,14 +61,14 @@ func TestFromMap(t *testing.T)  {
 		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
 	}
 
-	colNames := utils.SortStringSlice(df.getColNames(), utils.ASC)
+	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
 	if !utils.AreStringSliceEqual(colNames, expectedCols){
 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
 	}
 
 	// since the map has disorganized order, we will sort them out first
 	expectedKeys := utils.SortStringSlice(keys, utils.ASC)
-	sortedKeys := utils.SortStringSlice(df.pks, utils.ASC)
+	sortedKeys := utils.SortStringSlice(df.Keys(), utils.ASC)
 	if !utils.AreStringSliceEqual(expectedKeys, sortedKeys) {
 		t.Fatalf("keys expected: %v, got: %v", expectedKeys, sortedKeys)
 	}
@@ -80,7 +80,7 @@ func TestInsert(t *testing.T)  {
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[string]int{},
-		pks: []string{},
+		pks: OrderedMap{},
 	}
 
 	// insert thrice, but still have the same data due to the primary keys...treat this like a db
@@ -92,19 +92,19 @@ func TestInsert(t *testing.T)  {
 		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
 	}
 
-	colNames := utils.SortStringSlice(df.getColNames(), utils.ASC)
+	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
 	if !utils.AreStringSliceEqual(colNames, expectedCols){
 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
 	}
 
-	if !utils.AreStringSliceEqual(keys, df.pks) {
-		t.Fatalf("keys expected: %v, got: %v", keys, df.pks)
+	if !utils.AreStringSliceEqual(keys, df.Keys()) {
+		t.Fatalf("keys expected: %v, got: %v", keys, df.Keys())
 	}
 
 	for _, col := range df.cols {
 		expectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name)
-		if !utils.AreSliceEqual(col.Items, expectedItems){
-			t.Fatalf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items)
+		if !utils.AreSliceEqual(col.Items(), expectedItems){
+			t.Fatalf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items())
 		}
 	}
 }
@@ -124,7 +124,7 @@ func TestInsertNonExistingCols(t *testing.T)  {
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[string]int{},
-		pks: []string{},
+		pks: OrderedMap{},
 	}
 
 	// Insert the two sets of records
@@ -135,13 +135,13 @@ func TestInsertNonExistingCols(t *testing.T)  {
 		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
 	}
 
-	colNames := utils.SortStringSlice(df.getColNames(), utils.ASC)
+	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
 	if !utils.AreStringSliceEqual(colNames, allCols){
 		t.Fatalf("cols expected: %v, got: %v", allCols, colNames)
 	}
 
-	if !utils.AreStringSliceEqual(allKeys, df.pks) {
-		t.Fatalf("keys expected: %v, got: %v", keys, df.pks)
+	if !utils.AreStringSliceEqual(allKeys, df.Keys()) {
+		t.Fatalf("keys expected: %v, got: %v", keys, df.Keys())
 	}
 
 	for _, col := range df.cols {
@@ -149,8 +149,8 @@ func TestInsertNonExistingCols(t *testing.T)  {
 		extraExpectedItems := utils.ExtractFieldFromMapList(extraData, col.Name)
 		expectedItems := append(initialExpectedItems, extraExpectedItems...)
 
-		if !utils.AreSliceEqual(col.Items, expectedItems){
-			t.Errorf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items)
+		if !utils.AreSliceEqual(col.Items(), expectedItems){
+			t.Errorf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items())
 		}
 	}	
 }

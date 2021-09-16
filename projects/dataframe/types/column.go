@@ -2,18 +2,6 @@ package types
 
 import "regexp"
 
-type Datatype int
-
-type arrayFunc func([]interface{}) []interface{}
-
-type Column struct {
-	Name string
-	Items []interface{}
-	Dtype Datatype
-}
-
-type colTransform func() Column
-
 const (
 	IntType Datatype = iota
 	FloatType
@@ -23,19 +11,44 @@ const (
 	ArrayType
 )
 
+type Datatype int
+
+type colTransform func() Column
+
+type arrayFunc func([]interface{}) []interface{}
+
+type Column struct {
+	Name string
+	items OrderedMap
+	Dtype Datatype
+}
+
+// Returns a list of Items
+func (c *Column) Items() []interface{} {
+	return c.items.ToSlice()
+}
+
+
 // Inserts a given value at the given index.
 // If the index is beyond the length of keys,
 // it fills the gap in both Items and keys with nil and "" respectively
 func (c *Column) insert(index int, value interface{}) {
-	nextIndex := len(c.Items)
+	nextIndex := len(c.items)
 
 	if nextIndex <= index {
 		for i := nextIndex; i <= index; i++ {
-			c.Items = append(c.Items, nil)		
+			c.items[i] = nil		
 		}
 	}
 
-	c.Items[index] = value
+	c.items[index] = value
+}
+
+// Deletes many indices at once
+func (c *Column) deleteMany(indices []int)  {
+	for _, i := range indices {
+		delete(c.items, i)
+	}	
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
