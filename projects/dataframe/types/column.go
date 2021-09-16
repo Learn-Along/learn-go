@@ -10,7 +10,6 @@ type Column struct {
 	Name string
 	Items []interface{}
 	Dtype Datatype
-	keys []string
 }
 
 type colTransform func() Column
@@ -27,18 +26,16 @@ const (
 // Inserts a given value at the given index.
 // If the index is beyond the length of keys,
 // it fills the gap in both Items and keys with nil and "" respectively
-func (c *Column) insert(index int, key string, value interface{}) {
-	nextIndex := len(c.keys)
+func (c *Column) insert(index int, value interface{}) {
+	nextIndex := len(c.Items)
 
-	if nextIndex < index {
-		for i := nextIndex; i < index; i++ {
-			c.keys = append(c.keys, "")	
+	if nextIndex <= index {
+		for i := nextIndex; i <= index; i++ {
 			c.Items = append(c.Items, nil)		
 		}
 	}
 
-	c.keys = append(c.keys, key)
-	c.Items = append(c.Items, value)
+	c.Items[index] = value
 }
 
 // Returns a filter function that gets only values greater than the operand
