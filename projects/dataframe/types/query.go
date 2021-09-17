@@ -57,83 +57,71 @@ func (q *Query) Apply(ops ...colTransform) *Query {
 
 // Combines a list of maps of filters to produce a combined AND logical filter
 func AND(filters ...Filter) Filter{
-	combinedFilters := Filter{}
+	combinedFilter := Filter{}
 
 	for _, filter := range filters {
+		currentLength := len(combinedFilter)
+		newArrayLength := len(filter)
+		
+		if currentLength == 0 {
+			combinedFilter = filter
+			continue
+		}
 
-		for field, newArray := range filter {
-
-			oldArray, ok := combinedFilters[field]
-			if !ok {
-				combinedFilters[field] = newArray
-				continue
+		for row, value := range combinedFilter {	
+			if row < newArrayLength {
+				combinedFilter[row] = value && filter[row]
+			} else {
+				combinedFilter[row] = false
 			}
-			
-			oldArrayLength := len(oldArray)
-			newArrayLength := len(newArray)
+		}
 
-			for row, value := range oldArray {	
-				if row < newArrayLength {
-					combinedFilters[field][row] = value && newArray[row]
-				} else {
-					combinedFilters[field][row] = false
-				}
-			}
-
-			// fill up any new rows that didn't exist originally, with false
-			for row := oldArrayLength; row < newArrayLength; row++ {
-				combinedFilters[field] = append(combinedFilters[field], false)
-			}
+		// fill up any new rows that didn't exist originally, with false
+		for row := currentLength; row < newArrayLength; row++ {
+			combinedFilter = append(combinedFilter, false)
 		}
 	}
 
-	return combinedFilters
+	return combinedFilter
 }
 
 // Combines a list of filters to produce a combined OR logical filter
 func OR(filters ...Filter) Filter {
-	combinedFilters := Filter{}
+	combinedFilter := Filter{}
 
 	for _, filter := range filters {
-
-		for field, newArray := range filter {
-
-			oldArray, ok := combinedFilters[field]
-			if !ok {
-				combinedFilters[field] = newArray
-				continue
-			}
+		currentLength := len(combinedFilter)
+		newArrayLength := len(filter)
 			
-			oldArrayLength := len(oldArray)
-			newArrayLength := len(newArray)
+		if currentLength == 0 {
+			combinedFilter = filter
+			continue
+		}			
 
-			for row, value := range oldArray {	
-				if row < newArrayLength {
-					combinedFilters[field][row] = value || newArray[row]
-				}
-			}
-
-			// fill up any new rows that didn't exist originally, with the new value
-			for row := oldArrayLength; row < newArrayLength; row++ {
-				combinedFilters[field] = append(combinedFilters[field], newArray[row])
+		for row, value := range combinedFilter {	
+			if row < newArrayLength {
+				combinedFilter[row] = value || filter[row]
 			}
 		}
+
+		// fill up any new rows that didn't exist originally, with the new value
+		for row := currentLength; row < newArrayLength; row++ {
+			combinedFilter = append(combinedFilter, filter[row])
+		}
+
 	}
 
-	return combinedFilters
+	return combinedFilter
 }
 
 // Inverts a given filter to produce a NOT logical filter
 func NOT(filter Filter) Filter {
-	combinedFilters := Filter{}
+	count := len(filter)
+	combinedFilter := make(Filter, count)
 
-	for field, data := range filter {
-		combinedFilters[field] = []bool{}
-
-		for _, value := range data {
-			combinedFilters[field] = append(combinedFilters[field], !value)
-		}
+	for i, value := range filter {
+		combinedFilter[i] = !value
 	}
 
-	return combinedFilters
+	return combinedFilter
 }

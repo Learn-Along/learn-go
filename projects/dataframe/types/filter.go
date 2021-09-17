@@ -1,25 +1,26 @@
 package types
 
-type Filter map[string][]bool
-// Coalesces a map of bool arrays into an ANDED array of bool such that 
-// say, age > 7 and name = "John" returns only true when both are true
-func (f *Filter) Coalesce() []bool {
-	d := []bool{}
+type Filter []bool
 
-	defaultValue := true
-	for _, list := range *f {
-		for i, value := range list {
-			if i < len(d) {
-				d[i] = d[i] && value
-			} else {
-				d = append(d, defaultValue && value)
-			}
-		}
+// // Coalesces a map of bool arrays into an ANDED array of bool such that 
+// // say, age > 7 and name = "John" returns only true when both are true
+// func (f *Filter) Coalesce() []bool {
+// 	d := []bool{}
 
-		// after first loop, default is false as it means
-		// that index is missing in initial array, hence AND = false
-		defaultValue = false
-	}
+// 	defaultValue := true
+// 	for _, list := range *f {
+// 		for i, value := range list {
+// 			if i < len(d) {
+// 				d[i] = d[i] && value
+// 			} else {
+// 				d = append(d, defaultValue && value)
+// 			}
+// 		}
 
-	return d
-}
+// 		// after first loop, default is false as it means
+// 		// that index is missing in initial array, hence AND = false
+// 		defaultValue = false
+// 	}
+
+// 	return d
+// }

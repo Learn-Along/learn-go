@@ -99,7 +99,9 @@ func (d *Dataframe) getNonNilPkIndices() []int {
 	indices := make([]int, count)
 
 	counter := 0
-	for i, pk := range d.pks {
+	for i := 0; i < count; i++ {
+		pk := d.pks[i]
+
 		if pk != nil {
 			indices[counter] = i
 			counter++
@@ -148,18 +150,17 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 
 // Deletes the items that fulfill the filters
 func (d *Dataframe) Delete(filter Filter) error {
-	flags := filter.Coalesce()
 	colIndicesToDelete := []int{}
 	count := d.Count()
 	pkIndices := d.getNonNilPkIndices()
 
-	for i, flag := range flags {
+	for i, flag := range filter {
 		// delete where flag is true and i is in range of the index
 		if flag && i < count {
-			// delete the pk from index 
-			colIndicesToDelete = append(colIndicesToDelete, i)
+			// delete the pk from index
+			pkIndex := pkIndices[i] 
+			colIndicesToDelete = append(colIndicesToDelete, pkIndex)		
 			
-			pkIndex := pkIndices[i]
 			pk := d.pks[pkIndex]
 			delete(d.index, pk.(string))
 			// save nil in d.pks for index i	
@@ -197,21 +198,23 @@ func (d *Dataframe) Copy() (Dataframe, error) {
 
 // Converts that dataframe into a slice of records (maps)
 func (d *Dataframe) ToArray() ([]map[string]interface{}, error) {
-	data := []map[string]interface{}{}
-	count := len(d.index)
+	count := d.Count()
+	pkIndices := d.getNonNilPkIndices()
+	data := make([]map[string]interface{}, count)
+	
 
-	for i := 0; i < count; i++ {
+	for i, pkIndex := range pkIndices {
 		record := map[string]interface{}{}
 
 		for _, col := range d.cols {
 			if i < len(col.items) {
-				record[col.Name] = col.items[i]
+				record[col.Name] = col.items[pkIndex]
 			} else {
 				record[col.Name] = nil
 			}			
 		}
 		
-		data = append(data, record)
+		data[i] = record
 	}
 
 	return data, nil
@@ -231,7 +234,7 @@ func (d *Dataframe) insertRecord(record map[string]interface{}) error {
 
 	row, ok := d.index[key]; 
 	if !ok {
-		row = len(d.index)
+		row = len(d.pks)
 		d.index[key] = row
 		d.pks[row] = key
 	}		

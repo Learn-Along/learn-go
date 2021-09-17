@@ -58,10 +58,12 @@ func (c *Column) deleteMany(indices []int)  {
 // The operand can reference a constant, or a Col
 func (c *Column) GreaterThan(operand float64) Filter {
 	count := len(c.items)
-	flags := make([]bool, count)
+	flags := make(Filter, count)
 
 	for i, v := range c.items {
 		switch v := v.(type) {
+		case int:
+			flags[i] = float64(v) > operand
 		case int8:
 			flags[i] = float64(v) > operand
 		case int16:
@@ -79,7 +81,7 @@ func (c *Column) GreaterThan(operand float64) Filter {
 		}
 	}
 
-	return Filter{c.Name: flags}
+	return flags
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
@@ -87,10 +89,12 @@ func (c *Column) GreaterThan(operand float64) Filter {
 // The operand can reference a constant, or a Col
 func (c *Column) GreaterOrEquals(operand float64) Filter {
 	count := len(c.items)
-	flags := make([]bool, count)
+	flags := make(Filter, count)
 
 	for i, v := range c.items {
 		switch v := v.(type) {
+		case int:
+			flags[i] = float64(v) >= operand
 		case int8:
 			flags[i] = float64(v) >= operand
 		case int16:
@@ -108,7 +112,7 @@ func (c *Column) GreaterOrEquals(operand float64) Filter {
 		}
 	}
 
-	return Filter{c.Name: flags}
+	return flags
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
@@ -116,10 +120,12 @@ func (c *Column) GreaterOrEquals(operand float64) Filter {
 // The operand can reference a constant, or a Col
 func (c *Column) LessThan(operand float64) Filter {
 	count := len(c.items)
-	flags := make([]bool, count)
+	flags := make(Filter, count)
 
 	for i, v := range c.items {
 		switch v := v.(type) {
+		case int:
+			flags[i] = float64(v) < operand
 		case int8:
 			flags[i] = float64(v) < operand
 		case int16:
@@ -137,7 +143,7 @@ func (c *Column) LessThan(operand float64) Filter {
 		}
 	}
 
-	return Filter{c.Name: flags}
+	return flags
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
@@ -145,10 +151,12 @@ func (c *Column) LessThan(operand float64) Filter {
 // The operand can reference a constant, or a Col
 func (c *Column) LessOrEquals(operand float64) Filter {
 	count := len(c.items)
-	flags := make([]bool, count)
+	flags := make(Filter, count)
 
 	for i, v := range c.items {
 		switch v := v.(type) {
+		case int:
+			flags[i] = float64(v) <= operand
 		case int8:
 			flags[i] = float64(v) <= operand
 		case int16:
@@ -166,7 +174,7 @@ func (c *Column) LessOrEquals(operand float64) Filter {
 		}
 	}
 
-	return Filter{c.Name: flags}
+	return flags
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
@@ -174,20 +182,20 @@ func (c *Column) LessOrEquals(operand float64) Filter {
 // The operand can reference a constant, or a Col
 func (c *Column) Equals(operand interface{}) Filter {
 	count := len(c.items)
-	flags := make([]bool, count)
+	flags := make(Filter, count)
 
 	for i, v := range c.items {
 		flags[i] = v == operand
 	}
 
-	return Filter{c.Name: flags}
+	return flags
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
 // true if item is like the regex expression or else false
 func (c *Column) IsLike(pattern *regexp.Regexp) Filter  {
 	count := len(c.items)
-	flags := make([]bool, count)
+	flags := make(Filter, count)
 
 	for i, v := range c.items {
 		switch v := v.(type) {
@@ -200,7 +208,7 @@ func (c *Column) IsLike(pattern *regexp.Regexp) Filter  {
 		}		
 	}
 
-	return Filter{c.Name: flags}
+	return flags
 }
 
 // Returns a transformer method to transform the column from one form to another
