@@ -12,7 +12,6 @@ type Dataframe struct {
 	cols map[string]*Column;
 	pkFields []string;
 	index map[interface{}]int;
-	// pks OrderedMap;
 }
 
 // Constructs a Dataframe from an array of maps and returns a pointer to it
@@ -21,7 +20,6 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[interface{}]int{},
-		// pks: OrderedMap{},
 	}
 
 	for _, record := range records {
@@ -41,7 +39,6 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[interface{}]int{},
-		// pks: OrderedMap{},
 	}
 
 	for _, record := range records {
@@ -54,82 +51,6 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 	df.normalizeCols(nil)
 
 	return &df, nil
-}
-
-// Creates a Key to be used to identify the given record
-func createKey(record map[string]interface{}, primaryFields []string) (string, error)  {
-	key := ""
-	separator := "_"
-
-	for _, pkField := range primaryFields {
-		if value, ok := record[pkField]; ok {
-			key += fmt.Sprintf("%s_", value)
-		} else {
-			return "", fmt.Errorf("key error: %s in record %v", pkField, record)
-		}
-	}
-	
-	return strings.TrimRight(key, separator), nil
-}
-
-
-// Gets the pointer to a given column, or creates it if it does not exist
-func (d *Dataframe) Col(name string) *Column {
-	col := d.cols[name]
-
-	if col == nil {
-		newCol := Column{Name: name, items: map[int]interface{}{}, Dtype: ObjectType}
-		d.cols[name] = &newCol 
-		return &newCol
-	}
-
-	return col
-}
-
-// Access method to return the keys in order
-func (d *Dataframe) Keys() []string {
-	count := len(d.index)
-	orderedKeyMap := make(OrderedMap, count)
-
-	for key, i := range d.index {
-		orderedKeyMap[i] = key
-	}
-
-	return utils.ConvertToStringSlice(orderedKeyMap.ToSlice(), true)
-}
-
-// Returns the indices of the pks that have not been deleted, i.e. that have no nil
-func (d *Dataframe) getIndicesInOrder() []int {
-	count := len(d.index)
-	indices := make([]int, count)
-
-	counter := 0
-	for _, i := range d.index {
-		indices[counter] = i
-		counter++
-	}
-
-	sort.Slice(indices, func(i, j int) bool {	return indices[i] < indices[j]	})
-	return indices
-}
-
-// access method to return all column names
-func (d *Dataframe) ColumnNames() []string {
-	count := len(d.cols)
-	names := make([]string, count)
-
-	i := 0
-	for _, col := range d.cols {
-		names[i] = col.Name
-		i++
-	}
-
-	return names
-}
-
-// Returns the number of actual active items
-func (d *Dataframe) Count() int {
-	return len(d.index)
 }
 
 // Inserts items passed as a list of maps into the Dataframe,
@@ -147,20 +68,6 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 
 	d.normalizeCols(nil)
 	return nil
-}
-
-// reorders pks and indices and the cols
-func (d *Dataframe) defragmentize()  {
-	pkIndices := d.getIndicesInOrder()
-	keys := d.Keys()
-
-	for _, col := range d.cols {
-		col.items.Defragmentize(pkIndices)
-	}
-
-	for newRow, key := range keys {
-		d.index[key] = newRow
-	}
 }
 
 // Deletes the items that fulfill the filters
@@ -234,6 +141,11 @@ func (d *Dataframe) Merge(df *Dataframe) error {
 	return nil
 }
 
+// Returns the number of actual active items
+func (d *Dataframe) Count() int {
+	return len(d.index)
+}
+
 // Copies the dataframe and returns the new copy
 func (d *Dataframe) Copy() (Dataframe, error) {
 	return Dataframe{}, nil
@@ -274,6 +186,60 @@ func (d *Dataframe) Clear() {
 	for k := range d.index {
 		delete(d.index, k)
 	}	
+}
+
+// Gets the pointer to a given column, or creates it if it does not exist
+func (d *Dataframe) Col(name string) *Column {
+	col := d.cols[name]
+
+	if col == nil {
+		newCol := Column{Name: name, items: map[int]interface{}{}, Dtype: ObjectType}
+		d.cols[name] = &newCol 
+		return &newCol
+	}
+
+	return col
+}
+
+// Access method to return the keys in order
+func (d *Dataframe) Keys() []string {
+	count := len(d.index)
+	orderedKeyMap := make(OrderedMap, count)
+
+	for key, i := range d.index {
+		orderedKeyMap[i] = key
+	}
+
+	return utils.ConvertToStringSlice(orderedKeyMap.ToSlice(), true)
+}
+
+// access method to return all column names
+func (d *Dataframe) ColumnNames() []string {
+	count := len(d.cols)
+	names := make([]string, count)
+
+	i := 0
+	for _, col := range d.cols {
+		names[i] = col.Name
+		i++
+	}
+
+	return names
+}
+
+// Returns the indices of the pks that have not been deleted, i.e. that have no nil
+func (d *Dataframe) getIndicesInOrder() []int {
+	count := len(d.index)
+	indices := make([]int, count)
+
+	counter := 0
+	for _, i := range d.index {
+		indices[counter] = i
+		counter++
+	}
+
+	sort.Slice(indices, func(i, j int) bool {	return indices[i] < indices[j]	})
+	return indices
 }
 
 // Inserts a single record
@@ -321,4 +287,34 @@ func (d *Dataframe) getPkFieldMap() map[string]struct{} {
 	}
 
 	return _map
+}
+
+// Creates a Key to be used to identify the given record
+func createKey(record map[string]interface{}, primaryFields []string) (string, error)  {
+	key := ""
+	separator := "_"
+
+	for _, pkField := range primaryFields {
+		if value, ok := record[pkField]; ok {
+			key += fmt.Sprintf("%s_", value)
+		} else {
+			return "", fmt.Errorf("key error: %s in record %v", pkField, record)
+		}
+	}
+	
+	return strings.TrimRight(key, separator), nil
+}
+
+// reorders pks and indices and the cols
+func (d *Dataframe) defragmentize()  {
+	pkIndices := d.getIndicesInOrder()
+	keys := d.Keys()
+
+	for _, col := range d.cols {
+		col.items.Defragmentize(pkIndices)
+	}
+
+	for newRow, key := range keys {
+		d.index[key] = newRow
+	}
 }
