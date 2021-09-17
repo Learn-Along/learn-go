@@ -194,8 +194,11 @@ func (d *Dataframe) Delete(filter Filter) error {
 // Updates the items that fulfill the given filters with the new value
 func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 	count := d.Count()
+	sizeOfValue := len(value)
 	indicesToUpdate := make([]int, count)
 	pkIndices := d.getIndicesInOrder()
+	valueCopy := make(map[string]interface{}, sizeOfValue)
+	pkFieldMap := d.getPkFieldMap()
 
 	counter := 0
 	for i, shouldUpdate := range filter {
@@ -205,10 +208,16 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 		}		
 	}
 
+	for k, v := range value {
+		if _, ok := pkFieldMap[k]; !ok {
+			valueCopy[k] = v
+		}
+	}
+
 	// update only upto counter 
 	for _, pkIndex := range indicesToUpdate[:counter] {
-		for colName, v := range value {
-			d.Col(colName).insert(pkIndex, v)
+		for colName, v := range valueCopy {		
+			d.Col(colName).insert(pkIndex, v)			
 		}		
 	}
 
@@ -301,4 +310,15 @@ func (d *Dataframe) normalizeCols(defaultValue interface{})  {
 			col.insert(pkIndex, defaultValue)
 		}
 	}
+}
+
+// Converts the primary key field list to a map for easy checking against, to see if field is pkField or not
+func (d *Dataframe) getPkFieldMap() map[string]struct{} {
+	_map := make(map[string]struct{}, len(d.pkFields))
+
+	for _, field := range d.pkFields {
+		_map[field] = struct{}{}
+	}
+
+	return _map
 }
