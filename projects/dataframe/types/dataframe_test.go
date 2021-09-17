@@ -325,7 +325,7 @@ func TestDeleteReinsert(t *testing.T)  {
 
 	for loop, tr := range testTable {
 		df.Clear()
-		
+
 		df.Insert(dataArray)
 		if err != nil {
 			t.Fatalf("df error is: %s", err)
@@ -354,6 +354,129 @@ func TestDeleteReinsert(t *testing.T)  {
 		for i, record := range records {
 			for field, value := range record {
 				expectedValue := tr.onReinsert[i][field]
+				if expectedValue != value {
+					t.Fatalf("loop %d, the record %d expected %v, got %v, \n records: %v", loop, i, expectedValue, value, records)
+				}
+			}
+		}		
+	}
+}
+
+// Update should update any records that fulfill a given condition,
+// however, the primary keys should not be touched
+// and any unknown columns are just added to all records, defaulting to nil for the rest
+func TestUpdate(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
+
+	type testRecord struct {
+		filter Filter;
+		newData map[string]interface{};
+		expected []map[string]interface{};
+	}
+
+	testTable := []testRecord{
+		{
+			filter: df.Col("age").LessOrEquals(33), 
+			newData: map[string]interface{}{"location": "Kapchorwa", "new field": "yay", "age": 16},
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 16, "location": "Kapchorwa", "new field": "yay" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka", "new field": nil },
+				{"first name": "Paul", "last name": "Doe", "age": 16, "location": "Kapchorwa", "new field": "yay" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi", "new field": nil },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi", "new field": nil },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala", "new field": nil },
+			},
+		},
+		{
+			filter: df.Col("last name").IsLike(regexp.MustCompile("oe$")), 
+			newData: map[string]interface{}{"first name": "Hen", "age": 20,},
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 20, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 20, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 20, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 20, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 20, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 20, "location": "Kampala" },
+			},
+		},
+		{
+			filter: df.Col("last name").IsLike(regexp.MustCompile("D")), 
+			newData: map[string]interface{}{"location": "Bujumbura"},
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Bujumbura" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Bujumbura" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Bujumbura" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+		{
+			filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)),
+			newData: map[string]interface{}{"age": 87}, 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 87, "location": "Kampala" },
+			},
+		},
+		{
+			filter: OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)),
+			newData: map[string]interface{}{"last name": "Rigobertha", "age": 73}, 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 73, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 73, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 73, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 73, "location": "Kampala" },
+			},
+		},
+		{
+			filter: NOT(df.Col("location").Equals("Kampala")), 
+			newData: map[string]interface{}{"location": "Nebbi"},
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Nebbi" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nebbi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nebbi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+	}
+
+	for loop, tr := range testTable {
+		df.Clear()
+
+		df.Insert(dataArray)
+		if err != nil {
+			t.Fatalf("df error is: %s", err)
+		}
+
+		err = df.Update(tr.filter, tr.newData)
+		if err != nil {
+			t.Fatalf("df update error is: %s", err)
+		}
+
+		records, err := df.ToArray()
+		if err != nil {
+			t.Fatalf("error on ToArray is: %s", err)
+		}
+
+		if len(records) != len(tr.expected) {
+			t.Fatalf("loop %d, expected number of records: %d, got %d", loop, len(tr.expected), len(records))
+		}
+
+		for i, record := range records {
+			for field, value := range record {
+				expectedValue := tr.expected[i][field]
 				if expectedValue != value {
 					t.Fatalf("loop %d, the record %d expected %v, got %v, \n records: %v", loop, i, expectedValue, value, records)
 				}
