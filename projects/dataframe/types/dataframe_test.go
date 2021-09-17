@@ -207,7 +207,7 @@ func TestDelete(t *testing.T)  {
 			expected: dataArray,
 		},
 		{
-			filter: df.Col("age").IsLike(regexp.MustCompile("D")), 
+			filter: df.Col("last name").IsLike(regexp.MustCompile("D")), 
 			expected: []map[string]interface{}{
 				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
 				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },

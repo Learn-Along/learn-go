@@ -1,6 +1,8 @@
 package types
 
-import "regexp"
+import (
+	"regexp"
+)
 
 const (
 	IntType Datatype = iota
@@ -54,42 +56,151 @@ func (c *Column) deleteMany(indices []int)  {
 // Returns a map of an array of booleans corresponding in position to each item,
 // true if item is greater than operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) GreaterThan(operand interface{}) Filter {
-	return nil
+func (c *Column) GreaterThan(operand float64) Filter {
+	count := len(c.items)
+	flags := make([]bool, count)
+
+	for i, v := range c.items {
+		switch v := v.(type) {
+		case int8:
+			flags[i] = float64(v) > operand
+		case int16:
+			flags[i] = float64(v) > operand
+		case int32:
+			flags[i] = float64(v) > operand
+		case int64:
+			flags[i] = float64(v) > operand
+		case float32:
+			flags[i] = float64(v) > operand
+		case float64:
+			flags[i] = v > operand
+		default:
+			flags[i] = false
+		}
+	}
+
+	return Filter{c.Name: flags}
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
 // true if item is greater than or equal to the operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) GreaterOrEquals(operand interface{}) Filter {
-	return nil
+func (c *Column) GreaterOrEquals(operand float64) Filter {
+	count := len(c.items)
+	flags := make([]bool, count)
+
+	for i, v := range c.items {
+		switch v := v.(type) {
+		case int8:
+			flags[i] = float64(v) >= operand
+		case int16:
+			flags[i] = float64(v) >= operand
+		case int32:
+			flags[i] = float64(v) >= operand
+		case int64:
+			flags[i] = float64(v) >= operand
+		case float32:
+			flags[i] = float64(v) >= operand
+		case float64:
+			flags[i] = v >= operand
+		default:
+			flags[i] = false
+		}
+	}
+
+	return Filter{c.Name: flags}
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
 // true if item is less than operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) LessThan(operand interface{}) Filter {
-	return nil
+func (c *Column) LessThan(operand float64) Filter {
+	count := len(c.items)
+	flags := make([]bool, count)
+
+	for i, v := range c.items {
+		switch v := v.(type) {
+		case int8:
+			flags[i] = float64(v) < operand
+		case int16:
+			flags[i] = float64(v) < operand
+		case int32:
+			flags[i] = float64(v) < operand
+		case int64:
+			flags[i] = float64(v) < operand
+		case float32:
+			flags[i] = float64(v) < operand
+		case float64:
+			flags[i] = v < operand
+		default:
+			flags[i] = false
+		}
+	}
+
+	return Filter{c.Name: flags}
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
 // true if item is less than or equal to the operand or else false
 // The operand can reference a constant, or a Col
-func (c *Column) LessOrEquals(operand interface{}) Filter {
-	return nil
+func (c *Column) LessOrEquals(operand float64) Filter {
+	count := len(c.items)
+	flags := make([]bool, count)
+
+	for i, v := range c.items {
+		switch v := v.(type) {
+		case int8:
+			flags[i] = float64(v) <= operand
+		case int16:
+			flags[i] = float64(v) <= operand
+		case int32:
+			flags[i] = float64(v) <= operand
+		case int64:
+			flags[i] = float64(v) <= operand
+		case float32:
+			flags[i] = float64(v) <= operand
+		case float64:
+			flags[i] = v <= operand
+		default:
+			flags[i] = false
+		}
+	}
+
+	return Filter{c.Name: flags}
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
 // true if item is equal to operand or else false
 // The operand can reference a constant, or a Col
 func (c *Column) Equals(operand interface{}) Filter {
-	return nil
+	count := len(c.items)
+	flags := make([]bool, count)
+
+	for i, v := range c.items {
+		flags[i] = v == operand
+	}
+
+	return Filter{c.Name: flags}
 }
 
 // Returns a map of an array of booleans corresponding in position to each item,
 // true if item is like the regex expression or else false
 func (c *Column) IsLike(pattern *regexp.Regexp) Filter  {
-	return nil
+	count := len(c.items)
+	flags := make([]bool, count)
+
+	for i, v := range c.items {
+		switch v := v.(type) {
+		case string:
+			flags[i] = pattern.MatchString(v)
+		case []byte:
+			flags[i] = pattern.Match(v)
+		default:
+			flags[i] = false
+		}		
+	}
+
+	return Filter{c.Name: flags}
 }
 
 // Returns a transformer method to transform the column from one form to another
