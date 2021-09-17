@@ -26,7 +26,9 @@ var (
 	}
 	primaryFields = []string{"first name", "last name"}
 	expectedCols = utils.SortStringSlice([]string{"first name", "last name", "age", "location"}, utils.ASC)
+	noOfExpectedCols = len(expectedCols)
 	keys = []string{"John_Doe", "Jane_Doe", "Paul_Doe", "Richard_Roe", "Reyna_Roe", "Ruth_Roe"}
+	noOfExpectedKeys = len(keys)
 )
 
 // fromArray should create a dataframe from an array of maps
@@ -79,7 +81,7 @@ func TestInsert(t *testing.T)  {
 	df := Dataframe{
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
-		index: map[string]int{},
+		index: map[interface{}]int{},
 		pks: OrderedMap{},
 	}
 
@@ -123,7 +125,7 @@ func TestInsertNonExistingCols(t *testing.T)  {
 	df := Dataframe{
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
-		index: map[string]int{},
+		index: map[interface{}]int{},
 		pks: OrderedMap{},
 	}
 
@@ -193,7 +195,6 @@ func TestDelete(t *testing.T)  {
 		expected []map[string]interface{};
 	}
 
-	// FIXME: Reinserting records causes the tests to fail
 	testTable := []testRecord{
 		{
 			filter: df.Col("age").GreaterThan(33), 
@@ -214,34 +215,36 @@ func TestDelete(t *testing.T)  {
 				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
 			},
 		},
-		// {
-		// 	filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)), 
-		// 	expected: []map[string]interface{}{
-		// 		{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
-		// 		{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
-		// 		{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
-		// 		{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
-		// 		{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
-		// 	},
-		// },
-		// {
-		// 	filter: OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)), 
-		// 	expected: []map[string]interface{}{
-		// 		{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
-		// 		{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
-		// 	},
-		// },
-		// {
-		// 	filter: NOT(df.Col("location").Equals("Kampala")), 
-		// 	expected: []map[string]interface{}{
-		// 		{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
-		// 		{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
-		// 		{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
-		// 	},
-		// },
+		{
+			filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)), 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+			},
+		},
+		{
+			filter: OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)), 
+			expected: []map[string]interface{}{
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+			},
+		},
+		{
+			filter: NOT(df.Col("location").Equals("Kampala")), 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
 	}
 
 	for loop, tr := range testTable {
+		df.Clear()
+
 		df.Insert(dataArray)
 		if err != nil {
 			t.Fatalf("df error is: %s", err)
@@ -265,9 +268,144 @@ func TestDelete(t *testing.T)  {
 			for field, value := range record {
 				expectedValue := tr.expected[i][field]
 				if expectedValue != value {
-					t.Fatalf("loop %d, the record %d expected %v, got %v", loop, i, expectedValue, value)
+					t.Fatalf("loop %d, the record %d expected %v, got %v, \n records: %v", loop, i, expectedValue, value, records)
 				}
 			}
 		}		
+	}
+}
+
+// Insert, delete, insert should update only those records that don't exist
+func TestDeleteReinsert(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
+
+	type testRecord struct {
+		filter Filter;
+		onReinsert []map[string]interface{};
+	}
+
+	testTable := []testRecord{
+		{
+			filter: df.Col("age").GreaterThan(33), 
+			onReinsert: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+		{
+			filter: df.Col("last name").IsLike(regexp.MustCompile("D")), 
+			onReinsert: []map[string]interface{}{
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+			},
+		},
+		{
+			filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)), 
+			onReinsert: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+	}
+
+	for loop, tr := range testTable {
+		df.Clear()
+		
+		df.Insert(dataArray)
+		if err != nil {
+			t.Fatalf("df error is: %s", err)
+		}
+
+		err = df.Delete(tr.filter)
+		if err != nil {
+			t.Fatalf("df delete error is: %s", err)
+		}
+
+		// reinsert 
+		df.Insert(dataArray)
+		if err != nil {
+			t.Fatalf("df error is: %s", err)
+		}
+
+		records, err := df.ToArray()
+		if err != nil {
+			t.Fatalf("error on ToArray is: %s", err)
+		}
+
+		if len(records) != len(tr.onReinsert) {
+			t.Fatalf("loop %d, expected number of records: %d, got %d", loop, len(tr.onReinsert), len(records))
+		}
+
+		for i, record := range records {
+			for field, value := range record {
+				expectedValue := tr.onReinsert[i][field]
+				if expectedValue != value {
+					t.Fatalf("loop %d, the record %d expected %v, got %v, \n records: %v", loop, i, expectedValue, value, records)
+				}
+			}
+		}		
+	}
+}
+
+// Clear should clear all the cols, index and pks
+func TestClear(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
+
+	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
+		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
+	}
+
+	noOfColumns := len(df.ColumnNames())
+	if noOfColumns != noOfExpectedCols {
+		t.Fatalf("number of cols expected: %v, got: %v", noOfExpectedCols, noOfColumns)
+	}
+
+	noOfKeys := len(df.Keys())
+	if noOfKeys != noOfExpectedKeys  {
+		t.Fatalf("numer of keys expected: %v, got: %v", noOfExpectedKeys, noOfKeys)
+	}
+
+	indices := len(df.index)
+	if indices != noOfKeys {
+		t.Fatalf("number of indices expected: %v; got: %v", noOfKeys, indices)
+	}
+
+	df.Clear()
+
+	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
+		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
+	}
+
+	noOfColumns = len(df.ColumnNames())
+	if noOfColumns != 0 {
+		t.Fatalf("number of cols expected: %v, got: %v", 0, noOfColumns)
+	}
+
+	noOfKeys = len(df.Keys())
+	if noOfKeys != 0  {
+		t.Fatalf("number of keys expected: %v, got: %v", 0, noOfKeys)
+	}
+
+	indices = len(df.index)
+	if indices != 0 {
+		t.Fatalf("number of indices expected: %v; got: %v", 0, indices)
 	}
 }

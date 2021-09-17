@@ -35,6 +35,7 @@ func (c *Column) Items() []interface{} {
 // If the index is beyond the length of keys,
 // it fills the gap in both Items and keys with nil and "" respectively
 func (c *Column) insert(index int, value interface{}) {
+	// FIXME: This seems to be causing gaps
 	nextIndex := len(c.items)
 
 	if nextIndex <= index {

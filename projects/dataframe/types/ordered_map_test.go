@@ -31,3 +31,35 @@ func TestToSlice(t *testing.T)  {
 		}
 	}
 }
+
+// Defragmentize should reorder the ordered dict basing
+// on the new indices passed to it
+func TestDefragmentize(t *testing.T)  {
+	type testRecord struct {
+		_map OrderedMap;
+		newOrder []int;
+		expected []interface{}
+	}
+
+	testData := []testRecord{
+		{
+			_map: OrderedMap{0: "hi", 1: "hello", 2: "yoohoo", 3: "salut"},
+			newOrder: []int{3, 1, 0},
+			expected: []interface{}{"salut", "hello", "hi"},
+		},
+		{
+			_map: OrderedMap{0: 4, 1: 2, 2: "yoohoo", 3: "salut"},
+			newOrder: []int{1, 0, 3, 2},
+			expected: []interface{}{2, 4, "salut", "yoohoo"},
+		},
+	}
+
+	for _, tr := range testData {
+		tr._map.Defragmentize(tr.newOrder)
+		got := tr._map.ToSlice()
+		
+		if !utils.AreSliceEqual(got, tr.expected) {
+			t.Fatalf("expected %v; got %v", tr.expected, got)
+		}
+	}
+}

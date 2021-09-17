@@ -10,7 +10,7 @@ import (
 type Dataframe struct {
 	cols map[string]*Column;
 	pkFields []string;
-	index map[string]int;
+	index map[interface{}]int;
 	pks OrderedMap;
 }
 
@@ -19,7 +19,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 	df := Dataframe{
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
-		index: map[string]int{},
+		index: map[interface{}]int{},
 		pks: OrderedMap{},
 	}
 
@@ -41,7 +41,7 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 	df := Dataframe{
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
-		index: map[string]int{},
+		index: map[interface{}]int{},
 		pks: OrderedMap{},
 	}
 
@@ -148,6 +148,22 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 	return nil
 }
 
+// reorders pks and indices and the cols
+func (d *Dataframe) defragmentize()  {
+	pkIndices := d.getNonNilPkIndices()
+
+	for _, col := range d.cols {
+		col.items.Defragmentize(pkIndices)
+	}
+
+	for newRow, oldRow := range pkIndices {
+		pk := d.pks[oldRow]
+		d.index[pk] = newRow
+	}
+
+	d.pks.Defragmentize(pkIndices)
+}
+
 // Deletes the items that fulfill the filters
 func (d *Dataframe) Delete(filter Filter) error {
 	colIndicesToDelete := []int{}
@@ -162,7 +178,7 @@ func (d *Dataframe) Delete(filter Filter) error {
 			colIndicesToDelete = append(colIndicesToDelete, pkIndex)		
 			
 			pk := d.pks[pkIndex]
-			delete(d.index, pk.(string))
+			delete(d.index, pk)
 			// save nil in d.pks for index i	
 			d.pks[pkIndex] = nil	
 		}		
@@ -172,6 +188,9 @@ func (d *Dataframe) Delete(filter Filter) error {
 	for _, col := range d.cols {
 		col.deleteMany(colIndicesToDelete)
 	}
+
+	// defragmentize the pks, index and cols 
+	d.defragmentize()
 
 	return nil
 }
@@ -220,9 +239,18 @@ func (d *Dataframe) ToArray() ([]map[string]interface{}, error) {
 	return data, nil
 }
 
-// Frees the memory held by the dataframe by nilling all pointers in it
-func (d *Dataframe) Free() error {
-	return nil	
+// Clears all the data held by the dataframe except the primary key fields
+func (d *Dataframe) Clear() {
+	// clear the cols
+	for k := range d.cols {
+		delete(d.cols, k)
+	}
+
+	// clear the pks and index
+	for i, k := range d.pks {
+		delete(d.pks, i)
+		delete(d.index, k)
+	}	
 }
 
 // Inserts a single record
@@ -249,11 +277,14 @@ func (d *Dataframe) insertRecord(record map[string]interface{}) error {
 
 // Fills up the columns with the given value to reach a given length for all columns
 func (d *Dataframe) fillUpCols(finalLength int, value interface{})  {
+	pkIndices := d.getNonNilPkIndices()
+
 	for _, col := range d.cols {
 		colLength := len(col.items)
 		
 		for i := colLength; i < finalLength; i++ {
-			col.insert(i, value)
+			pkIndex := pkIndices[i]
+			col.insert(pkIndex, value)
 		}
 	}
 }
