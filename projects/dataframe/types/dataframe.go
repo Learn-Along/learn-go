@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
@@ -11,7 +12,7 @@ type Dataframe struct {
 	cols map[string]*Column;
 	pkFields []string;
 	index map[interface{}]int;
-	pks OrderedMap;
+	// pks OrderedMap;
 }
 
 // Constructs a Dataframe from an array of maps and returns a pointer to it
@@ -20,7 +21,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[interface{}]int{},
-		pks: OrderedMap{},
+		// pks: OrderedMap{},
 	}
 
 	for _, record := range records {
@@ -30,9 +31,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 		}
 	}
 
-	finalLength := len(df.index)
-	df.fillUpCols(finalLength, nil)
-
+	df.normalizeCols(nil)
 	return &df, nil
 }
 
@@ -42,7 +41,7 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[interface{}]int{},
-		pks: OrderedMap{},
+		// pks: OrderedMap{},
 	}
 
 	for _, record := range records {
@@ -52,8 +51,7 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 		}
 	}
 
-	finalLength := len(df.index)
-	df.fillUpCols(finalLength, nil)
+	df.normalizeCols(nil)
 
 	return &df, nil
 }
@@ -90,22 +88,29 @@ func (d *Dataframe) Col(name string) *Column {
 
 // Access method to return the keys in order
 func (d *Dataframe) Keys() []string {
-	return utils.ConvertToStringSlice(d.pks.ToSlice(), true)
+	count := len(d.index)
+	orderedKeyMap := make(OrderedMap, count)
+
+	for key, i := range d.index {
+		orderedKeyMap[i] = key
+	}
+
+	return utils.ConvertToStringSlice(orderedKeyMap.ToSlice(), true)
 }
 
 // Returns the indices of the pks that have not been deleted, i.e. that have no nil
-func (d *Dataframe) getNonNilPkIndices() []int {
-	count := len(d.pks)
+func (d *Dataframe) getIndicesInOrder() []int {
+	count := len(d.index)
 	indices := make([]int, count)
 
 	counter := 0
-	for i := 0; i < count && d.pks[i] != nil; i++ {
+	for _, i := range d.index {
 		indices[counter] = i
 		counter++
 	}
 
-	return indices[:counter]
-
+	sort.Slice(indices, func(i, j int) bool {	return indices[i] < indices[j]	})
+	return indices
 }
 
 // access method to return all column names
@@ -130,6 +135,8 @@ func (d *Dataframe) Count() int {
 // Inserts items passed as a list of maps into the Dataframe,
 // It will overwrite any record whose primary field values match with the new records
 func (d *Dataframe) Insert(records []map[string]interface{}) error {
+	d.defragmentize()
+
 	for _, record := range records {
 		err := d.insertRecord(record)
 		if err != nil {
@@ -138,45 +145,35 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 		}
 	}	
 
-	finalLength := d.Count()
-	d.fillUpCols(finalLength, nil)
-
+	d.normalizeCols(nil)
 	return nil
 }
 
 // reorders pks and indices and the cols
 func (d *Dataframe) defragmentize()  {
-	pkIndices := d.getNonNilPkIndices()
+	pkIndices := d.getIndicesInOrder()
+	keys := d.Keys()
 
 	for _, col := range d.cols {
 		col.items.Defragmentize(pkIndices)
 	}
 
-	for newRow, oldRow := range pkIndices {
-		pk := d.pks[oldRow]
-		d.index[pk] = newRow
+	for newRow, key := range keys {
+		d.index[key] = newRow
 	}
-
-	d.pks.Defragmentize(pkIndices)
 }
 
 // Deletes the items that fulfill the filters
 func (d *Dataframe) Delete(filter Filter) error {
 	colIndicesToDelete := []int{}
 	count := d.Count()
-	pkIndices := d.getNonNilPkIndices()
+	pkIndices := d.getIndicesInOrder()
+	keys := d.Keys()
 
-	for i, flag := range filter {
-		// delete where flag is true and i is in range of the index
-		if flag && i < count {
-			// delete the pk from index
-			pkIndex := pkIndices[i] 
-			colIndicesToDelete = append(colIndicesToDelete, pkIndex)		
-			
-			pk := d.pks[pkIndex]
-			delete(d.index, pk)
-			// save nil in d.pks for index i	
-			d.pks[pkIndex] = nil	
+	for i, shouldDelete := range filter {
+		if shouldDelete && i < count {
+			colIndicesToDelete = append(colIndicesToDelete, pkIndices[i])		
+			delete(d.index, keys[i])
 		}		
 	}
 
@@ -192,7 +189,26 @@ func (d *Dataframe) Delete(filter Filter) error {
 }
 
 // Updates the items that fulfill the given filters with the new value
-func (d *Dataframe) Update(filters []bool, value map[string]interface{}) error  {
+func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
+	// count := d.Count()
+	// indicesToUpdate := make([]int, count)
+	// pkIndices := d.getIndicesInOrder()
+
+	// counter := 0
+	// for i, shouldUpdate := range filter {
+	// 	if shouldUpdate && i < count {
+	// 		indicesToUpdate[counter] = pkIndices[i]		
+	// 		counter++	
+	// 	}		
+	// }
+
+	// // update only upto counter 
+	// for _, pkIndex := range indicesToUpdate[:counter] {
+	// 	for colName, v := range value {
+	// 		d.Col(colName).insert(pkIndex, v)
+	// 	}		
+	// }
+
 	return nil
 }
 
@@ -214,7 +230,7 @@ func (d *Dataframe) Copy() (Dataframe, error) {
 // Converts that dataframe into a slice of records (maps)
 func (d *Dataframe) ToArray() ([]map[string]interface{}, error) {
 	count := d.Count()
-	pkIndices := d.getNonNilPkIndices()
+	pkIndices := d.getIndicesInOrder()
 	data := make([]map[string]interface{}, count)
 	
 
@@ -242,9 +258,8 @@ func (d *Dataframe) Clear() {
 		delete(d.cols, k)
 	}
 
-	// clear the pks and index
-	for i, k := range d.pks {
-		delete(d.pks, i)
+	// clear the index
+	for k := range d.index {
 		delete(d.index, k)
 	}	
 }
@@ -256,11 +271,10 @@ func (d *Dataframe) insertRecord(record map[string]interface{}) error {
 		return fmt.Errorf("failed to create key for %v using field %v", record, d.pkFields)
 	}
 
-	row, ok := d.index[key]; 
+	row, ok := d.index[key]
 	if !ok {
-		row = len(d.pks)
+		row = len(d.index)
 		d.index[key] = row
-		d.pks[row] = key
 	}		
 
 	for fieldName, value := range record {
@@ -272,15 +286,16 @@ func (d *Dataframe) insertRecord(record map[string]interface{}) error {
 }
 
 // Fills up the columns with the given value to reach a given length for all columns
-func (d *Dataframe) fillUpCols(finalLength int, value interface{})  {
-	pkIndices := d.getNonNilPkIndices()
+func (d *Dataframe) normalizeCols(defaultValue interface{})  {
+	pkIndices := d.getIndicesInOrder()
+	finalLength := len(pkIndices)
 
 	for _, col := range d.cols {
 		colLength := len(col.items)
 		
 		for i := colLength; i < finalLength; i++ {
 			pkIndex := pkIndices[i]
-			col.insert(pkIndex, value)
+			col.insert(pkIndex, defaultValue)
 		}
 	}
 }

@@ -82,7 +82,7 @@ func TestInsert(t *testing.T)  {
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[interface{}]int{},
-		pks: OrderedMap{},
+		// pks: OrderedMap{},
 	}
 
 	// insert thrice, but still have the same data due to the primary keys...treat this like a db
@@ -126,7 +126,7 @@ func TestInsertNonExistingCols(t *testing.T)  {
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[interface{}]int{},
-		pks: OrderedMap{},
+		// pks: OrderedMap{},
 	}
 
 	// Insert the two sets of records

@@ -6,7 +6,7 @@ import (
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
 )
 
-// ToSlice converts an ordered map into a slice
+// ToSlice converts an ordered map into a slice, ignoring gaps in indices automatically
 func TestToSlice(t *testing.T)  {
 	type testRecord struct {
 		input OrderedMap;
@@ -21,6 +21,10 @@ func TestToSlice(t *testing.T)  {
 		{
 			input: OrderedMap{0: 4, 1: 2, 2: "yoohoo", 3: "salut"},
 			expected: []interface{}{4, 2, "yoohoo", "salut"},
+		},
+		{
+			input: OrderedMap{0: 4, 2: "yoohoo", 3: "salut"},
+			expected: []interface{}{4, "yoohoo", "salut"},
 		},
 	}
 
@@ -57,7 +61,7 @@ func TestDefragmentize(t *testing.T)  {
 	for _, tr := range testData {
 		tr._map.Defragmentize(tr.newOrder)
 		got := tr._map.ToSlice()
-		
+
 		if !utils.AreSliceEqual(got, tr.expected) {
 			t.Fatalf("expected %v; got %v", tr.expected, got)
 		}
