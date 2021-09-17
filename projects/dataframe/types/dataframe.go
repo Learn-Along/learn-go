@@ -165,21 +165,24 @@ func (d *Dataframe) defragmentize()  {
 
 // Deletes the items that fulfill the filters
 func (d *Dataframe) Delete(filter Filter) error {
-	colIndicesToDelete := []int{}
 	count := d.Count()
+	indicesToDelete := make([]int, count)
 	pkIndices := d.getIndicesInOrder()
 	keys := d.Keys()
 
+	counter := 0
 	for i, shouldDelete := range filter {
 		if shouldDelete && i < count {
-			colIndicesToDelete = append(colIndicesToDelete, pkIndices[i])		
+			indicesToDelete[counter] = pkIndices[i]
+			counter++
+
 			delete(d.index, keys[i])
 		}		
 	}
 
 	// delete the items in each col 
 	for _, col := range d.cols {
-		col.deleteMany(colIndicesToDelete)
+		col.deleteMany(indicesToDelete[:counter])
 	}
 
 	// defragmentize the pks, index and cols 
@@ -190,24 +193,24 @@ func (d *Dataframe) Delete(filter Filter) error {
 
 // Updates the items that fulfill the given filters with the new value
 func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
-	// count := d.Count()
-	// indicesToUpdate := make([]int, count)
-	// pkIndices := d.getIndicesInOrder()
+	count := d.Count()
+	indicesToUpdate := make([]int, count)
+	pkIndices := d.getIndicesInOrder()
 
-	// counter := 0
-	// for i, shouldUpdate := range filter {
-	// 	if shouldUpdate && i < count {
-	// 		indicesToUpdate[counter] = pkIndices[i]		
-	// 		counter++	
-	// 	}		
-	// }
+	counter := 0
+	for i, shouldUpdate := range filter {
+		if shouldUpdate && i < count {
+			indicesToUpdate[counter] = pkIndices[i]		
+			counter++	
+		}		
+	}
 
-	// // update only upto counter 
-	// for _, pkIndex := range indicesToUpdate[:counter] {
-	// 	for colName, v := range value {
-	// 		d.Col(colName).insert(pkIndex, v)
-	// 	}		
-	// }
+	// update only upto counter 
+	for _, pkIndex := range indicesToUpdate[:counter] {
+		for colName, v := range value {
+			d.Col(colName).insert(pkIndex, v)
+		}		
+	}
 
 	return nil
 }
