@@ -79,23 +79,36 @@ func TestSortStringSlice(t *testing.T)  {
 // ConvertToStringSlice converts an []interface{} to []string
 func TestConvertToStringSlice(t *testing.T)  {
 	type testRecord struct {
-		input []interface{};
-		expected []string
+		slice []interface{};
+		ignoreNil bool;
+		expected []string;
 	}
 
 	testData := []testRecord{
 		{
-			input: []interface{}{"hi", "hello", "yoohoo", "salut"},
+			slice: []interface{}{"hi", "hello", "yoohoo", "salut"},
+			ignoreNil: false,
 			expected: []string{"hi", "hello", "yoohoo", "salut"},
 		},
 		{
-			input: []interface{}{"hi", "hello", "salut"},
+			slice: []interface{}{"hi", "hello", "salut"},
+			ignoreNil: true,
 			expected: []string{"hi", "hello", "salut"},
+		},
+		{
+			slice: []interface{}{"hi", "hello", nil, "salut"},
+			ignoreNil: true,
+			expected: []string{"hi", "hello", "salut"},
+		},
+		{
+			slice: []interface{}{"hi", "hello", nil, "salut"},
+			ignoreNil: false,
+			expected: []string{"hi", "hello", "", "salut"},
 		},
 	}
 
 	for _, tr := range testData {
-		got := ConvertToStringSlice(tr.input)
+		got := ConvertToStringSlice(tr.slice, tr.ignoreNil)
 		if !AreStringSliceEqual(got, tr.expected) {
 			t.Fatalf("expected %v; got %v", tr.expected, got)
 		}

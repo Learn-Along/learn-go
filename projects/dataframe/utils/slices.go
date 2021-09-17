@@ -79,13 +79,25 @@ func SortStringSlice(slice []string, order SortOrder) []string {
 }
 
 // Converts a given interface{} slice into a []string
-func ConvertToStringSlice(slice []interface{}) []string {
+func ConvertToStringSlice(slice []interface{}, ignoreNil bool) []string {
 	length := len(slice)
 	s := make([]string, length)
 
-	for i, v := range slice {
-		s[i] = v.(string)
+	i := 0
+	for _, v := range slice {
+		value := v
+
+		if ignoreNil && value == nil {
+			continue
+		}
+
+		if value == nil {
+			value = ""
+		}
+
+		s[i] = value.(string)
+		i++
 	}
 
-	return s
+	return s[:i]
 }

@@ -90,7 +90,24 @@ func (d *Dataframe) Col(name string) *Column {
 
 // Access method to return the keys in order
 func (d *Dataframe) Keys() []string {
-	return utils.ConvertToStringSlice(d.pks.ToSlice())
+	return utils.ConvertToStringSlice(d.pks.ToSlice(), true)
+}
+
+// Returns the indices of the pks that have not been deleted, i.e. that have no nil
+func (d *Dataframe) getNonNilPkIndices() []int {
+	count := len(d.pks)
+	indices := make([]int, count)
+
+	counter := 0
+	for i, pk := range d.pks {
+		if pk != nil {
+			indices[counter] = i
+			counter++
+		}
+	}
+
+	return indices[:counter]
+
 }
 
 // access method to return all column names
@@ -105,6 +122,11 @@ func (d *Dataframe) ColumnNames() []string {
 	}
 
 	return names
+}
+
+// Returns the number of actual active items
+func (d *Dataframe) Count() int {
+	return len(d.index)
 }
 
 // Inserts items passed as a list of maps into the Dataframe,
@@ -127,23 +149,27 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 // Deletes the items that fulfill the filters
 func (d *Dataframe) Delete(filter Filter) error {
 	flags := filter.Coalesce()
-	indicesToDelete := []int{}
-	noOfPks := len(d.pks)
+	colIndicesToDelete := []int{}
+	count := d.Count()
+	pkIndices := d.getNonNilPkIndices()
 
 	for i, flag := range flags {
-		// delete where flag is true
-		if flag && i < noOfPks {
-			// delete the pk from pks and index 
-			indicesToDelete = append(indicesToDelete, i)
-			pk := d.pks[i]
-			delete(d.index, pk.(string))	
-			delete(d.pks, i)		
+		// delete where flag is true and i is in range of the index
+		if flag && i < count {
+			// delete the pk from index 
+			colIndicesToDelete = append(colIndicesToDelete, i)
+			
+			pkIndex := pkIndices[i]
+			pk := d.pks[pkIndex]
+			delete(d.index, pk.(string))
+			// save nil in d.pks for index i	
+			d.pks[pkIndex] = nil	
 		}		
 	}
 
 	// delete the items in each col 
 	for _, col := range d.cols {
-		col.deleteMany(indicesToDelete)
+		col.deleteMany(colIndicesToDelete)
 	}
 
 	return nil
@@ -172,7 +198,7 @@ func (d *Dataframe) Copy() (Dataframe, error) {
 // Converts that dataframe into a slice of records (maps)
 func (d *Dataframe) ToArray() ([]map[string]interface{}, error) {
 	data := []map[string]interface{}{}
-	count := len(d.pks)
+	count := len(d.index)
 
 	for i := 0; i < count; i++ {
 		record := map[string]interface{}{}
