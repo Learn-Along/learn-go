@@ -99,13 +99,9 @@ func (d *Dataframe) getNonNilPkIndices() []int {
 	indices := make([]int, count)
 
 	counter := 0
-	for i := 0; i < count; i++ {
-		pk := d.pks[i]
-
-		if pk != nil {
-			indices[counter] = i
-			counter++
-		}
+	for i := 0; i < count && d.pks[i] != nil; i++ {
+		indices[counter] = i
+		counter++
 	}
 
 	return indices[:counter]
@@ -142,7 +138,7 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 		}
 	}	
 
-	finalLength := len(d.index)
+	finalLength := d.Count()
 	d.fillUpCols(finalLength, nil)
 
 	return nil
