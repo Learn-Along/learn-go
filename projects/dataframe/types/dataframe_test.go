@@ -751,5 +751,47 @@ func TestCopy(t *testing.T)  {
 			}
 		}
 	}
+}
+
+// Merge combines into the given dataframe, the dataframes passed, overwriting any records that
+// have the same primary key value
+func TestMerge(t *testing.T)  {
+	df1, err := FromArray(dataArray[:1], primaryFields)
+	if err != nil {
+		t.Fatalf("df1 error is: %s", err)
+	}
+
+	df2, err := FromArray(dataArray[1:3], primaryFields)
+	if err != nil {
+		t.Fatalf("df2 error is: %s", err)
+	}
+
+	df3, err := FromArray(dataArray[3:], primaryFields)
+	if err != nil {
+		t.Fatalf("df3 error is: %s", err)
+	}
+
+	df4, err := FromArray(dataArray[:1], primaryFields)
+	if err != nil {
+		t.Fatalf("df4 error is: %s", err)
+	}
+
+	err = df1.Merge(df2, df3, df4)
+	if err != nil {
+		t.Fatalf("Merge error %s", err)
+	}
+
+	if !utils.AreStringSliceEqual(df1.pkFields, primaryFields){
+		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df1.pkFields)
+	}
+
+	colNames := utils.SortStringSlice(df1.ColumnNames(), utils.ASC)
+	if !utils.AreStringSliceEqual(colNames, expectedCols){
+		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
+	}
+
+	if !utils.AreStringSliceEqual(keys, df1.Keys()) {
+		t.Fatalf("keys expected: %v, got: %v", keys, df1.Keys())
+	}
 
 }

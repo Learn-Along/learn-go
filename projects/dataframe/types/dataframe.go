@@ -139,6 +139,18 @@ func (d *Dataframe) Select(fields ...string) *query {
 
 // Merges the dataframes dfs to d
 func (d *Dataframe) Merge(dfs ...*Dataframe) error {
+	for _, df := range dfs {
+		records, err := df.ToArray()
+		if err != nil {
+			return err
+		}
+
+		err = d.Insert(records)
+		if err != nil {
+			return err
+		}
+	}
+	
 	return nil
 }
 
