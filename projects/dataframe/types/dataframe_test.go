@@ -158,7 +158,8 @@ func TestInsertNonExistingCols(t *testing.T)  {
 	}	
 }
 
-// ToArray should convert the data into an array
+// ToArray should convert the data into an array. If no string args are passed,
+// the values have all the fields
 func TestToArray(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
@@ -179,6 +180,42 @@ func TestToArray(t *testing.T)  {
 			expected := dataArray[i][field]
 			if expected != value {
 				t.Fatalf("the record %d expected %v, got %v", i, expected, value)
+			}
+		}
+	}
+}
+
+// ToArray should convert the data into an array. If string args are passed,
+// the values have the specified fields only
+func TestToArrayWithArgs(t *testing.T)  {
+	fields := []string{"age", "location"}
+	excludedFields := []string{"last name", "first name"}
+
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
+
+	records, err := df.ToArray(fields...)
+	if err != nil {
+		t.Fatalf("error on ToArray is: %s", err)
+	}
+
+	if len(records) != len(dataArray) {
+		t.Fatalf("expected number of records: %d, got %d", len(records), len(dataArray))
+	}
+
+	for i, record := range records {
+		for field, value := range record {
+			expected := dataArray[i][field]
+			if expected != value {
+				t.Fatalf("the record %d expected %v, got %v", i, expected, value)
+			}
+		}
+
+		for _, excludedField := range excludedFields {
+			if _, exists := record[excludedField]; exists {
+				t.Fatalf("excluded field %v has been included in \n %v", excludedField, record)
 			}
 		}
 	}

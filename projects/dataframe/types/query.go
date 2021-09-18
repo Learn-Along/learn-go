@@ -43,41 +43,52 @@ type query struct{
 // Actually executes the query
 func (q *query) Execute() ([]map[string]interface{}, error) {
 	// may need to add a recover defer
-	// filters := []filterType{}
-	// aggs := []aggregation{}
-	// sortOptions := []sortOption{}
-	// txList := []transformation{}
+	filters := []filterType{}
+	aggs := []aggregation{}
+	sortOptions := []sortOption{}
+	txList := []transformation{}
+	selectedFields := []string{}
 
-	// // combine similar actions together
-	// for _, act := range q.ops {
-	// 	switch act._type {
-	// 	case FILTER_ACTION:
-	// 		filters = append(filters, act.payload.(filterType))
-	// 	case GROUPBY_ACTION:
-	// 		aggs = append(aggs, act.payload.([]aggregation)...)
-	// 	case SORT_ACTION:
-	// 		sortOptions = append(sortOptions, act.payload.([]sortOption)...)
-	// 	case APPLY_ACTION:
-	// 		txList = append(txList, act.payload.([]transformation)...)
-	// 	}
-	// }
+	// combine similar actions together
+	for _, act := range q.ops {
+		switch act._type {
+		case FILTER_ACTION:
+			filters = append(filters, act.payload.(filterType))
+		case GROUPBY_ACTION:
+			aggs = append(aggs, act.payload.([]aggregation)...)
+		case SORT_ACTION:
+			sortOptions = append(sortOptions, act.payload.([]sortOption)...)
+		case APPLY_ACTION:
+			txList = append(txList, act.payload.([]transformation)...)
+		case SELECT_ACTION:
+			selectedFields = append(selectedFields, act.payload.([]string)...)
+		}
+	}
 
-	// filteredDf, err := q.df.filter(AND(filters...))
-	// if err != nil {
-	// 	return nil, err
-	// }
+	filteredDf, err := q.df.filter(AND(filters...))
+	if err != nil {
+		return nil, err
+	}
 
-	// groupedDfs, err := filteredDf.groupby(mergeAggregations(aggs))
-	// mergedTxs := mergeTransformations(txList)
+	groupedDfs, err := filteredDf.groupby(mergeAggregations(aggs))
+	if err != nil {
+		return nil, err
+	}	
+	noOfGroups := len(groupedDfs)
+	if noOfGroups == 0 {
+		return []map[string]interface{}{}, nil
+	}
 
-	// for _, df := range groupedDfs {
-	// 	// sort the df
-	// 	// apply the app functions on df
-	// }
+	// merge the grouped dataframes (maintaining order)
+	err = groupedDfs[0].Merge(groupedDfs[1:]...)
+	if err != nil {
+		return nil, err
+	}
 
-	// merge the groupedDfs
-
-	return nil, nil
+	mergedTxs := mergeTransformations(txList)
+	groupedDfs[0].sortby(sortOptions...)
+	groupedDfs[0].apply(mergedTxs)
+	return groupedDfs[0].ToArray(selectedFields...)	
 }
 
 // Given a list of boolean corresponding to indices of the items,

@@ -137,8 +137,8 @@ func (d *Dataframe) Select(fields ...string) *query {
 	return &query{df: d, ops: []action{{_type: SELECT_ACTION, payload: fields}}}
 }
 
-// Merges the dataframe df to d
-func (d *Dataframe) Merge(df *Dataframe) error {
+// Merges the dataframes dfs to d
+func (d *Dataframe) Merge(dfs ...*Dataframe) error {
 	return nil
 }
 
@@ -157,17 +157,28 @@ func (d *Dataframe) Copy() (*Dataframe, error) {
 	return FromArray(records, d.pkFields)
 }
 
-// Converts that dataframe into a slice of records (maps)
-func (d *Dataframe) ToArray() ([]map[string]interface{}, error) {
+// Converts that dataframe into a slice of records (maps). If selectedFields is a non-empty slice 
+// the fields are limited only to the passed fields
+func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{}, error) {
 	count := d.Count()
 	pkIndices := d.getIndicesInOrder()
 	data := make([]map[string]interface{}, count)
-	
+	cols := map[string]*Column{}
+
+	for _, field := range selectedFields {
+		if val, ok := d.cols[field]; ok {
+			cols[field] = val
+		}
+	}
+
+	if len(cols) == 0 {
+		cols = d.cols
+	}
 
 	for i, pkIndex := range pkIndices {
 		record := map[string]interface{}{}
 
-		for _, col := range d.cols {
+		for _, col := range cols {
 			if i < len(col.items) {
 				record[col.Name] = col.items[pkIndex]
 			} else {
@@ -346,4 +357,15 @@ func (d *Dataframe) filter(filter filterType) (*Dataframe, error) {
 // Groups this dataframe, basing on the aggFuncMap, and returns a slice of smaller Dataframe addresses
 func (d *Dataframe) groupby(aggFuncMap map[string][]aggregateFunc) ([]*Dataframe, error) {
 	return nil, nil
+}
+
+// Orders the items in the columns of this dataframe basing on the sort options passed.
+// Do note that if the same column has more than sort option, the last one will take effect
+func (d *Dataframe) sortby(options... sortOption) error {
+	return nil
+}
+
+// Applys the given rowWiseFunc functions on the dataframe
+func (d *Dataframe) apply(rowWiseFuncMap map[string][]rowWiseFunc) error {
+	return nil
 }
