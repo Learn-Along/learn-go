@@ -150,7 +150,7 @@ func (d *Dataframe) Merge(dfs ...*Dataframe) error {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -366,6 +366,8 @@ func (d *Dataframe) filter(filter filterType) (*Dataframe, error) {
 
 }
 
+// FIXME: GorupBy is wrong. It must receive the column names to groupby and the aggregate functions to operate
+// on other columns
 // Groups this dataframe, basing on the aggFuncMap, and returns a slice of smaller Dataframe addresses
 func (d *Dataframe) groupby(aggFuncMap map[string][]aggregateFunc) ([]*Dataframe, error) {
 	return nil, nil

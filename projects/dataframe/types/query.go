@@ -105,6 +105,8 @@ func (q *query) SortBy(options ...sortOption) *query {
 	return q
 }
 
+// FIXME: GorupBy is wrong. It must receive the column names to groupby and the aggregate functions to operate
+// on other columns
 // Groups the data into groups that have same values for the given columns
 func (q *query) GroupBy(aggs ...aggregation) *query {
 	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: aggs})
