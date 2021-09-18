@@ -149,7 +149,12 @@ func (d *Dataframe) Count() int {
 
 // Copies the dataframe and returns the new copy
 func (d *Dataframe) Copy() (*Dataframe, error) {
-	return &Dataframe{}, nil
+	records, err := d.ToArray()
+	if err != nil {
+		return nil, err
+	}
+
+	return FromArray(records, d.pkFields)
 }
 
 // Converts that dataframe into a slice of records (maps)
