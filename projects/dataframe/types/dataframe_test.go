@@ -523,6 +523,7 @@ func TestUpdate(t *testing.T)  {
 	}
 }
 
+// TODO: Still trying to make this test pass
 // Select should be able to query data allowing for selection of fields,
 // sorting, grouping, filtering, applying etc.
 func TestSelect(t *testing.T)  {

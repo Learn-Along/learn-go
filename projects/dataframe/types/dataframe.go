@@ -373,6 +373,7 @@ func (d *Dataframe) groupby(aggFuncMap map[string][]aggregateFunc) ([]*Dataframe
 	return nil, nil
 }
 
+// FIXME: Implement this sortby
 // Orders the items in the columns of this dataframe basing on the sort options passed.
 // Do note that if the same column has more than sort option, the last one will take effect
 func (d *Dataframe) sortby(options... sortOption) error {
