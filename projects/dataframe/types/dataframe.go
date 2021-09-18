@@ -342,3 +342,8 @@ func (d *Dataframe) filter(filter filterType) (*Dataframe, error) {
 	return newDf, nil
 
 }
+
+// Groups this dataframe, basing on the aggFuncMap, and returns a slice of smaller Dataframe addresses
+func (d *Dataframe) groupby(aggFuncMap map[string][]aggregateFunc) ([]*Dataframe, error) {
+	return nil, nil
+}

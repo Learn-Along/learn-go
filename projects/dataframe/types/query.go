@@ -42,16 +42,23 @@ type query struct{
 
 // Actually executes the query
 func (q *query) Execute() ([]map[string]interface{}, error) {
+	// may need to add a recover defer
 	// filters := []filterType{}
 	// aggs := []aggregation{}
+	// sortOptions := []sortOption{}
+	// txList := []transformation{}
 
 	// // combine similar actions together
-	// for _, act := range opsCopy {
+	// for _, act := range q.ops {
 	// 	switch act._type {
 	// 	case FILTER_ACTION:
 	// 		filters = append(filters, act.payload.(filterType))
 	// 	case GROUPBY_ACTION:
-	// 		aggs = append(aggs, act.payload.(aggregation))
+	// 		aggs = append(aggs, act.payload.([]aggregation)...)
+	// 	case SORT_ACTION:
+	// 		sortOptions = append(sortOptions, act.payload.([]sortOption)...)
+	// 	case APPLY_ACTION:
+	// 		txList = append(txList, act.payload.([]transformation)...)
 	// 	}
 	// }
 
@@ -60,7 +67,15 @@ func (q *query) Execute() ([]map[string]interface{}, error) {
 	// 	return nil, err
 	// }
 
-	// groupedDfs, err := q.df.groupby(mergeAggregations(aggs))
+	// groupedDfs, err := filteredDf.groupby(mergeAggregations(aggs))
+	// mergedTxs := mergeTransformations(txList)
+
+	// for _, df := range groupedDfs {
+	// 	// sort the df
+	// 	// apply the app functions on df
+	// }
+
+	// merge the groupedDfs
 
 	return nil, nil
 }
@@ -81,7 +96,7 @@ func (q *query) SortBy(options ...sortOption) *query {
 
 // Groups the data into groups that have same values for the given columns
 func (q *query) GroupBy(aggs ...aggregation) *query {
-	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: mergeAggregations(aggs)})
+	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: aggs})
 	return q
 }
 
