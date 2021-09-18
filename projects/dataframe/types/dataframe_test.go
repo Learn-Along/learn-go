@@ -82,7 +82,7 @@ func TestInsert(t *testing.T)  {
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[interface{}]int{},
-		// pks: OrderedMap{},
+		// pks: orderedMapType{},
 	}
 
 	// insert thrice, but still have the same data due to the primary keys...treat this like a db
@@ -126,7 +126,7 @@ func TestInsertNonExistingCols(t *testing.T)  {
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
 		index: map[interface{}]int{},
-		// pks: OrderedMap{},
+		// pks: orderedMapType{},
 	}
 
 	// Insert the two sets of records
@@ -191,7 +191,7 @@ func TestDelete(t *testing.T)  {
 	}
 
 	type testRecord struct {
-		filter Filter;
+		filter filterType;
 		expected []map[string]interface{};
 	}
 
@@ -283,7 +283,7 @@ func TestDeleteReinsert(t *testing.T)  {
 	}
 
 	type testRecord struct {
-		filter Filter;
+		filter filterType;
 		onReinsert []map[string]interface{};
 	}
 
@@ -372,7 +372,7 @@ func TestUpdate(t *testing.T)  {
 	}
 
 	type testRecord struct {
-		filter Filter;
+		filter filterType;
 		newData map[string]interface{};
 		expected []map[string]interface{};
 	}

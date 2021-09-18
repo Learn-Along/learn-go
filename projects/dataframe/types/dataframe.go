@@ -71,7 +71,7 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 }
 
 // Deletes the items that fulfill the filters
-func (d *Dataframe) Delete(filter Filter) error {
+func (d *Dataframe) Delete(filter filterType) error {
 	count := d.Count()
 	indicesToDelete := make([]int, count)
 	pkIndices := d.getIndicesInOrder()
@@ -131,8 +131,9 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 	return nil
 }
 
-// Selects a given number of fields, and returns a Query instance of the same
-func (d *Dataframe) Select(fields ...string) *Query {
+// Selects a given number of fields, and returns a query instance of the same
+func (d *Dataframe) Select(fields ...string) *query {
+	// Creates a new query with this df and one SELECT action in the ops list
 	return nil
 }
 
@@ -204,7 +205,7 @@ func (d *Dataframe) Col(name string) *Column {
 // Access method to return the keys in order
 func (d *Dataframe) Keys() []string {
 	count := len(d.index)
-	orderedKeyMap := make(OrderedMap, count)
+	orderedKeyMap := make(orderedMapType, count)
 
 	for key, i := range d.index {
 		orderedKeyMap[i] = key

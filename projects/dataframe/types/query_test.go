@@ -8,14 +8,14 @@ import (
 // that index-wise, if there is any false on a given index,
 // the final list has a false, else it has true
 func TestAND(t *testing.T)  {
-	testData := []Filter{
+	testData := []filterType{
 		{ true, true, true, true, true },
 		{ true, false, true, true, true, false},
 		{ true, false, false, true, },
 		{ true, true, false, true, },	
 	}
 
-	expected := Filter{ true, false, false, true, false, false}
+	expected := filterType{ true, false, false, true, false, false}
 	got := AND(testData...)
 
 	for i, expectedValue := range expected {
@@ -31,14 +31,14 @@ func TestAND(t *testing.T)  {
 // But then gives all consitituent arrays the OR version of all of them such that
 // to allow for all 
 func TestOR(t *testing.T)  {
-	testData := []Filter{
+	testData := []filterType{
 		{ true, true, true, false, true },
 		{ true, false, true, false, true, false},
 		{ true, false, false, false, },
 		{ true, true, false, false, },	
 	}
 
-	expected := Filter{ true, true, true, false, true, false}
+	expected := filterType{ true, true, true, false, true, false}
 	got := OR(testData...)
 
 	for i, expectedValue := range expected {
@@ -52,9 +52,9 @@ func TestOR(t *testing.T)  {
 // that index-wise, if there is any true on a given index,
 // the final list has a false in that index, else it has true (it inverts the booleans)
 func TestNOT(t *testing.T)  {
-	testData := Filter{ true, true, false, true, true}
+	testData := filterType{ true, true, false, true, true}
 
-	expected := Filter{ !true, !true, !false, !true, !true}
+	expected := filterType{ !true, !true, !false, !true, !true}
 	got := NOT(testData)
 
 	for i, expectedValue := range expected {

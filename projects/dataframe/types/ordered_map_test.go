@@ -9,21 +9,21 @@ import (
 // ToSlice converts an ordered map into a slice, ignoring gaps in indices automatically
 func TestToSlice(t *testing.T)  {
 	type testRecord struct {
-		input OrderedMap;
+		input orderedMapType;
 		expected []interface{}
 	}
 
 	testData := []testRecord{
 		{
-			input: OrderedMap{0: "hi", 1: "hello", 2: "yoohoo", 3: "salut"},
+			input: orderedMapType{0: "hi", 1: "hello", 2: "yoohoo", 3: "salut"},
 			expected: []interface{}{"hi", "hello", "yoohoo", "salut"},
 		},
 		{
-			input: OrderedMap{0: 4, 1: 2, 2: "yoohoo", 3: "salut"},
+			input: orderedMapType{0: 4, 1: 2, 2: "yoohoo", 3: "salut"},
 			expected: []interface{}{4, 2, "yoohoo", "salut"},
 		},
 		{
-			input: OrderedMap{0: 4, 2: "yoohoo", 3: "salut"},
+			input: orderedMapType{0: 4, 2: "yoohoo", 3: "salut"},
 			expected: []interface{}{4, "yoohoo", "salut"},
 		},
 	}
@@ -40,19 +40,19 @@ func TestToSlice(t *testing.T)  {
 // on the new indices passed to it
 func TestDefragmentize(t *testing.T)  {
 	type testRecord struct {
-		_map OrderedMap;
+		_map orderedMapType;
 		newOrder []int;
 		expected []interface{}
 	}
 
 	testData := []testRecord{
 		{
-			_map: OrderedMap{0: "hi", 1: "hello", 2: "yoohoo", 3: "salut"},
+			_map: orderedMapType{0: "hi", 1: "hello", 2: "yoohoo", 3: "salut"},
 			newOrder: []int{3, 1, 0},
 			expected: []interface{}{"salut", "hello", "hi"},
 		},
 		{
-			_map: OrderedMap{0: 4, 1: 2, 2: "yoohoo", 3: "salut"},
+			_map: orderedMapType{0: 4, 1: 2, 2: "yoohoo", 3: "salut"},
 			newOrder: []int{1, 0, 3, 2},
 			expected: []interface{}{2, 4, "salut", "yoohoo"},
 		},

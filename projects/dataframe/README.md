@@ -116,26 +116,10 @@ err = df1.Delete(AND(df1.Col("age").GreaterThan(3), df1.Col("name").IsLike(regex
 * Selection methods
 */
 
-// select a few fields, transform the data accordingly and return the map of records
+// select a few fields, with apply to transformation the data accordingly and return the map of records
 data, err = df1.Select("age", "name", "date").Apply(
-    df1.Col("age").Tx(func(oldArray []int){
-      newValues := []int{}
-
-      for _, i := range oldArray {
-        newValues = append(newValues, i*8)
-      }
-
-      return newValues
-    }),
-    df1.Col("name").Tx(func(oldArray string){
-      newValues := []string{}
-
-      for _, i := range oldArray {
-        newValues = append(newValues, fmt.Sprintf("name is %s", oldValue))
-      }
-
-      return newValues
-    }),
+    df1.Col("age").Tx(func(v int) {return v*8  }),
+    df1.Col("name").Tx(func(v string) { return fmt.Sprintf("name is %s", v) }),
   ).Execute()
 
 // sort
@@ -144,10 +128,12 @@ data, err = df1.Select("age", "name", "date").SortBy(
                 df1.Col("name").Order(ASC),
             ).Execute()
 
-// group
+// groupby
 data, err = df1.Select("age", "name", "date").GroupBy(
-                df1.Col("age"),
-                df1.Col("name"),
+                df1.Col("age").Agg(MAX),
+                df1.Col("date").Agg(MIN),
+                // Or supply a custom aggregregate func that returns a single value given an array of values
+                df1.Col("name").Agg(func(arr []interface{}) {return arr[0]}),
             ).Execute()
 
 // filter

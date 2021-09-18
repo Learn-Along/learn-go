@@ -1,54 +1,75 @@
 package types
 
 const (
-	ASC SortOrder = iota
+	ASC sortOrder = iota
 	DESC
 )
 
-type SortOrder int
+const (
+	FILTER_ACTION actionType = iota
+	SORT_ACTION
+	GROUPBY_ACTION
+	APPLY_ACTION
+	SELECT_ACTION
+)
 
-type sortOption struct {
-	Col *Column
-	Order SortOrder
+type action struct {
+	_type actionType
+	payload interface{}
 }
 
+type actionType int
+
+type sortOrder int
+
+type sortOption map[string]sortOrder
+
+type filterType []bool
+
 /**
-* Query
+* query
 */
-type Query struct{
-	ops []colTransform
+type query struct{
+	ops []action
+	df *Dataframe
 }
 
 // Actually executes the query
-func (q *Query) Execute() ([]map[string]interface{}, error) {
-	newDf := Dataframe{}
-	for _, op := range q.ops {
-		newCol := op()
-		newDf.cols[newCol.Name] = &newCol
-	}
+func (q *query) Execute() ([]map[string]interface{}, error) {
+	// newDf := Dataframe{}
+	// for _, op := range q.ops {
+	// 	newCol := op()
+	// 	newDf.cols[newCol.Name] = &newCol
+	// }
 
-	return newDf.ToArray()
+	// return newDf.ToArray()
+
+	return nil, nil
 }
 
 // Given a list of boolean corresponding to indices of the items,
 // true meaning the item should be included, false meaning that item should be excluded
 // the method then returns a query instance
-func (q *Query) Where(filter Filter) *Query {
+func (q *query) Where(filter filterType) *query {
+	q.ops = append(q.ops, action{_type: FILTER_ACTION, payload: filter})
 	return q
 }
 
 // Sorts the data by the col provided in the sort option, and int he order given
-func (q *Query) SortBy(options ...sortOption) *Query {
+func (q *query) SortBy(options ...sortOption) *query {
+	q.ops = append(q.ops, action{_type: SORT_ACTION, payload: options})
 	return q
 }
 
-// Groups the data into gorups that have same values for the given columns
-func (q *Query) GroupBy(cols ...*Column) *Query {
+// Groups the data into groups that have same values for the given columns
+func (q *query) GroupBy(cols ...*Column) *query {
+	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: cols})
 	return q
 }
 
 // Applies the col transforms to the query
-func (q *Query) Apply(ops ...colTransform) *Query {
+func (q *query) Apply(ops ...transformation) *query {
+	q.ops = append(q.ops, action{_type: APPLY_ACTION, payload: ops})
 	return nil
 }
 
@@ -56,8 +77,8 @@ func (q *Query) Apply(ops ...colTransform) *Query {
 // Logic combinations
 
 // Combines a list of maps of filters to produce a combined AND logical filter
-func AND(filters ...Filter) Filter{
-	combinedFilter := Filter{}
+func AND(filters ...filterType) filterType{
+	combinedFilter := filterType{}
 
 	for _, filter := range filters {
 		currentLength := len(combinedFilter)
@@ -86,8 +107,8 @@ func AND(filters ...Filter) Filter{
 }
 
 // Combines a list of filters to produce a combined OR logical filter
-func OR(filters ...Filter) Filter {
-	combinedFilter := Filter{}
+func OR(filters ...filterType) filterType {
+	combinedFilter := filterType{}
 
 	for _, filter := range filters {
 		currentLength := len(combinedFilter)
@@ -115,9 +136,9 @@ func OR(filters ...Filter) Filter {
 }
 
 // Inverts a given filter to produce a NOT logical filter
-func NOT(filter Filter) Filter {
+func NOT(filter filterType) filterType {
 	count := len(filter)
-	combinedFilter := make(Filter, count)
+	combinedFilter := make(filterType, count)
 
 	for i, value := range filter {
 		combinedFilter[i] = !value

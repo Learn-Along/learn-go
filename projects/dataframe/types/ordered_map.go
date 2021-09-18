@@ -2,10 +2,10 @@ package types
 
 import "sort"
 
-type OrderedMap map[int]interface{}
+type orderedMapType map[int]interface{}
 
 // Converts an ordered map to a slice
-func (o *OrderedMap) ToSlice() []interface{} {
+func (o *orderedMapType) ToSlice() []interface{} {
 	count := len(*o)
 	indices := make([]int, count)
 	slice := make([]interface{}, count)
@@ -27,10 +27,10 @@ func (o *OrderedMap) ToSlice() []interface{} {
 	return slice
 }
 
-// Reorders the OrderedMap ensuring that any gaps in the data are removed
+// Reorders the orderedMapType ensuring that any gaps in the data are removed
 // So as to go back to a sequantial key list
-func (o *OrderedMap) Defragmentize(newOrder []int) {
-	copyOfO := OrderedMap{}
+func (o *orderedMapType) Defragmentize(newOrder []int) {
+	copyOfO := orderedMapType{}
 	for k, v := range *o {
 		copyOfO[k] = v
 		delete(*o, k)
