@@ -653,3 +653,66 @@ func TestClear(t *testing.T)  {
 		t.Fatalf("number of indices expected: %v; got: %v", 0, indices)
 	}
 }
+
+// Copy should make a new Dataframe that resembles the dataframe but
+// has no reference to the items of the previous Dataframe
+func TestCopy(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
+
+	newDf, err := df.Copy()
+	if err != nil {
+		t.Fatalf("df copy error is: %s", err)
+	}
+
+	if newDf == df {
+		t.Fatalf("expected %p not to equal %p", newDf, df)
+	}
+
+	if !utils.AreStringSliceEqual(df.pkFields, newDf.pkFields){
+		t.Fatalf("new df pkFields expected: %v, got %v", df.pkFields, newDf.pkFields)
+	}
+
+	if !utils.AreStringSliceEqual(df.ColumnNames(), newDf.ColumnNames()){
+		t.Fatalf("new df column names expected: %v, got %v", df.ColumnNames(), newDf.ColumnNames())
+	}
+
+	if !utils.AreStringSliceEqual(df.Keys(), newDf.Keys()){
+		t.Fatalf("new df keys expected: %v, got %v", df.Keys(), newDf.Keys())
+	}
+
+	for key, col := range df.cols {
+		newDfCol := newDf.cols[key]
+		if newDfCol == col {
+			t.Fatalf("expected col '%s' of address %p not to equal %p", key, newDfCol, col)
+		}
+	}
+
+	newDfRecords, err := newDf.ToArray()
+	if err != nil {
+		t.Fatalf("newDf ToArray error is: %s", err)
+	}
+
+	oldRecords, err := df.ToArray()
+	if err != nil {
+		t.Fatalf("df ToArray error is: %s", err)
+	}
+
+	for i, record := range dataArray {
+		for field, expected := range record {
+			newDfValue := newDfRecords[i][field]
+			oldDfValue := oldRecords[i][field]
+
+			if expected != oldDfValue {
+				t.Fatalf("Old Df: the record %d expected %v, got %v", i, expected, oldDfValue)
+			}
+
+			if expected != newDfValue {
+				t.Fatalf("New Df: the record %d expected %v, got %v", i, expected, newDfValue)
+			}
+		}
+	}
+
+}

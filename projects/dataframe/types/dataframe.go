@@ -134,7 +134,7 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 // Selects a given number of fields, and returns a query instance of the same
 func (d *Dataframe) Select(fields ...string) *query {
 	// Creates a new query with this df and one SELECT action in the ops list
-	return nil
+	return &query{df: d, ops: []action{{_type: SELECT_ACTION, payload: fields}}}
 }
 
 // Merges the dataframe df to d
@@ -148,8 +148,8 @@ func (d *Dataframe) Count() int {
 }
 
 // Copies the dataframe and returns the new copy
-func (d *Dataframe) Copy() (Dataframe, error) {
-	return Dataframe{}, nil
+func (d *Dataframe) Copy() (*Dataframe, error) {
+	return &Dataframe{}, nil
 }
 
 // Converts that dataframe into a slice of records (maps)
@@ -318,4 +318,22 @@ func (d *Dataframe) defragmentize()  {
 	for newRow, key := range keys {
 		d.index[key] = newRow
 	}
+}
+
+// Filters this dataframe and returns the filtered copy of this dataframe
+func (d *Dataframe) filter(filter filterType) (*Dataframe, error) {
+	newDf, err := d.Copy()
+	if err != nil {
+		return nil, err
+	}
+
+	// toggle the values in the filter, and delete the unwanted items
+	for i, v := range filter {
+		filter[i] = !v
+	}
+
+	newDf.Delete(filter)
+
+	return newDf, nil
+
 }

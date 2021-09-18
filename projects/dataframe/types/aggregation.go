@@ -256,9 +256,31 @@ func getRange(values []interface{}) interface{} {
 	return nil
 }
 
+/*
+*	Helpers
+*/
+
 // Converts a given value of unknown type to float64
 func convertToFloat64(value interface{}) float64 {
 	v := fmt.Sprintf("%v", value)
 	valueAsFloat, _ := strconv.ParseFloat(v, 64)
 	return valueAsFloat
+}
+
+// Merges a slice of aggregations into a map of lists of aggregate functions
+func mergeAggregations(aggs []aggregation) map[string][]aggregateFunc {
+	res := map[string][]aggregateFunc{}
+
+	for _, agg 	:= range aggs {
+		for key, v := range agg {
+			prev, ok := res[key]
+			if !ok {
+				prev = []aggregateFunc{}
+			} 
+
+			res[key] = append(prev, v)
+		}
+	}
+
+	return res
 }

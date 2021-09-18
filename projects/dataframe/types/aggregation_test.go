@@ -251,3 +251,39 @@ func TestRANGE(t *testing.T)  {
 		}
 	}
 }
+
+// mergeAggregations should merge an aggregation list into a map of slices of aggregateFunc functions
+func TestMergeAggregations(t *testing.T)  {
+	type testRecord struct {
+		input []aggregation;
+		expected map[string][]aggregateFunc
+	}
+
+	testData := []testRecord{
+		{
+			input: []aggregation{{"hi": MAX}, {"hi": MIN, "yoo": RANGE}, {"hi": SUM, "an": RANGE}, {"an": MIN}},
+			expected: map[string][]aggregateFunc{
+				"hi": {MAX, MIN, SUM},
+				"yoo": {RANGE},
+				"an": {RANGE, MIN},
+			},
+		},		
+	}
+
+	sampleArray := []interface{}{2, 1, 45, 6}
+
+	for _, tr := range testData {
+		res := mergeAggregations(tr.input)
+
+		for key, v := range tr.expected {
+			for i, agg := range v {
+				got := res[key][i](sampleArray)
+				expected := agg(sampleArray)
+
+				if got != expected {
+					t.Fatalf("for key '%s', expected %v; got %v",key,  agg, res[key][i])
+				}
+			}
+		}
+	}
+}

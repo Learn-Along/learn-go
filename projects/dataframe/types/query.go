@@ -6,9 +6,15 @@ const (
 )
 
 const (
+	// This order is important. 
+	// filter first, 
+	// then group, 
+	// then sort each group,
+	// then apply whatever,
+	// then select the field
 	FILTER_ACTION actionType = iota
-	SORT_ACTION
 	GROUPBY_ACTION
+	SORT_ACTION
 	APPLY_ACTION
 	SELECT_ACTION
 )
@@ -36,13 +42,25 @@ type query struct{
 
 // Actually executes the query
 func (q *query) Execute() ([]map[string]interface{}, error) {
-	// newDf := Dataframe{}
-	// for _, op := range q.ops {
-	// 	newCol := op()
-	// 	newDf.cols[newCol.Name] = &newCol
+	// filters := []filterType{}
+	// aggs := []aggregation{}
+
+	// // combine similar actions together
+	// for _, act := range opsCopy {
+	// 	switch act._type {
+	// 	case FILTER_ACTION:
+	// 		filters = append(filters, act.payload.(filterType))
+	// 	case GROUPBY_ACTION:
+	// 		aggs = append(aggs, act.payload.(aggregation))
+	// 	}
 	// }
 
-	// return newDf.ToArray()
+	// filteredDf, err := q.df.filter(AND(filters...))
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// groupedDfs, err := q.df.groupby(mergeAggregations(aggs))
 
 	return nil, nil
 }
@@ -63,7 +81,7 @@ func (q *query) SortBy(options ...sortOption) *query {
 
 // Groups the data into groups that have same values for the given columns
 func (q *query) GroupBy(aggs ...aggregation) *query {
-	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: aggs})
+	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: mergeAggregations(aggs)})
 	return q
 }
 
