@@ -10,8 +10,8 @@ var (
 	MIN aggregateFunc = getMin
 	SUM aggregateFunc = getSum
 	MEAN aggregateFunc = getMean
-	// MODE
-	// RANGE
+	COUNT aggregateFunc = getCount
+	RANGE aggregateFunc = getRange
 	// PERCENTILE(int)
 )
 
@@ -42,20 +42,20 @@ func getMax(values []interface{}) interface{} {
 		}
 		
 		switch v := v.(type) {
-		case int:	
-			if a.(float64) < float64(v) { a = float64(v) }
+		case int:				
+			if val := float64(v); a.(float64) < val { a = val }
 		case int8:
-			if a.(float64) < float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) < val { a = val }
 		case int16:
-			if a.(float64) < float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) < val { a = val }
 		case int32:
-			if a.(float64) < float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) < val { a = val }
 		case int64:
-			if a.(float64) < float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) < val { a = val }
 		case float32:
-			if a.(float64) < float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) < val { a = val }
 		case float64:
-			if a.(float64) < float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) < val { a = val }
 		case string:
 			if a.(string) < v { a = v }
 		}			
@@ -84,20 +84,20 @@ func getMin(values []interface{}) interface{} {
 		}
 
 		switch v := v.(type) {
-		case int:	
-			if a.(float64) > float64(v) { a = float64(v) }
+		case int:
+			if val := float64(v); a.(float64) > val { a = val }	
 		case int8:
-			if a.(float64) > float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) > val { a = val }	
 		case int16:
-			if a.(float64) > float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) > val { a = val }	
 		case int32:
-			if a.(float64) > float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) > val { a = val }	
 		case int64:
-			if a.(float64) > float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) > val { a = val }	
 		case float32:
-			if a.(float64) > float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) > val { a = val }	
 		case float64:
-			if a.(float64) > float64(v) { a = float64(v) }
+			if val := float64(v); a.(float64) > val { a = val }	
 		case string:
 			if a.(string) > v { a = v }
 		}			
@@ -179,6 +179,81 @@ func getMean(values []interface{}) interface{} {
 	}
 
 	return a
+}
+
+// Returns the number of items in the values array
+func getCount(values []interface{}) interface{} {
+	return len(values)
+}
+
+// Returns the difference between the biggest and the smallest value in the values array,
+// if all values are numbers (or nil which are ignored), else it returns nil
+func getRange(values []interface{}) interface{} {
+	var max interface{} = nil
+	var min interface{} = nil
+
+	defer func() {
+		if r := recover(); r != nil {
+			min = nil
+			max = nil
+		}
+	}()
+
+	for _, v := range values {
+		if v == nil { continue }
+		if max == nil { 
+			isStr := false
+			if max, isStr = v.(string); !isStr {
+				max = convertToFloat64(v)
+			}
+		}
+
+		if min == nil { 
+			isStr := false
+			if min, isStr = v.(string); !isStr {
+				min = convertToFloat64(v)
+			}
+		}
+		
+		switch v := v.(type) {
+		case int:	
+			val := float64(v)
+			if max.(float64) < val { max = val }
+			if min.(float64) > val { min = val }
+		case int8:
+			val := float64(v)
+			if max.(float64) < val { max = val }
+			if min.(float64) > val { min = val }
+		case int16:
+			val := float64(v)
+			if max.(float64) < val { max = val }
+			if min.(float64) > val { min = val }
+		case int32:
+			val := float64(v)
+			if max.(float64) < val { max = val }
+			if min.(float64) > val { min = val }
+		case int64:
+			val := float64(v)
+			if max.(float64) < val { max = val }
+			if min.(float64) > val { min = val }
+		case float32:
+			val := float64(v)
+			if max.(float64) < val { max = val }
+			if min.(float64) > val { min = val }
+		case float64:
+			val := float64(v)
+			if max.(float64) < val { max = val }
+			if min.(float64) > val { min = val }
+		case string:
+			return nil
+		}			
+	}
+
+	if min != nil && max != nil {
+		return max.(float64) - min.(float64)
+	}
+
+	return nil
 }
 
 // Converts a given value of unknown type to float64

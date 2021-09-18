@@ -167,3 +167,87 @@ func TestMEAN(t *testing.T)  {
 		}
 	}
 }
+
+// COUNT should return the number of items in the list of values, including nils
+func TestCOUNT(t *testing.T)  {
+	type testRecord struct {
+		input []interface{};
+		expected interface{}
+	}
+
+	testData := []testRecord{
+		{
+			input: []interface{}{"hi", "hello", "hello", "hello", "yoohoo", "salut", "hello", "yoohoo", "salut", "yoohoo"},
+			expected: 10,
+		},
+		{
+			input: []interface{}{1, 2.3, 4, 0.8, 2.3, 4},
+			expected: 6,
+		},
+		{
+			input: []interface{}{1, "hello", 5, "salut"},
+			expected: 4,
+		},
+		{
+			input: []interface{}{80, 78, 98, 4},
+			expected: 4,
+		},		{
+			input: []interface{}{80.7, 78.6, 98.5, 98.509},
+			expected: 4,
+		},		{
+			input: []interface{}{80, 78, 98, 4, nil, 7},
+			expected: 6,
+		},
+		
+	}
+
+	for _, tr := range testData {
+		got := COUNT(tr.input)
+		if got != tr.expected {
+			t.Fatalf("expected %v; got %v", tr.expected, got)
+		}
+	}
+}
+
+// RANGE should return the range (as a float64 value) of the given list of items
+// i.e. maximum minus minimum.
+// It returns nil if the values are not numbers (nil values are ignored)
+func TestRANGE(t *testing.T)  {
+	type testRecord struct {
+		input []interface{};
+		expected interface{}
+	}
+
+	testData := []testRecord{
+		{
+			input: []interface{}{"hi", "hello", "yoohoo", "salut"},
+			expected: nil,
+		},
+		{
+			input: []interface{}{1, 2.3, 4, 0.8},
+			expected: 3.2,
+		},
+		{
+			input: []interface{}{1, "hello", 5, "salut"},
+			expected: nil,
+		},
+		{
+			input: []interface{}{80, 78, 98, 4},
+			expected: 94.0,
+		},		{
+			input: []interface{}{80.7, 78.6, 98.5, 98.509},
+			expected: float64(98.509) - float64(78.6),
+		},		{
+			input: []interface{}{80, 78, 98, 4, nil, 7},
+			expected: 94.0,
+		},
+		
+	}
+
+	for _, tr := range testData {
+		got := RANGE(tr.input)
+		if got != tr.expected {
+			t.Fatalf("expected %v; got %v", tr.expected, got)
+		}
+	}
+}
