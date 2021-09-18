@@ -367,5 +367,14 @@ func (d *Dataframe) sortby(options... sortOption) error {
 
 // Applys the given rowWiseFunc functions on the dataframe
 func (d *Dataframe) apply(rowWiseFuncMap map[string][]rowWiseFunc) error {
+	for field, txs := range rowWiseFuncMap {
+		for _, tx := range txs {
+			if col, ok := d.cols[field]; ok {
+				for i, v := range col.items {
+					col.items[i] = tx(v)
+				}
+			}	
+		}			
+	}
 	return nil
 }
