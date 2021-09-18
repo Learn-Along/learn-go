@@ -12,7 +12,7 @@ var (
 	MEAN aggregateFunc = getMean
 	COUNT aggregateFunc = getCount
 	RANGE aggregateFunc = getRange
-	// PERCENTILE(int)
+	// PERCENTILE(int) etc.
 )
 
 // map of column name and the aggregateFunc function to apply to its values

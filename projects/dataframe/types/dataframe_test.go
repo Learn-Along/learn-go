@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -484,6 +485,126 @@ func TestUpdate(t *testing.T)  {
 		}		
 	}
 }
+
+// Select should be able to query data allowing for selection of fields,
+// sorting, grouping, filtering, applying etc.
+func TestSelect(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
+
+	type testRecord struct {
+		q *query;
+		expected []map[string]interface{};
+	}
+
+	testTable := []testRecord{
+		{
+			// select will ignore columns like 'date' that don't exist in the dataframe
+			q: df.Select("age", "first name", "last name", "date").Apply(
+				df.Col("age").Tx(func(v interface{}) interface{} {return v.(int) * 8}),
+				df.Col("first name").Tx(func(v interface{}) interface{} { return fmt.Sprintf("name is %s", v) }),
+			), 
+			expected: []map[string]interface{}{
+				{"first name": "name is John", "last name": "Doe", "age":  8*30, },
+				{"first name": "name is Jane", "last name": "Doe", "age": 8*50, },
+				{"first name": "name is Paul", "last name": "Doe", "age": 8*19, },
+				{"first name": "name is Richard", "last name": "Roe", "age": 8*34, },
+				{"first name": "name is Reyna", "last name": "Roe", "age": 8*45, },
+				{"first name": "name is Ruth", "last name": "Roe", "age": 8*60, },
+			},
+		},
+		{
+			q: df.Select("age", "first name", "last name", "location").SortBy(
+				df.Col("last name").Order(ASC),
+                df.Col("age").Order(DESC),                
+            ), 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+			},
+		},
+		{
+			// all columns that are not part of the GroupBy will be ignored in the select as they make no sense
+			// select will also ignore any columns in the groupby that were not passed in the list of selects
+			q: df.Select("age", "last name", "first name").GroupBy(
+                df.Col("age").Agg(MEAN),
+				// even a custom agggregate functions are possible
+                df.Col("last name").Agg(func(arr []interface{}) interface{} {return MAX(arr)}),
+                df.Col("location").Agg(func(arr []interface{}) interface{}{return "random"}),
+            ), 
+			expected: []map[string]interface{}{
+				{"last name": "Doe", "age": 30 },
+				{"last name": "Roe", "age": 50},
+			},
+		},
+		{
+			// Passing no fields in Select returns all columns
+			q: df.Select().Where(
+				AND(
+					OR(
+						df.Col("age").LessThan(20),
+						df.Col("last name").IsLike(regexp.MustCompile("^(?i)roe$")),
+					),
+					df.Col("location").Equals("Kampala"),
+				),
+			),
+			expected: []map[string]interface{}{
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+		{
+			q: df.Select("age", "last name").Where(
+				df.Col("age").GreaterOrEquals(30),
+			).GroupBy(
+				df.Col("age").Agg(SUM),
+				df.Col("last name").Agg(MAX),
+			).SortBy(
+				df.Col("age").Order(DESC),
+			).Apply(
+				df.Col("age").Tx(func(v interface{}) interface{} {return fmt.Sprintf("total: %v", v)}),
+			),
+			expected: []map[string]interface{}{
+				{"last name": "Roe", "age": "total 139",},
+				{"last name": "Doe", "age": "total 80",},
+			},
+		},
+	}
+
+	for loop, tr := range testTable {
+		df.Clear()
+
+		df.Insert(dataArray)
+		if err != nil {
+			t.Fatalf("df error is: %s", err)
+		}
+
+		records, err := tr.q.Execute()
+		if err != nil {
+			t.Fatalf("error on ToArray is: %s", err)
+		}
+
+		if len(records) != len(tr.expected) {
+			t.Fatalf("loop %d, expected number of records: %d, got %d", loop, len(tr.expected), len(records))
+		}
+
+		for i, record := range records {
+			for field, value := range record {
+				expectedValue := tr.expected[i][field]
+				if expectedValue != value {
+					t.Fatalf("loop %d, the record %d expected %v, got %v, \n records: %v", loop, i, expectedValue, value, records)
+				}
+			}
+		}		
+	}
+}
+
 
 // Clear should clear all the cols, index and pks
 func TestClear(t *testing.T)  {

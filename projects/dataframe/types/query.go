@@ -62,8 +62,8 @@ func (q *query) SortBy(options ...sortOption) *query {
 }
 
 // Groups the data into groups that have same values for the given columns
-func (q *query) GroupBy(cols ...*Column) *query {
-	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: cols})
+func (q *query) GroupBy(aggs ...aggregation) *query {
+	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: aggs})
 	return q
 }
 

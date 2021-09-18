@@ -138,14 +138,14 @@ data, err = df1.Select("age", "name", "date").GroupBy(
 
 // filter
 data, err = df1.Select("age", "name", "date").Where(
-              AND(
-                OR(
-                  df1.Col("age").GreatherThan(20),
-                  df1.Col("name").IsLike(regexp.MustCompile("^(?i)john$"))
-                  ),
-                  df1.Col("source").Equals("https://sopherapps.com")
-              )
-          ).Execute()
+                        AND(
+                          OR(
+                            df1.Col("age").GreaterThan(20),
+                            df1.Col("name").IsLike(regexp.MustCompile("^(?i)john$")),
+                            df1.Col("source").Equals("https://sopherapps.com"),
+                          ),
+                        ),
+                      ).Execute()
 
 // pipe the operations one after another
 // the ... should be replace with appropriate arguments of course.

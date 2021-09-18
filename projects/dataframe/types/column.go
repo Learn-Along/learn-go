@@ -52,7 +52,7 @@ func (c *Column) deleteMany(indices []int)  {
 	}	
 }
 
-// Returns a map of an array of booleans corresponding in position to each item,
+// Returns an array of booleans corresponding in position to each item,
 // true if item is greater than operand or else false
 // The operand can reference a constant, or a Col
 func (c *Column) GreaterThan(operand float64) filterType {
@@ -83,7 +83,7 @@ func (c *Column) GreaterThan(operand float64) filterType {
 	return flags
 }
 
-// Returns a map of an array of booleans corresponding in position to each item,
+// Returns an array of booleans corresponding in position to each item,
 // true if item is greater than or equal to the operand or else false
 // The operand can reference a constant, or a Col
 func (c *Column) GreaterOrEquals(operand float64) filterType {
@@ -114,7 +114,7 @@ func (c *Column) GreaterOrEquals(operand float64) filterType {
 	return flags
 }
 
-// Returns a map of an array of booleans corresponding in position to each item,
+// Returns an array of booleans corresponding in position to each item,
 // true if item is less than operand or else false
 // The operand can reference a constant, or a Col
 func (c *Column) LessThan(operand float64) filterType {
@@ -145,7 +145,7 @@ func (c *Column) LessThan(operand float64) filterType {
 	return flags
 }
 
-// Returns a map of an array of booleans corresponding in position to each item,
+// Returns an array of booleans corresponding in position to each item,
 // true if item is less than or equal to the operand or else false
 // The operand can reference a constant, or a Col
 func (c *Column) LessOrEquals(operand float64) filterType {
@@ -176,7 +176,7 @@ func (c *Column) LessOrEquals(operand float64) filterType {
 	return flags
 }
 
-// Returns a map of an array of booleans corresponding in position to each item,
+// Returns an array of booleans corresponding in position to each item,
 // true if item is equal to operand or else false
 // The operand can reference a constant, or a Col
 func (c *Column) Equals(operand interface{}) filterType {
@@ -190,7 +190,7 @@ func (c *Column) Equals(operand interface{}) filterType {
 	return flags
 }
 
-// Returns a map of an array of booleans corresponding in position to each item,
+// Returns an array of booleans corresponding in position to each item,
 // true if item is like the regex expression or else false
 func (c *Column) IsLike(pattern *regexp.Regexp) filterType  {
 	count := len(c.items)
