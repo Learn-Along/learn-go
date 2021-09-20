@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 	"testing"
 
@@ -78,7 +79,7 @@ func TestFromMap(t *testing.T)  {
 }
 
 // Insert should insert more records to the dataframe, overwriting any of the same key
-func TestInsert(t *testing.T)  {
+func TestDataframe_Insert(t *testing.T)  {
 	df := Dataframe{
 		pkFields: primaryFields,
 		cols: map[string]*Column{},
@@ -115,7 +116,7 @@ func TestInsert(t *testing.T)  {
 // Insert should add the new records at the end of the dtaframe,
 // while initializing the values for the non-existing columns to nil or its equivalent
 // for the other prexisting values
-func TestInsertNonExistingCols(t *testing.T)  {
+func TestDataframe_InsertNonExistingCols(t *testing.T)  {
 	extraData := []map[string]interface{}{
 		{"first name": "Roy", "last name": "Roe", "address": "Nairobi" },
 		{"first name": "David", "last name": "Doe", "address": "Nairobi" },
@@ -160,7 +161,7 @@ func TestInsertNonExistingCols(t *testing.T)  {
 
 // ToArray should convert the data into an array. If no string args are passed,
 // the values have all the fields
-func TestToArray(t *testing.T)  {
+func TestDataframe_ToArray(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
 		t.Fatalf("df error is: %s", err)
@@ -187,7 +188,7 @@ func TestToArray(t *testing.T)  {
 
 // ToArray should convert the data into an array. If string args are passed,
 // the values have the specified fields only
-func TestToArrayWithArgs(t *testing.T)  {
+func TestDataframe_ToArrayWithArgs(t *testing.T)  {
 	fields := []string{"age", "location"}
 	excludedFields := []string{"last name", "first name"}
 
@@ -222,7 +223,7 @@ func TestToArrayWithArgs(t *testing.T)  {
 }
 
 // Delete should delete any records that fulfill a given condition
-func TestDelete(t *testing.T)  {
+func TestDataframe_Delete(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
 		t.Fatalf("df error is: %s", err)
@@ -314,7 +315,7 @@ func TestDelete(t *testing.T)  {
 }
 
 // Insert, delete, insert should update only those records that don't exist
-func TestDeleteReinsert(t *testing.T)  {
+func TestDataframe_DeleteReinsert(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
 		t.Fatalf("df error is: %s", err)
@@ -403,7 +404,7 @@ func TestDeleteReinsert(t *testing.T)  {
 // Update should update any records that fulfill a given condition,
 // however, the primary keys should not be touched
 // and any unknown columns are just added to all records, defaulting to nil for the rest
-func TestUpdate(t *testing.T)  {
+func TestDataframe_Update(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
 		t.Fatalf("df error is: %s", err)
@@ -525,7 +526,7 @@ func TestUpdate(t *testing.T)  {
 
 // Select should be able to query data allowing for selection of fields,
 // sorting, grouping, filtering, applying etc.
-func TestSelect(t *testing.T)  {
+func TestDataframe_Select(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
 		t.Fatalf("df error is: %s", err)
@@ -642,7 +643,7 @@ func TestSelect(t *testing.T)  {
 
 
 // Clear should clear all the cols, index and pks
-func TestClear(t *testing.T)  {
+func TestDataframe_Clear(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
 		t.Fatalf("df error is: %s", err)
@@ -691,7 +692,7 @@ func TestClear(t *testing.T)  {
 
 // Copy should make a new Dataframe that resembles the dataframe but
 // has no reference to the items of the previous Dataframe
-func TestCopy(t *testing.T)  {
+func TestDataframe_Copy(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
 		t.Fatalf("df error is: %s", err)
@@ -755,7 +756,7 @@ func TestCopy(t *testing.T)  {
 
 // Merge combines into the given dataframe, the dataframes passed, overwriting any records that
 // have the same primary key value
-func TestMerge(t *testing.T)  {
+func TestDataframe_Merge(t *testing.T)  {
 	df1, err := FromArray(dataArray[:1], primaryFields)
 	if err != nil {
 		t.Fatalf("df1 error is: %s", err)
@@ -793,4 +794,53 @@ func TestMerge(t *testing.T)  {
 	if !utils.AreStringSliceEqual(keys, df1.Keys()) {
 		t.Fatalf("keys expected: %v, got: %v", keys, df1.Keys())
 	}
+}
+
+// The PrettyPrintRecords method prints out the records in a pretty format
+func ExampleDataframe_PrettyPrintRecords()  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		log.Fatalf("df error is: %s", err)
+	}
+	
+	df.PrettyPrintRecords()
+	// Output:
+	// [
+	// 	{
+	// 		"age": 30,
+	// 		"first name": "John",
+	// 		"last name": "Doe",
+	// 		"location": "Kampala"
+	// 	},
+	// 	{
+	// 		"age": 50,
+	// 		"first name": "Jane",
+	// 		"last name": "Doe",
+	// 		"location": "Lusaka"
+	// 	},
+	// 	{
+	// 		"age": 19,
+	// 		"first name": "Paul",
+	// 		"last name": "Doe",
+	// 		"location": "Kampala"
+	// 	},
+	// 	{
+	// 		"age": 34,
+	// 		"first name": "Richard",
+	// 		"last name": "Roe",
+	// 		"location": "Nairobi"
+	// 	},
+	// 	{
+	// 		"age": 45,
+	// 		"first name": "Reyna",
+	// 		"last name": "Roe",
+	// 		"location": "Nairobi"
+	// 	},
+	// 	{
+	// 		"age": 60,
+	// 		"first name": "Ruth",
+	// 		"last name": "Roe",
+	// 		"location": "Kampala"
+	// 	}
+	// ]
 }

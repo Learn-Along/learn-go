@@ -7,7 +7,7 @@ import (
 )
 
 // ToSlice converts an ordered map into a slice, ignoring gaps in indices automatically
-func TestToSlice(t *testing.T)  {
+func TestOrderedMap_ToSlice(t *testing.T)  {
 	type testRecord struct {
 		input orderedMapType;
 		expected []interface{}
@@ -38,7 +38,7 @@ func TestToSlice(t *testing.T)  {
 
 // Defragmentize should reorder the ordered dict basing
 // on the new indices passed to it
-func TestDefragmentize(t *testing.T)  {
+func TestOrderedMap_Defragmentize(t *testing.T)  {
 	type testRecord struct {
 		_map orderedMapType;
 		newOrder []int;

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -254,6 +255,21 @@ func (d *Dataframe) ColumnNames() []string {
 	}
 
 	return names
+}
+
+// Pretty prints the record in this dataframe
+func (d *Dataframe) PrettyPrintRecords() error {
+	data, err := d.ToArray()
+	if err != nil {
+		return err
+	}
+
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return utils.PrettyPrintJSON(dataJSON)
 }
 
 // Returns the indices of the pks that have not been deleted, i.e. that have no nil

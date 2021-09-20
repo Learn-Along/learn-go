@@ -7,7 +7,7 @@ import (
 )
 
 // insert for columns should fill any gaps in keys and Items with "", nil respectively
-func TestColumnInsert(t *testing.T)  {
+func TestColumn_insert(t *testing.T)  {
 	col := Column{Name: "hi", Dtype: StringType, items: map[int]interface{}{0: "hi", 1: "wow"}}
 	col.insert(4, "yeah")
 	expectedItems := []interface{}{"hi", "wow", nil, nil, "yeah"}
