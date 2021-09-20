@@ -523,7 +523,6 @@ func TestUpdate(t *testing.T)  {
 	}
 }
 
-// TODO: Still trying to make this test pass
 // Select should be able to query data allowing for selection of fields,
 // sorting, grouping, filtering, applying etc.
 func TestSelect(t *testing.T)  {
@@ -559,8 +558,8 @@ func TestSelect(t *testing.T)  {
                 df.Col("age").Order(DESC),                
             ), 
 			expected: []map[string]interface{}{
-				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
 				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
 				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
 				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
 				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
@@ -576,8 +575,8 @@ func TestSelect(t *testing.T)  {
                 df.Col("location").Agg(func(arr []interface{}) interface{}{return "random"}),
             ), 
 			expected: []map[string]interface{}{
-				{"last name": "Doe", "age": 30 },
-				{"last name": "Roe", "age": 50},
+				{"last name": "Doe", "age": float64(33) },
+				{"last name": "Roe", "age": float64(139) / 3},
 			},
 		},
 		{
@@ -607,8 +606,8 @@ func TestSelect(t *testing.T)  {
 				df.Col("age").Tx(func(v interface{}) interface{} {return fmt.Sprintf("total: %v", v)}),
 			),
 			expected: []map[string]interface{}{
-				{"last name": "Roe", "age": "total 139",},
-				{"last name": "Doe", "age": "total 80",},
+				{"last name": "Roe", "age": "total: 139",},
+				{"last name": "Doe", "age": "total: 80",},
 			},
 		},
 	}
@@ -711,8 +710,10 @@ func TestCopy(t *testing.T)  {
 		t.Fatalf("new df pkFields expected: %v, got %v", df.pkFields, newDf.pkFields)
 	}
 
-	if !utils.AreStringSliceEqual(df.ColumnNames(), newDf.ColumnNames()){
-		t.Fatalf("new df column names expected: %v, got %v", df.ColumnNames(), newDf.ColumnNames())
+	oldCols := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
+	newCols := utils.SortStringSlice(newDf.ColumnNames(), utils.ASC)
+	if !utils.AreStringSliceEqual(oldCols, newCols){
+		t.Fatalf("new df column names expected: %v, got %v", oldCols, newCols)
 	}
 
 	if !utils.AreStringSliceEqual(df.Keys(), newDf.Keys()){
@@ -792,5 +793,4 @@ func TestMerge(t *testing.T)  {
 	if !utils.AreStringSliceEqual(keys, df1.Keys()) {
 		t.Fatalf("keys expected: %v, got: %v", keys, df1.Keys())
 	}
-
 }

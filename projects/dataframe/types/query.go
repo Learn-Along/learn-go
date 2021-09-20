@@ -59,16 +59,11 @@ type query struct{
 // Actually executes the query
 func (q *query) Execute() ([]map[string]interface{}, error) {
 	// may need to add a recover defer
-	var gopt groupByOption
+	var gopt *groupByOption
 	filters := []filterType{}
 	sortOptions := []sortOption{}
 	txList := []transformation{}
 	selectedFields := []string{}
-
-	// controls
-	shouldGroup := false
-	shouldSort := false 
-	shouldApply := false
 
 	// combine similar actions together
 	for _, act := range q.ops {
@@ -76,13 +71,10 @@ func (q *query) Execute() ([]map[string]interface{}, error) {
 		case FILTER_ACTION:
 			filters = append(filters, act.payload.(filterType))
 		case GROUPBY_ACTION:
-			shouldGroup = true
-			gopt = act.payload.(groupByOption)
+			gopt = act.payload.(*groupByOption)
 		case SORT_ACTION:
-			shouldSort = true
 			sortOptions = append(sortOptions, act.payload.([]sortOption)...)
 		case APPLY_ACTION:
-			shouldApply = true
 			txList = append(txList, act.payload.([]transformation)...)
 		case SELECT_ACTION:
 			selectedFields = append(selectedFields, act.payload.([]string)...)
@@ -94,21 +86,21 @@ func (q *query) Execute() ([]map[string]interface{}, error) {
 		return nil, err
 	}
 
-	if shouldGroup {
+	if gopt != nil {
 		df, err = df.getGroupedDf(gopt)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if shouldSort {
+	if len(sortOptions) > 0 {
 		df, err = df.getSortedDf(sortOptions...)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if shouldApply {
+	if len(txList) > 0 {
 		mergedTxs := mergeTransformations(txList)	
 		err = df.apply(mergedTxs)
 		if err != nil {
@@ -141,7 +133,7 @@ func (q *query) GroupBy(fields ...string) *groupByOption {
 // Applies the col transforms to the query
 func (q *query) Apply(ops ...transformation) *query {
 	q.ops = append(q.ops, action{_type: APPLY_ACTION, payload: ops})
-	return nil
+	return q
 }
 
 

@@ -374,7 +374,7 @@ func (d *Dataframe) getFilteredDf(filter filterType) (*Dataframe, error) {
 }
 
 // Groups this dataframe, basing on the groupbyOption passed, and returns a new grouped Dataframe copy
-func (d *Dataframe) getGroupedDf(gopt groupByOption) (*Dataframe, error) {
+func (d *Dataframe) getGroupedDf(gopt *groupByOption) (*Dataframe, error) {
 	aggs := mergeAggregations(gopt.aggs)
 	groupedData := map[string][]map[string]interface{}{}
 	mergedRecords := []map[string]interface{}{}
@@ -410,7 +410,7 @@ func (d *Dataframe) getGroupedDf(gopt groupByOption) (*Dataframe, error) {
 
 	for i, key := range index {
 		mergedRecord := mergedRecords[i]
-		df, err := FromArray(groupedData[key], gopt.fields)
+		df, err := FromArray(groupedData[key], d.pkFields)
 		if err != nil {
 			return nil, err
 		}
@@ -468,7 +468,7 @@ func (d *Dataframe) getSortedDf(options... sortOption) (*Dataframe, error) {
 					}
 				default:
 					prevAsFloat := convertToFloat64(prevValue)
-					nextAsFloat := convertToFloat64(prevValue)
+					nextAsFloat := convertToFloat64(nextValue)
 
 					if order == ASC {
 						return prevAsFloat < nextAsFloat
