@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "**.go"
+      - ".github/workflows/**"
+jobs:
+  dataframe-test:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Install go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.17.1"
+
+      - name: Checkout the commit
+        uses: actions/checkout@v2
+
+      - name: Run tests
+        run: cd $GITHUB_WORKSPACE/projects/dataframe && go test ./... -timeout 30s -race
