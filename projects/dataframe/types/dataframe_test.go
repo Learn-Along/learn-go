@@ -570,10 +570,9 @@ func TestSelect(t *testing.T)  {
 		{
 			// all columns that are not part of the GroupBy will be ignored in the select as they make no sense
 			// select will also ignore any columns in the groupby that were not passed in the list of selects
-			q: df.Select("age", "last name", "first name").GroupBy(
+			q: df.Select("age", "last name", "first name").GroupBy("last name").Agg(
                 df.Col("age").Agg(MEAN),
 				// even a custom agggregate functions are possible
-                df.Col("last name").Agg(func(arr []interface{}) interface{} {return MAX(arr)}),
                 df.Col("location").Agg(func(arr []interface{}) interface{}{return "random"}),
             ), 
 			expected: []map[string]interface{}{
@@ -600,9 +599,8 @@ func TestSelect(t *testing.T)  {
 		{
 			q: df.Select("age", "last name").Where(
 				df.Col("age").GreaterOrEquals(30),
-			).GroupBy(
+			).GroupBy("last name").Agg(
 				df.Col("age").Agg(SUM),
-				df.Col("last name").Agg(MAX),
 			).SortBy(
 				df.Col("age").Order(DESC),
 			).Apply(

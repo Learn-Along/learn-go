@@ -32,6 +32,22 @@ type sortOption map[string]sortOrder
 
 type filterType []bool
 
+/*
+* GroupBy Options 
+*/
+type groupByOption struct {
+	fields []string
+	aggs []aggregation
+	q *query
+}
+
+// aggregates the different groups
+func (g *groupByOption) Agg(aggs...aggregation) *query {
+	g.aggs = append(g.aggs, aggs...)
+	g.q.ops = append(g.q.ops, action{_type: GROUPBY_ACTION, payload: g})
+	return g.q
+}
+
 /**
 * query
 */
@@ -43,11 +59,16 @@ type query struct{
 // Actually executes the query
 func (q *query) Execute() ([]map[string]interface{}, error) {
 	// may need to add a recover defer
+	var gopt groupByOption
 	filters := []filterType{}
-	aggs := []aggregation{}
 	sortOptions := []sortOption{}
 	txList := []transformation{}
 	selectedFields := []string{}
+
+	// controls
+	shouldGroup := false
+	shouldSort := false 
+	shouldApply := false
 
 	// combine similar actions together
 	for _, act := range q.ops {
@@ -55,40 +76,47 @@ func (q *query) Execute() ([]map[string]interface{}, error) {
 		case FILTER_ACTION:
 			filters = append(filters, act.payload.(filterType))
 		case GROUPBY_ACTION:
-			aggs = append(aggs, act.payload.([]aggregation)...)
+			shouldGroup = true
+			gopt = act.payload.(groupByOption)
 		case SORT_ACTION:
+			shouldSort = true
 			sortOptions = append(sortOptions, act.payload.([]sortOption)...)
 		case APPLY_ACTION:
+			shouldApply = true
 			txList = append(txList, act.payload.([]transformation)...)
 		case SELECT_ACTION:
 			selectedFields = append(selectedFields, act.payload.([]string)...)
 		}
 	}
 
-	filteredDf, err := q.df.filter(AND(filters...))
+	df, err := q.df.getFilteredDf(AND(filters...))
 	if err != nil {
 		return nil, err
 	}
 
-	groupedDfs, err := filteredDf.groupby(mergeAggregations(aggs))
-	if err != nil {
-		return nil, err
-	}	
-	noOfGroups := len(groupedDfs)
-	if noOfGroups == 0 {
-		return []map[string]interface{}{}, nil
+	if shouldGroup {
+		df, err = df.getGroupedDf(gopt)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// merge the grouped dataframes (maintaining order)
-	err = groupedDfs[0].Merge(groupedDfs[1:]...)
-	if err != nil {
-		return nil, err
+	if shouldSort {
+		df, err = df.getSortedDf(sortOptions...)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	mergedTxs := mergeTransformations(txList)
-	groupedDfs[0].sortby(sortOptions...)
-	groupedDfs[0].apply(mergedTxs)
-	return groupedDfs[0].ToArray(selectedFields...)	
+	if shouldApply {
+		mergedTxs := mergeTransformations(txList)	
+		err = df.apply(mergedTxs)
+		if err != nil {
+			return nil, err
+		}		
+	}
+
+	return df.ToArray(selectedFields...)	
 }
 
 // Given a list of boolean corresponding to indices of the items,
@@ -105,12 +133,9 @@ func (q *query) SortBy(options ...sortOption) *query {
 	return q
 }
 
-// FIXME: GorupBy is wrong. It must receive the column names to groupby and the aggregate functions to operate
-// on other columns
-// Groups the data into groups that have same values for the given columns
-func (q *query) GroupBy(aggs ...aggregation) *query {
-	q.ops = append(q.ops, action{_type: GROUPBY_ACTION, payload: aggs})
-	return q
+// Groups the data into groups that have same values for the given columns/fields
+func (q *query) GroupBy(fields ...string) *groupByOption {
+	return &groupByOption{q: q, fields: fields, aggs: []aggregation{}}
 }
 
 // Applies the col transforms to the query

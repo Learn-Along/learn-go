@@ -267,18 +267,15 @@ func convertToFloat64(value interface{}) float64 {
 	return valueAsFloat
 }
 
-// Merges a slice of aggregations into a map of lists of aggregate functions
-func mergeAggregations(aggs []aggregation) map[string][]aggregateFunc {
-	res := map[string][]aggregateFunc{}
+// Merges a slice of aggregations into one aggregation.
+// Inorder to have only one aggregation per column, only the last aggregateFunc passed for that column
+// is kept
+func mergeAggregations(aggs []aggregation) aggregation {
+	res := aggregation{}
 
 	for _, agg 	:= range aggs {
 		for key, v := range agg {
-			prev, ok := res[key]
-			if !ok {
-				prev = []aggregateFunc{}
-			} 
-
-			res[key] = append(prev, v)
+			res[key] = v
 		}
 	}
 

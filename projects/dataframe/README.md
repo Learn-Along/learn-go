@@ -129,11 +129,11 @@ data, err = df1.Select("age", "name", "date").SortBy(
             ).Execute()
 
 // groupby
-data, err = df1.Select("age", "name", "date").GroupBy(
-                df1.Col("age").Agg(MAX),
-                df1.Col("date").Agg(MIN),
+data, err = df1.Select("age", "name", "date").GroupBy("name", "date").Agg(
+                df1.Col("vote").Agg(MAX),
+                df1.Col("age").Agg(MIN),
                 // Or supply a custom aggregregate func that returns a single value given an array of values
-                df1.Col("name").Agg(func(arr []interface{}) {return arr[0]}),
+                df1.Col("address").Agg(func(arr []interface{}) {return arr[0]}),
             ).Execute()
 
 // filter

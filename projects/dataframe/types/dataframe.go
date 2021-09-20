@@ -325,7 +325,7 @@ func createKey(record map[string]interface{}, primaryFields []string) (string, e
 
 	for _, pkField := range primaryFields {
 		if value, ok := record[pkField]; ok {
-			key += fmt.Sprintf("%s_", value)
+			key += fmt.Sprintf("%v_", value)
 		} else {
 			return "", fmt.Errorf("key error: %s in record %v", pkField, record)
 		}
@@ -348,11 +348,15 @@ func (d *Dataframe) defragmentize()  {
 	}
 }
 
-// Filters this dataframe and returns the filtered copy of this dataframe
-func (d *Dataframe) filter(filter filterType) (*Dataframe, error) {
+// Filters this dataframe and returns the filtered **copy** of this dataframe
+func (d *Dataframe) getFilteredDf(filter filterType) (*Dataframe, error) {
 	newDf, err := d.Copy()
 	if err != nil {
 		return nil, err
+	}
+
+	if filter == nil {
+		return newDf, nil
 	}
 
 	// toggle the values in the filter, and delete the unwanted items
@@ -360,24 +364,127 @@ func (d *Dataframe) filter(filter filterType) (*Dataframe, error) {
 		filter[i] = !v
 	}
 
-	newDf.Delete(filter)
+	err = newDf.Delete(filter)
+	if err != nil {
+		return nil, err
+	}
 
 	return newDf, nil
 
 }
 
-// FIXME: GorupBy is wrong. It must receive the column names to groupby and the aggregate functions to operate
-// on other columns
-// Groups this dataframe, basing on the aggFuncMap, and returns a slice of smaller Dataframe addresses
-func (d *Dataframe) groupby(aggFuncMap map[string][]aggregateFunc) ([]*Dataframe, error) {
-	return nil, nil
+// Groups this dataframe, basing on the groupbyOption passed, and returns a new grouped Dataframe copy
+func (d *Dataframe) getGroupedDf(gopt groupByOption) (*Dataframe, error) {
+	aggs := mergeAggregations(gopt.aggs)
+	groupedData := map[string][]map[string]interface{}{}
+	mergedRecords := []map[string]interface{}{}
+	index := []string{}
+
+	records, err := d.ToArray()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range records {
+		key, err := createKey(record, gopt.fields)
+		if err != nil {
+			return nil, err
+		}
+
+		if data, ok := groupedData[key]; ok {
+			groupedData[key] = append(data, record)
+		} else {
+			// index maintains order of the groups
+			index = append(index, key)
+			
+			mergedRecord := map[string]interface{}{}
+			for _, field := range gopt.fields {
+				mergedRecord[field] = record[field]
+			}
+			mergedRecords = append(mergedRecords, mergedRecord)
+
+			groupedData[key] = []map[string]interface{}{record}
+		}
+	}
+
+
+	for i, key := range index {
+		mergedRecord := mergedRecords[i]
+		df, err := FromArray(groupedData[key], gopt.fields)
+		if err != nil {
+			return nil, err
+		}
+
+		for field, aggFunc := range aggs {
+			mergedRecord[field] = aggFunc(df.Col(field).Items())
+		}
+
+		mergedRecords[i] = mergedRecord
+	}	
+	
+	return FromArray(mergedRecords, gopt.fields)
 }
 
-// FIXME: Implement this sortby
 // Orders the items in the columns of this dataframe basing on the sort options passed.
-// Do note that if the same column has more than sort option, the last one will take effect
-func (d *Dataframe) sortby(options... sortOption) error {
-	return nil
+func (d *Dataframe) getSortedDf(options... sortOption) (*Dataframe, error) {
+	records, err := d.ToArray()
+	if err != nil {
+		return nil, err
+	}
+
+	if options == nil {
+		return d.Copy()
+	}
+		
+	sort.SliceStable(records, func(i, j int) bool {
+		prev := records[i]
+		next := records[j]
+
+		for _, opt := range options {
+			for field, order := range opt {	
+				nextValue := next[field]
+				prevValue := prev[field]
+
+				if nextValue == prevValue {
+					continue
+				}
+
+				if prevValue == nil {
+					// nils will be pushed up by default
+					return order == ASC
+				}
+
+				if nextValue == nil {
+					// nils will be pushed up by default
+					return order == DESC
+				}
+
+				switch p := prevValue.(type) {
+				case string:
+					if order == ASC {
+						return p < nextValue.(string)
+					} else {
+						return p > nextValue.(string)
+					}
+				default:
+					prevAsFloat := convertToFloat64(prevValue)
+					nextAsFloat := convertToFloat64(prevValue)
+
+					if order == ASC {
+						return prevAsFloat < nextAsFloat
+					} else {
+						return prevAsFloat > nextAsFloat
+					}
+				}	
+				
+			}
+		}
+
+		return true
+	})
+	
+
+	return FromArray(records, d.pkFields)
 }
 
 // Applys the given rowWiseFunc functions on the dataframe

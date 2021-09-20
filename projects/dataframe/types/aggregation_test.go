@@ -252,20 +252,22 @@ func TestRANGE(t *testing.T)  {
 	}
 }
 
-// mergeAggregations should merge an aggregation list into a map of slices of aggregateFunc functions
+// mergeAggregations should merge an aggregation list into a single aggregation 
+// ensuring that the last aggregateFunc to be attached to a given column is the one kept,
+// the previous ones are overwritten, to avoid ambiguity
 func TestMergeAggregations(t *testing.T)  {
 	type testRecord struct {
 		input []aggregation;
-		expected map[string][]aggregateFunc
+		expected aggregation
 	}
 
 	testData := []testRecord{
 		{
 			input: []aggregation{{"hi": MAX}, {"hi": MIN, "yoo": RANGE}, {"hi": SUM, "an": RANGE}, {"an": MIN}},
-			expected: map[string][]aggregateFunc{
-				"hi": {MAX, MIN, SUM},
-				"yoo": {RANGE},
-				"an": {RANGE, MIN},
+			expected: aggregation{
+				"hi": SUM,
+				"yoo": RANGE,
+				"an": MIN,
 			},
 		},		
 	}
@@ -275,14 +277,12 @@ func TestMergeAggregations(t *testing.T)  {
 	for _, tr := range testData {
 		res := mergeAggregations(tr.input)
 
-		for key, v := range tr.expected {
-			for i, agg := range v {
-				got := res[key][i](sampleArray)
-				expected := agg(sampleArray)
+		for key, agg := range tr.expected {
+			got := res[key](sampleArray)
+			expected := agg(sampleArray)
 
-				if got != expected {
-					t.Fatalf("for key '%s', expected %v; got %v",key,  agg, res[key][i])
-				}
+			if got != expected {
+				t.Fatalf("for key '%s', expected %v; got %v",key,  agg, res[key])
 			}
 		}
 	}
