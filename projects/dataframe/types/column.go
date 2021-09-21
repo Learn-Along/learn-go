@@ -220,7 +220,7 @@ func (c *Column) IsLike(pattern *regexp.Regexp) filterType  {
 // Returns transformer method specific to this column to transform its values from one thing to another
 // It is passed a function expecting a value any type
 func (c *Column) Tx(op rowWiseFunc) transformation {
-	return transformation{c.Name: op}
+	return transformation{k: c.Name, v: op}
 }
 
 // Returns an aggregation function specific to this column to

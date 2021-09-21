@@ -18,7 +18,13 @@ func TestMergeTransformations(t *testing.T)  {
 
 	testData := []testRecord{
 		{
-			input: []transformation{{"hi": _addTen}, {"hi": _minusTen, "yoo": _multiplyByTen}, {"hi": _divideByTen, "an": _multiplyByTen}, {"an": _minusTen}},
+			input: []transformation{
+				{k: "hi", v: _addTen}, 
+				{k: "hi", v: _minusTen},
+				{k: "yoo", v: _multiplyByTen}, 
+				{k: "hi", v: _divideByTen},
+				{k: "an", v: _multiplyByTen}, 
+				{k: "an", v: _minusTen}},
 			expected: map[string][]rowWiseFunc{
 				"hi": {_addTen, _minusTen, _divideByTen},
 				"yoo": {_multiplyByTen},
@@ -42,4 +48,33 @@ func TestMergeTransformations(t *testing.T)  {
 			}
 		}
 	}
+}
+
+func Benchmark_mergeTransformations(b *testing.B) {
+	_addTen := func (i interface{}) interface{}  {return i.(int) + 10 }
+	_minusTen := func (i interface{}) interface{}  {return i.(int) - 10 }
+	_multiplyByTen := func (i interface{}) interface{}  {return i.(int) * 10 }
+	_divideByTen := func (i interface{}) interface{}  {return i.(int) / 10 }
+
+	input := []transformation{
+		{k: "hi", v: _addTen}, 
+		{k: "hi", v: _minusTen},
+		{k: "yoo", v: _multiplyByTen}, 
+		{k: "hi", v: _divideByTen},
+		{k: "an", v: _multiplyByTen}, 
+		{k: "an", v: _minusTen},
+	}
+
+	for i := 0; i < b.N; i++ {
+		mergeTransformations(input)
+	}
+
+	// Results:
+	// ========
+	// 
+	// | Change 					| time				 | memory 				 | allocations			 |
+	// |----------------------------|--------------------|-----------------------|-----------------------|
+	// | transformation as map  	| 1073 ns/op         | 488 B/op              | 8 allocs/op           |
+	// | transformation as struct  	| 766.5 ns/op        | 488 B/op              | 8 allocs/op           |
+	// | Add goroutine in for loop	| 3689 ns/op	     | 632 B/op	      		 | 10 allocs/op   		 |
 }
