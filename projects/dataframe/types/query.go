@@ -108,6 +108,8 @@ func (q *query) Execute() ([]map[string]interface{}, error) {
 		}		
 	}
 
+	// FIXME: Could we return a dataframe instead of converting this to an array first
+	// This could mean that less columns are even generated and passed out
 	return df.ToArray(selectedFields...)	
 }
 

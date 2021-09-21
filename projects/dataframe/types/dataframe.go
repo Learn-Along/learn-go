@@ -23,6 +23,8 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 		index: map[interface{}]int{},
 	}
 
+	// FIXME: what if we just generate the primary keys and the col items in one loop and just update
+	// the created dataframe's cols and index. There would be no need for even calling normalizeCols
 	for _, record := range records {
 		err := df.insertRecord(record)
 		if err != nil {
@@ -42,6 +44,8 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 		index: map[interface{}]int{},
 	}
 
+	// FIXME: what if we just generate the primary keys and the col items in one loop and just update
+	// the created dataframe's cols and index. There would be no need for even calling normalizeCols
 	for _, record := range records {
 		err := df.insertRecord(record)
 		if err != nil {
@@ -83,16 +87,24 @@ func (d *Dataframe) Delete(filter filterType) error {
 
 	counter := 0
 	for i, shouldDelete := range filter {
+		// FIXME:
+		// aside from the mutation delete(d.index,..) which might have race conditions,
+		// these others could be done concurrently
+		// as they don't affect themselves.
 		if shouldDelete && i < count {
 			indicesToDelete[counter] = pkIndices[i]
 			counter++
 
+			// FIXME:
+			// remove this from here. Look for a bulk way of removing keys from a map quickly
 			delete(d.index, keys[i])
 		}		
 	}
 
 	// delete the items in each col 
 	for _, col := range d.cols {
+		// FIXME:
+		// These again can be done concurrently since the data is saved in separate columns.
 		col.deleteMany(indicesToDelete[:counter])
 	}
 
@@ -113,6 +125,8 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 
 	counter := 0
 	for i, shouldUpdate := range filter {
+		// FIXME: Concurrency should be possible here, possibly by ranging over 0 to len(filter)
+		// The pkIndex could be pushed to a channel and another goroutine just updates that index
 		if shouldUpdate && i < count {
 			indicesToUpdate[counter] = pkIndices[i]		
 			counter++	
@@ -120,13 +134,16 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 	}
 
 	for k, v := range value {
+		// FIXME: Concurrency possible
 		if _, ok := pkFieldMap[k]; !ok {
 			valueCopy[k] = v
 		}
 	}
 
-	// update only upto counter 
+	// update only upto counter
+	// This could a range over a channel instead...see FIXME at "for i, shouldUpdate := range filter"
 	for _, pkIndex := range indicesToUpdate[:counter] {
+		// FIXME: concurrenyc is possible for this inner loop
 		for colName, v := range valueCopy {		
 			d.Col(colName).insert(pkIndex, v)			
 		}		
@@ -144,6 +161,8 @@ func (d *Dataframe) Select(fields ...string) *query {
 // Merges the dataframes dfs to d
 func (d *Dataframe) Merge(dfs ...*Dataframe) error {
 	for _, df := range dfs {
+		// FIXME: Is it possible to merge without having to change to row-wise structure first.
+		// that is basing on the assumption that columnar is more efficient as we claimed
 		records, err := df.ToArray()
 		if err != nil {
 			return err
@@ -165,6 +184,8 @@ func (d *Dataframe) Count() int {
 
 // Copies the dataframe and returns the new copy
 func (d *Dataframe) Copy() (*Dataframe, error) {
+	// FIXME: Why not just copy the columns, the index, and the pkFields
+	// Having to call ToArray is very inefficient 
 	records, err := d.ToArray()
 	if err != nil {
 		return nil, err
@@ -182,6 +203,7 @@ func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{},
 	cols := map[string]*Column{}
 
 	for _, field := range selectedFields {
+		// FIXME: concurrency possible
 		if val, ok := d.cols[field]; ok {
 			cols[field] = val
 		}
@@ -194,6 +216,7 @@ func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{},
 	for i, pkIndex := range pkIndices {
 		record := map[string]interface{}{}
 
+		// FIXME: The column names are unique, the columns are independent, concurrency is thus possible
 		for _, col := range cols {
 			if i < len(col.items) {
 				record[col.Name] = col.items[pkIndex]
@@ -212,11 +235,13 @@ func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{},
 func (d *Dataframe) Clear() {
 	// clear the cols
 	for k := range d.cols {
+		// FIXME: can be done concurrently
 		delete(d.cols, k)
 	}
 
 	// clear the index
 	for k := range d.index {
+		// FIXME: Can be done concurrently
 		delete(d.index, k)
 	}	
 }
@@ -239,6 +264,12 @@ func (d *Dataframe) Keys() []string {
 	count := len(d.index)
 	orderedKeyMap := make(orderedMapType, count)
 
+	// FIXME:
+	// Could we cache this result and save it on the dataframe itself,
+	// and recalculate it only and update it, only when the d.index changes?
+	// Imagine having to go through this loop every time someone calls keys 
+	// but then again, since it is a method, we could leave it to the user to cache
+	// that result themselves
 	for key, i := range d.index {
 		orderedKeyMap[i] = key
 	}
@@ -251,6 +282,8 @@ func (d *Dataframe) ColumnNames() []string {
 	count := len(d.cols)
 	names := make([]string, count)
 
+	// FIXME:
+	// Could we just get the keys of the map of d.cols. I believe the keys are the actual names of the columns
 	i := 0
 	for _, col := range d.cols {
 		names[i] = col.Name
@@ -262,6 +295,14 @@ func (d *Dataframe) ColumnNames() []string {
 
 // Pretty prints the record in this dataframe
 func (d *Dataframe) PrettyPrintRecords() error {
+	// FIXME:
+	// Is it possible to print the data as a table instead of row-wise data,
+	// so as to give the actual picture of how the data is stored.
+	// e.g.
+	// ----------------------------------------
+	// | Col 1   | Col 2   | Col 3 | Col 4    |
+	// ----------------------------------------
+	// | foo     | 45      | 90    | hyu      |
 	data, err := d.ToArray()
 	if err != nil {
 		return err
@@ -280,6 +321,8 @@ func (d *Dataframe) getIndicesInOrder() []int {
 	count := len(d.index)
 	indices := make([]int, count)
 
+	// FIXME:What if this were converted into a range from zero to count, instead of range d.index
+	// wouldn't this allow for concurrently updating the indices slice as no data races would be expected.
 	counter := 0
 	for _, i := range d.index {
 		indices[counter] = i
@@ -320,6 +363,7 @@ func (d *Dataframe) normalizeCols(defaultValue interface{})  {
 	finalLength := len(pkIndices)
 
 	for _, col := range d.cols {
+		// FIXME: This could be done concurrently as the cols are independent of each other
 		colLength := len(col.items)
 		
 		for i := colLength; i < finalLength; i++ {
@@ -334,6 +378,7 @@ func (d *Dataframe) getPkFieldMap() map[string]struct{} {
 	_map := make(map[string]struct{}, len(d.pkFields))
 
 	for _, field := range d.pkFields {
+		// FIXME: This can be done concurrently
 		_map[field] = struct{}{}
 	}
 
@@ -345,6 +390,7 @@ func createKey(record map[string]interface{}, primaryFields []string) (string, e
 	key := ""
 	separator := "_"
 
+	// FIXME: Could using strings.Join more expressive of what is actually being done here? Try that.
 	for _, pkField := range primaryFields {
 		if value, ok := record[pkField]; ok {
 			key += fmt.Sprintf("%v_", value)
@@ -362,10 +408,15 @@ func (d *Dataframe) defragmentize()  {
 	keys := d.Keys()
 
 	for _, col := range d.cols {
+		// FIXME:
+		// These columns are independent. Their defragmentation can be done concurrently
 		col.items.Defragmentize(pkIndices)
 	}
 
 	for newRow, key := range keys {
+		// FIXME:
+		// This could be done concurrently
+		// even if two keys were alike, this is supposed to be an index, and thus only one key should be present
 		d.index[key] = newRow
 	}
 }
@@ -383,6 +434,8 @@ func (d *Dataframe) getFilteredDf(filter filterType) (*Dataframe, error) {
 
 	// toggle the values in the filter, and delete the unwanted items
 	for i, v := range filter {
+		// FIXME:
+		// This can be done concurrently
 		filter[i] = !v
 	}
 
@@ -402,6 +455,9 @@ func (d *Dataframe) getGroupedDf(gopt *groupByOption) (*Dataframe, error) {
 	mergedRecords := []map[string]interface{}{}
 	index := []string{}
 
+	// FIXME:
+	// Is it possible to group these items without first going back to row-wise structure?
+	// Afterall, we claimed it was more efficient to group when the data is columnar, or was that wishful thinking?
 	records, err := d.ToArray()
 	if err != nil {
 		return nil, err
@@ -449,6 +505,9 @@ func (d *Dataframe) getGroupedDf(gopt *groupByOption) (*Dataframe, error) {
 
 // Orders the items in the columns of this dataframe basing on the sort options passed.
 func (d *Dataframe) getSortedDf(options... sortOption) (*Dataframe, error) {
+	// FIXME: 
+	// Is it possible to sort this dataframe without going back to row-wise structure?
+	// Afterall we claimed it was more efficient to do so when the data was columnar, or was that wishful thinking?
 	records, err := d.ToArray()
 	if err != nil {
 		return nil, err
@@ -512,8 +571,12 @@ func (d *Dataframe) getSortedDf(options... sortOption) (*Dataframe, error) {
 // Applys the given rowWiseFunc functions on the dataframe
 func (d *Dataframe) apply(rowWiseFuncMap map[string][]rowWiseFunc) error {
 	for field, txs := range rowWiseFuncMap {
+		// FIXME: This second for loop works on each field/column at a time,
+		// and so this should be done concurrently
 		for _, tx := range txs {
 			if col, ok := d.cols[field]; ok {
+				// FIXME: This third for loop works on individual items,
+				// and so this too can be done concurrently
 				for i, v := range col.items {
 					col.items[i] = tx(v)
 				}
