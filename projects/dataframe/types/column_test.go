@@ -16,3 +16,28 @@ func TestColumn_insert(t *testing.T)  {
 		t.Fatalf("items expected: %v, got %v", expectedItems, col.Items())
 	}
 }
+
+/*
+* Benchmark tests
+*/
+func BenchmarkColumn_GreaterThan(b *testing.B)  {
+	items := map[int]interface{}{}
+
+	for i := 0; i < 9000000; i++ {
+		items[i] = i
+	}
+
+	col := Column{Name: "hi", Dtype: StringType, items: items}
+
+	for i := 0; i < b.N; i++ {
+		col.GreaterThan(1000)
+	}
+
+	// Results:
+	// ========
+	// 
+	// | Change 					| time				 | memory 				 | allocations			 | Choice  |
+	// |----------------------------|--------------------|-----------------------|-----------------------|---------|
+	// | None				    	| 791834066 ns/op	 | 48366771 B/op	     | 344697 allocs/op      | x  	   |
+	// | Add goroutine in for loop	| 13898155496 ns/op	 | 1321728940 B/op	     | 23181212 allocs/op  	 |		   |
+}
