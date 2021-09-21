@@ -37,6 +37,7 @@ func (c *Column) insert(index int, value interface{}) {
 
 	if nextIndex <= index {
 		for i := nextIndex; i <= index; i++ {
+			// FIXME: concurrency possible
 			c.items[i] = nil		
 		}
 	}
@@ -47,6 +48,7 @@ func (c *Column) insert(index int, value interface{}) {
 // Deletes many indices at once
 func (c *Column) deleteMany(indices []int)  {
 	for _, i := range indices {
+		// FIXME: concurrency possible
 		delete(c.items, i)
 	}	
 }
@@ -59,6 +61,7 @@ func (c *Column) GreaterThan(operand float64) filterType {
 	flags := make(filterType, count)
 
 	for i, v := range c.items {
+		// FIXME: concurrency possible
 		switch v := v.(type) {
 		case int:
 			flags[i] = float64(v) > operand
@@ -90,6 +93,7 @@ func (c *Column) GreaterOrEquals(operand float64) filterType {
 	flags := make(filterType, count)
 
 	for i, v := range c.items {
+		// FIXME: concurrency possible
 		switch v := v.(type) {
 		case int:
 			flags[i] = float64(v) >= operand
@@ -121,6 +125,7 @@ func (c *Column) LessThan(operand float64) filterType {
 	flags := make(filterType, count)
 
 	for i, v := range c.items {
+		// FIXME: concurrency possible
 		switch v := v.(type) {
 		case int:
 			flags[i] = float64(v) < operand
@@ -152,6 +157,7 @@ func (c *Column) LessOrEquals(operand float64) filterType {
 	flags := make(filterType, count)
 
 	for i, v := range c.items {
+		// FIXME: concurrency possible
 		switch v := v.(type) {
 		case int:
 			flags[i] = float64(v) <= operand
@@ -183,6 +189,7 @@ func (c *Column) Equals(operand interface{}) filterType {
 	flags := make(filterType, count)
 
 	for i, v := range c.items {
+		// FIXME: concurrency possible
 		flags[i] = v == operand
 	}
 
@@ -196,6 +203,7 @@ func (c *Column) IsLike(pattern *regexp.Regexp) filterType  {
 	flags := make(filterType, count)
 
 	for i, v := range c.items {
+		// FIXME: concurrency possible
 		switch v := v.(type) {
 		case string:
 			flags[i] = pattern.MatchString(v)
