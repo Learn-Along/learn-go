@@ -287,3 +287,26 @@ func TestMergeAggregations(t *testing.T)  {
 		}
 	}
 }
+
+/*
+* Benchmark tests
+*/
+func Benchmark_mergeAggregations(b *testing.B)  {
+	input := []aggregation{
+		{"hi": MAX}, 
+		{"hi": MIN, "yoo": RANGE},
+		{"hi": SUM, "an": RANGE},
+		{"an": MIN},
+	}
+
+	for i := 0; i < b.N; i++ {
+		mergeAggregations(input)
+	}
+	
+	// Results:
+	// ========
+	// 
+	// | Change 					| time				 | memory 				 | allocations			 | Choice  |
+	// |----------------------------|--------------------|-----------------------|-----------------------|---------|
+	// | aggregation as map  		| 806.4 ns/op	     | 256 B/op	             | 2 allocs/op           |  x  	   |
+}

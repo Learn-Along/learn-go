@@ -1,7 +1,6 @@
 package types
 
-// map of column name and the array function to apply to its values
-// type transformation map[string]rowWiseFunc
+// struct with k as column name and v as the array function to apply to its values
 type transformation struct{k string; v rowWiseFunc}
 
 // function that transforms each element into another element

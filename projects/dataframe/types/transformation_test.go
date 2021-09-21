@@ -53,6 +53,10 @@ func TestMergeTransformations(t *testing.T)  {
 	}
 }
 
+/*
+* Benchmark tests
+*/
+
 func Benchmark_mergeTransformations(b *testing.B) {
 	input := []transformation{
 		{k: "hi", v: _addTen}, 
