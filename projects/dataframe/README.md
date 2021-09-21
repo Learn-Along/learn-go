@@ -257,12 +257,13 @@ data, err = df1.Select(...).Where(...).GroupBy(...).SortBy(...).Apply(...).Execu
 
 This library has a lot of opportunity to improve. Some include:
 
+- [ ] Actually make use of the columnar structure in filtering, selecting, grouping etc. [Right now it seems to make things just more complicated than rowise structure as most if not all these operations are done in row-wise manner]
 - [ ] Optimize memory usage. There is a lot of copying and heavy use of suboptimal type methods
 - [ ] Optimize speed. There are way too many loops.
 - [ ] Take advantage of concurrent design. No goroutines were used. These might help improve speed or readability or both.
 - [ ] Clean up the code. Some of the functions arre really dirty. The tests also are quite dirty.
 - [ ] Add benchmark tests
-- [ ] Add the features for accessing any set of records using their indices (x and y) like pandas does it or just add `Limit(int)` and `Skip(int)` methods. I actually feel `Limit` and `Skip` would align better with the current API which mimics a SQL.
+- [ ] Add the features for accessing any set of records using their indices (x and y) like pandas does it or just add `Limit(int)` and `Skip(int)` methods. I actually feel `Limit` and `Skip` would align better with the current API which mimics SQL.
 - [ ] More stuff you will find. Just create an issue. If I am taking too long to respond (as I have been known to in the past), shoot me an email at [sales@sopherapps.com](mailto:sales@sopherapps.com)
 
 ## License
