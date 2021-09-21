@@ -59,6 +59,9 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 func (d *Dataframe) Insert(records []map[string]interface{}) error {
 	d.defragmentize()
 
+	// FIXME:
+	// To quicken this even further, we could transpose the matrix at this point 
+	// and have slices corresponding to each column. These can then be bulk inserted into the columns.
 	for _, record := range records {
 		err := d.insertRecord(record)
 		if err != nil {
@@ -301,6 +304,9 @@ func (d *Dataframe) insertRecord(record map[string]interface{}) error {
 	}		
 
 	for fieldName, value := range record {
+		// FIXME:
+		// to take advantage of having values in separate columns,
+		// these values can be saved concurrently
 		col := d.Col(fieldName)			
 		col.insert(row, value)
 	}
