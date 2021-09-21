@@ -10,6 +10,10 @@ func (o *orderedMapType) ToSlice() []interface{} {
 	indices := make([]int, count)
 	slice := make([]interface{}, count)
 
+	// FIXME: if the assumption is there are no gaps in this orderedMap,
+	// which assumption is true, as Deframentize needs to be called everytime
+	// there is random update to the map, then concurrency here is possible. try a goroutine and a channel
+	// and two ranges, one, on *o, the other on the channel
 	counter := 0
 	for i := range *o {
 		indices[counter] = i
@@ -32,11 +36,13 @@ func (o *orderedMapType) ToSlice() []interface{} {
 func (o *orderedMapType) Defragmentize(newOrder []int) {
 	copyOfO := orderedMapType{}
 	for k, v := range *o {
+		// FIXME: concurrency is possible
 		copyOfO[k] = v
 		delete(*o, k)
 	}	
 
 	for newRow, oldRow := range newOrder {
+		// FIXME: concurrency is possible
 		(*o)[newRow] = copyOfO[oldRow]
 	}
 }
