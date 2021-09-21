@@ -141,8 +141,11 @@ func (q *query) Apply(ops ...transformation) *query {
 
 // Logic combinations
 
-// Combines a list of maps of filters to produce a combined AND logical filter
+// Combines a list of filters to produce a combined AND logical filter
 func AND(filters ...filterType) filterType{
+	// FIXME: What if I got the maximum length of the filters,
+	// used make to create a filterType of that length (values default to false),
+	// and then got rid of append at the bottom
 	combinedFilter := filterType{}
 
 	for _, filter := range filters {
@@ -173,6 +176,9 @@ func AND(filters ...filterType) filterType{
 
 // Combines a list of filters to produce a combined OR logical filter
 func OR(filters ...filterType) filterType {
+	// FIXME: What if I got the maximum length of the filters, (use a utility from slices.go)
+	// used make to create a filterType of that length (values default to false),
+	// and then got rid of append at the bottom
 	combinedFilter := filterType{}
 
 	for _, filter := range filters {
@@ -206,6 +212,7 @@ func NOT(filter filterType) filterType {
 	combinedFilter := make(filterType, count)
 
 	for i, value := range filter {
+		// FIXME: concurrency possible
 		combinedFilter[i] = !value
 	}
 
