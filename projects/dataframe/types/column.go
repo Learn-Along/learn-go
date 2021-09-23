@@ -1,7 +1,6 @@
 package types
 
 import (
-	"math"
 	"regexp"
 )
 
@@ -16,9 +15,6 @@ const (
 
 
 type Datatype int
-
-type comparator func(value interface{}) bool
-
 
 type Column struct {
 	Name string
@@ -58,195 +54,32 @@ func (c *Column) deleteMany(indices []int)  {
 // true if item is greater than operand or else false
 // The operand can reference a constant, or a Col
 func (c *Column) GreaterThan(operand float64) filterType {
-	// type boolTuple struct {i int; v bool}
-	// count := len(c.items)
-	// flags := make(filterType, count)	
-	// queue := make(chan boolTuple)
-	// n := runtime.GOMAXPROCS(0)
-	// portionSize := int(math.Ceil(float64(count)/float64(n)))
-	// // portionSize := 4
+	count := len(c.items)
+	flags := make(filterType, count)
 
-	// // one goroutine for each process, to utilize the cache to the max
-	// // https://appliedgo.net/concurrencyslower/
-	// for i := 0; i < n; i++ {
-	// 	// goroutines should not update global variables so as to avoid heap memory,
-	// 	// but you can read them
-	// 	start := i * portionSize
-	// 	stop := start + portionSize
-		
-	// 	go func(start int, stop int, maxCount int, chn chan boolTuple) {
-	// 		for i := start; i < stop && i < maxCount; i++ {
-	// 			switch v := c.items[i].(type) {
-	// 			case int:
-	// 				chn <- boolTuple{i: i, v: float64(v) > operand}
-	// 			case int8:
-	// 				chn <- boolTuple{i: i, v: float64(v) > operand}
-	// 			case int16:
-	// 				chn <- boolTuple{i: i, v: float64(v) > operand}
-	// 			case int32:
-	// 				chn <- boolTuple{i: i, v: float64(v) > operand}
-	// 			case int64:
-	// 				chn <- boolTuple{i: i, v: float64(v) > operand}
-	// 			case float32:
-	// 				chn <- boolTuple{i: i, v: float64(v) > operand}
-	// 			case float64:
-	// 				chn <- boolTuple{i: i, v: v > operand}
-	// 			default:
-	// 				chn <- boolTuple{i: i, v: false}
-	// 			}
-	// 		}			
-	// 	}(start, stop, count, queue)		
-	// }
-
-	// for i := 0; i < count; i++ {
-	// 	t := <- queue
-	// 	flags[t.i] = t.v		
-	// }
-
-	// return flags
-	// count := len(c.items)
-	// flags := make(filterType, count)
-
-	// for i, v := range c.items {
-	// 	switch v := v.(type) {
-	// 	case int:
-	// 		flags[i] = float64(v) > operand
-	// 	case int8:
-	// 		flags[i] = float64(v) > operand
-	// 	case int16:
-	// 		flags[i] = float64(v) > operand
-	// 	case int32:
-	// 		flags[i] = float64(v) > operand
-	// 	case int64:
-	// 		flags[i] = float64(v) > operand
-	// 	case float32:
-	// 		flags[i] = float64(v) > operand
-	// 	case float64:
-	// 		flags[i] = v > operand
-	// 	default:
-	// 		flags[i] = false
-	// 	}
-	// }
-
-	// return flags
-	return c.compareWithItems(func(v interface{}) bool {
+	for i, v := range c.items {
 		switch v := v.(type) {
 		case int:
-			return float64(v) > operand
+			flags[i] = float64(v) > operand
 		case int8:
-			return float64(v) > operand
+			flags[i] = float64(v) > operand
 		case int16:
-			return float64(v) > operand
+			flags[i] = float64(v) > operand
 		case int32:
-			return float64(v) > operand
+			flags[i] = float64(v) > operand
 		case int64:
-			return float64(v) > operand
+			flags[i] = float64(v) > operand
 		case float32:
-			return float64(v) > operand
+			flags[i] = float64(v) > operand
 		case float64:
-			return v > operand
+			flags[i] = v > operand
 		default:
-			return false
+			flags[i] = false
 		}
-	})
-}
-
-// Utility to run comparison methods faster on the given items
-func (c *Column) compareWithItems(compare comparator) filterType {
-	type boolTuple struct {i int; v bool}
-	count := len(c.items)
-	flags := make(filterType, count)	
-	n := 3 // runtime.GOMAXPROCS(0)
-	// if n < 1 {
-	// 	n = 1
-	// }
-	// each interface{} is about 16 bytes
-	assumedCacheLineSize := 64
-	portionSize := int(assumedCacheLineSize / 16)
-	queue := make(chan boolTuple, count)
-
-	// one goroutine for each process, to utilize the cache to the max
-	// https://appliedgo.net/concurrencyslower/
-	for i := 0; i < n; i++ {
-		// goroutines should not update global variables so as to avoid heap memory,
-		// but you can read them
-		// Split the array to the given portion size
-		start := i * portionSize
-		stop := int(math.Min(float64(start + portionSize), float64(count)))
-
-		if start >= count {
-			break
-		}
-
-		// create n or less goroutines
-		go func(start int, stop int, maxCount int, chn chan boolTuple) {
-			// each goroutine pushes to the channel a number of times equal to portionSize
-			for i := start; i < stop; i++ {
-				chn <- boolTuple{i: i, v: compare(c.items[i])}
-			}			
-		}(start, stop, count, queue)		
 	}
 
-	for i := 0; i < count; i++ {
-		t := <- queue
-		flags[t.i] = t.v		
-	}
-
-	return flags	
+	return flags
 }
-
-// // Returns an array of booleans corresponding in position to each item,
-// // true if item is greater than operand or else false
-// // The operand can reference a constant, or a Col
-// func (c *Column) GreaterThan(operand float64) filterType {
-// 	count := len(c.items)
-// 	flags := make(filterType, count)	
-// 	ch := make(chan boolTuple)
-// 	n := runtime.GOMAXPROCS(0)
-// 	portionSize := int(math.Ceil(float64(count)/float64(n)))
-
-// 	// one goroutine for each process, to utilize the cache to the max
-// 	// https://appliedgo.net/concurrencyslower/
-// 	for i := 0; i < n; i++ {
-// 		// goroutines should not update global variables so as to avoid heap memory,
-// 		// but can read them
-// 		startIndex := i * portionSize
-// 		stopIndex := startIndex + portionSize
-
-// 		go func(start int, stop int, maxCount int, chn chan boolTuple) {
-
-// 			for i := start; i < stop && i < maxCount; i++ {
-// 				switch v := c.items[i].(type) {
-// 				case int:
-// 					chn <- boolTuple{i: i, v: float64(v) > operand}
-// 				case int8:
-// 					chn <- boolTuple{i: i, v: float64(v) > operand}
-// 				case int16:
-// 					chn <- boolTuple{i: i, v: float64(v) > operand}
-// 				case int32:
-// 					chn <- boolTuple{i: i, v: float64(v) > operand}
-// 				case int64:
-// 					chn <- boolTuple{i: i, v: float64(v) > operand}
-// 				case float32:
-// 					chn <- boolTuple{i: i, v: float64(v) > operand}
-// 				case float64:
-// 					chn <- boolTuple{i: i, v: v > operand}
-// 				default:
-// 					chn <- boolTuple{i: i, v: false}
-// 				}
-// 			}
-			
-// 		}(startIndex, stopIndex, count, ch)
-		
-// 	}
-
-// 	for i := 0; i < count; i++ {
-// 		t := <- ch
-// 		flags[t.i] = t.v		
-// 	}	
-
-// 	return flags
-// }
 
 // Returns an array of booleans corresponding in position to each item,
 // true if item is greater than or equal to the operand or else false
