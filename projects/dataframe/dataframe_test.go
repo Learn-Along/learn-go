@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
+	"github.com/tobgu/qframe"
 )
 
 var (
@@ -48,7 +49,7 @@ func TestFromArray(t *testing.T)  {
 		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
 	}
 
-	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
+	colNames := df.ColumnNames()
 	if !utils.AreStringSliceEqual(colNames, expectedColNames){
 		t.Fatalf("cols expected: %v, got: %v", expectedColNames, colNames)
 	}
@@ -102,7 +103,7 @@ func TestFromMap(t *testing.T)  {
 		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
 	}
 
-	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
+	colNames := df.ColumnNames()
 	if !utils.AreStringSliceEqual(colNames, expectedColNames){
 		t.Fatalf("cols expected: %v, got: %v", expectedColNames, colNames)
 	}
@@ -150,40 +151,84 @@ func BenchmarkFromMap(b *testing.B)  {
 	// | v2 using qframe				| 9316 ns/op	        | 3304 B/op	      		 | 89 allocs/op			 | x        |
 }
 
-// // Insert should insert more records to the dataframe, overwriting any of the same key
-// func TestDataframe_Insert(t *testing.T)  {
-// 	df := Dataframe{
-// 		pkFields: primaryFields,
-// 		cols: map[string]*Column{},
-// 		index: map[interface{}]int{},
-// 		// pks: orderedMapType{},
-// 	}
+// Insert should insert more records to the dataframe, overwriting any of the same key
+func TestDataframe_Insert(t *testing.T)  {
+	df := Dataframe{
+		pkFields: primaryFields,
+		q: qframe.QFrame{},
+		index: map[string]int{},
+	}
 
-// 	// insert thrice, but still have the same data due to the primary keys...treat this like a db
-// 	df.Insert(dataArray)
-// 	df.Insert(dataArray)
-// 	df.Insert(dataArray)
+	// insert thrice, but still have the same data due to the primary keys...treat this like a db
+	df.Insert(dataArray)
+	df.Insert(dataArray)
+	df.Insert(dataArray)
 
-// 	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
-// 		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
-// 	}
+	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
+		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
+	}
 
-// 	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
-// 	if !utils.AreStringSliceEqual(colNames, expectedCols){
-// 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
-// 	}
+	colNames := df.ColumnNames()
+	if !utils.AreStringSliceEqual(colNames, expectedColNames){
+		t.Fatalf("cols expected: %v, got: %v", expectedColNames, colNames)
+	}
 
-// 	if !utils.AreStringSliceEqual(keys, df.Keys()) {
-// 		t.Fatalf("keys expected: %v, got: %v", keys, df.Keys())
-// 	}
+	if !utils.AreStringSliceEqual(keys, df.Keys()) {
+		t.Fatalf("keys expected: %v, got: %v", keys, df.Keys())
+	}
 
-// 	for _, col := range df.cols {
-// 		expectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name)
-// 		if !utils.AreSliceEqual(col.Items(), expectedItems){
-// 			t.Fatalf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items())
-// 		}
-// 	}
-// }
+	for _, config := range expectedColConfig {
+		expectedItems := utils.ExtractFieldFromMapList(dataArray, config.Name)
+		switch config.Type {
+		case IntType:
+			actualItems := df.q.MustIntView(config.Name).Slice()
+			for i := 0; i < len(expectedItems); i++ {
+				expected := expectedItems[i].(int)
+				got := actualItems[i]
+
+				if expected != got {
+					t.Fatalf("col '%s' items expected: %v, got %v", config.Name, expected, got)
+				}
+			}
+
+		case Float64Type:
+			actualItems := df.q.MustFloatView(config.Name).Slice()
+			for i := 0; i < len(expectedItems); i++ {
+				expected := expectedItems[i].(float64)
+				got := actualItems[i]
+
+				if expected != got {
+					t.Fatalf("col '%s' items expected: %v, got %v", config.Name, expected, got)
+				}
+			}
+
+		case BooleanType:
+			actualItems := df.q.MustBoolView(config.Name).Slice()
+			for i := 0; i < len(expectedItems); i++ {
+				expected := expectedItems[i].(bool)
+				got := actualItems[i]
+
+				if expected != got {
+					t.Fatalf("col '%s' items expected: %v, got %v", config.Name, expected, got)
+				}
+			}
+
+		case StringType:
+			actualItems := df.q.MustStringView(config.Name).Slice()
+			for i := 0; i < len(expectedItems); i++ {
+				expected := expectedItems[i].(string)
+				got := *actualItems[i]
+
+				if expected != got {
+					t.Fatalf("col '%s' items expected: %v, got %v", config.Name, expected, got)
+				}
+			}
+
+		default:
+			t.Fatalf("Unknown type %v", config.Type)			
+		}
+	}
+}
 
 // // Insert should add the new records at the end of the dtaframe,
 // // while initializing the values for the non-existing columns to nil or its equivalent
