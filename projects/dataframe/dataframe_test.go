@@ -1,6 +1,7 @@
 package dataframe
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
@@ -54,6 +55,24 @@ func TestFromArray(t *testing.T)  {
 
 	if !utils.AreStringSliceEqual(keys, df.Keys()) {
 		t.Fatalf("keys expected: %v, got: %v", keys, df.Keys())
+	}
+
+	records, err := df.ToArray()
+	if err != nil {
+		t.Fatalf("error on ToArray is: %s", err)
+	}
+
+	if len(records) != len(dataArray) {
+		t.Fatalf("expected number of records: %d, got %d", len(records), len(dataArray))
+	}
+
+	for i, record := range records {
+		for field, value := range record {
+			expected := dataArray[i][field]
+			if fmt.Sprintf("%v", expected) != fmt.Sprintf("%v", value) {
+				t.Fatalf("the record %d expected %s, got %s", i, expected, value)
+			}
+		}
 	}
 }
 

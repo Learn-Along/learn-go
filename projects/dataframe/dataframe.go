@@ -1,6 +1,8 @@
 package dataframe
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -166,7 +168,19 @@ func (d *Dataframe) Copy() (*Dataframe, error) {
 // Converts that dataframe into a slice of records (maps). If selectedFields is a non-empty slice 
 // the fields are limited only to the passed fields
 func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{}, error) {	
-	return nil, nil
+	w := new(bytes.Buffer)
+	err := d.q.ToJSON(w)
+	if err != nil {
+		return nil, err
+	}
+
+	var data []map[string]interface{}
+	err = json.Unmarshal(w.Bytes(), &data)
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
 }
 
 // Clears all the data held by the dataframe except the primary key fields
