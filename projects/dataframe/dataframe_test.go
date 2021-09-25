@@ -87,33 +87,68 @@ func BenchmarkFromArray(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | v1					    		| 8560 ns/op	    	| 2216 B/op	     		 | 50 allocs/op   		 | x  	   |
-	// | v2 using qframe				| 8975 ns/op	        | 3304 B/op	      		 | 89 allocs/op			 |         |
+	// | v1					    		| 8560 ns/op	    	| 2216 B/op	     		 | 50 allocs/op   		 |  	   |
+	// | v2 using qframe				| 8975 ns/op	        | 3304 B/op	      		 | 89 allocs/op			 | x       |
 }
 
-// // fromMap should create a dataframe from a map of maps
-// func TestFromMap(t *testing.T)  {
-// 	df, err := FromMap(dataMap, primaryFields)
-// 	if err != nil {
-// 		t.Fatalf("error is: %s", err)
-// 	}
+// fromMap should create a dataframe from a map of maps, the order is unpredictable
+func TestFromMap(t *testing.T)  {
+	df, err := FromMap(dataMap, primaryFields, expectedColConfig)
+	if err != nil {
+		t.Fatalf("error is: %s", err)
+	}
 
-// 	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
-// 		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
-// 	}
+	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
+		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
+	}
 
-// 	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
-// 	if !utils.AreStringSliceEqual(colNames, expectedCols){
-// 		t.Fatalf("cols expected: %v, got: %v", expectedCols, colNames)
-// 	}
+	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
+	if !utils.AreStringSliceEqual(colNames, expectedColNames){
+		t.Fatalf("cols expected: %v, got: %v", expectedColNames, colNames)
+	}
 
-// 	// since the map has disorganized order, we will sort them out first
-// 	expectedKeys := utils.SortStringSlice(keys, utils.ASC)
-// 	sortedKeys := utils.SortStringSlice(df.Keys(), utils.ASC)
-// 	if !utils.AreStringSliceEqual(expectedKeys, sortedKeys) {
-// 		t.Fatalf("keys expected: %v, got: %v", expectedKeys, sortedKeys)
-// 	}
-// }
+	expectedSortedKeys := utils.SortStringSlice(keys, utils.ASC)
+	sortedKeys := utils.SortStringSlice(df.Keys(), utils.ASC)
+	if !utils.AreStringSliceEqual(expectedSortedKeys, sortedKeys) {
+		t.Fatalf("keys expected: %v, got: %v", expectedSortedKeys, sortedKeys)
+	}
+
+	records, err := df.ToArray()
+	if err != nil {
+		t.Fatalf("error on ToArray is: %s", err)
+	}
+
+	if len(records) != len(dataArray) {
+		t.Fatalf("expected number of records: %d, got %d", len(records), len(dataArray))
+	}
+
+	for i, record := range records {
+		key := fmt.Sprintf("%s %s", record["first name"], record["last name"])
+		expectedRecord := dataMap[key]
+
+		for field, value := range record {
+			expected := expectedRecord[field]
+			if fmt.Sprintf("%v", expected) != fmt.Sprintf("%v", value) {
+				t.Fatalf("the record %d expected %s, got %s", i, expected, value)
+			}
+		}
+	}
+}
+
+func BenchmarkFromMap(b *testing.B)  {
+	for i := 0; i < b.N; i++ {
+		FromMap(dataMap, primaryFields, expectedColConfig)
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | v1					    		| 7214 ns/op	    	| 2212 B/op	     		 | 50 allocs/op 		 |  	   |
+	// | v2 using qframe				| 9316 ns/op	        | 3304 B/op	      		 | 89 allocs/op			 | x        |
+}
 
 // // Insert should insert more records to the dataframe, overwriting any of the same key
 // func TestDataframe_Insert(t *testing.T)  {

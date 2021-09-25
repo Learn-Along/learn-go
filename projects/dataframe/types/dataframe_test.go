@@ -92,6 +92,20 @@ func TestFromMap(t *testing.T)  {
 	}
 }
 
+func BenchmarkFromMap(b *testing.B)  {
+	for i := 0; i < b.N; i++ {
+		FromMap(dataMap, primaryFields)
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None					    	| 7214 ns/op	    	| 2212 B/op	     		 | 50 allocs/op 		 | x  	   |
+}
+
 // Insert should insert more records to the dataframe, overwriting any of the same key
 func TestDataframe_Insert(t *testing.T)  {
 	df := Dataframe{
