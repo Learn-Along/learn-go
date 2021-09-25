@@ -2,6 +2,7 @@ package types
 
 import (
 	"regexp"
+	"runtime"
 )
 
 const (
@@ -13,8 +14,11 @@ const (
 	ArrayType
 )
 
+var MAX_PROCS = runtime.GOMAXPROCS(0)
 
 type Datatype int
+
+// type boolTuple struct {i int; v bool}
 
 type Column struct {
 	Name string
@@ -111,6 +115,65 @@ func (c *Column) GreaterOrEquals(operand float64) filterType {
 
 	return flags
 }
+
+// // Same as @GreaterOrEquals but optimized to take advantage of multicore systems
+// func (c *Column) XGreaterOrEquals(operand float64) filterType {
+// 	count := len(c.items)
+// 	flags := make(filterType, count)
+// 	type pRange struct{start int; stop int}
+// 	queue := make(chan pRange)
+// 	results := make(chan boolTuple)
+// 	// For cache size of 64 KB, cache line of 64 B, and knowing that size of interface{} is 16 B
+// 	portionSize := 40
+
+// 	// create MAX_PROCS goroutines only 
+// 	for i := 0; i < MAX_PROCS; i++ {
+// 		go func (input chan pRange, output chan boolTuple)  {
+// 			for p := range input {
+// 				for index := p.start; index < p.stop; index++ {
+// 					switch v := c.items[index].(type) {
+// 					case int:
+// 						output <- boolTuple{i: index, v: float64(v) >= operand}
+// 					case int8:
+// 						output <- boolTuple{i: index, v: float64(v) >= operand}
+// 					case int16:
+// 						output <- boolTuple{i: index, v: float64(v) >= operand}
+// 					case int32:
+// 						output <- boolTuple{i: index, v: float64(v) >= operand}
+// 					case int64:
+// 						output <- boolTuple{i: index, v: float64(v) >= operand}
+// 					case float32:
+// 						output <- boolTuple{i: index, v: float64(v) >= operand}
+// 					case float64:
+// 						output <- boolTuple{i: index, v: v >= operand}
+// 					default:
+// 						output <- boolTuple{i: index, v: false}
+// 					}
+// 				}				
+// 			}			
+// 		}(queue, results)
+// 	}
+
+// 	// Sort of the scheduler the portions to pass to each goroutine
+// 	go func (output chan pRange)  {
+// 		for i := 0; i < count; i += portionSize {
+// 			stop := i + portionSize
+// 			if stop > count {
+// 				stop = count
+// 			}
+
+// 			output <- pRange{start: i, stop: stop}		
+// 		}
+// 		close(output)		
+// 	}(queue)
+
+// 	for i := 0; i < count; i++ {
+// 		r := <- results
+// 		flags[r.i] = r.v
+// 	}
+
+// 	return flags
+// }
 
 // Returns an array of booleans corresponding in position to each item,
 // true if item is less than operand or else false

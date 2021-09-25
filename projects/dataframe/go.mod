@@ -2,4 +2,7 @@ module github.com/learn-along/learn-go/projects/dataframe
 
 go 1.17
 
-require golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+require (
+	github.com/mauricelam/genny v0.0.0-20190320071652-0800202903e5 // indirect
+	github.com/tobgu/qframe v0.3.6 // indirect
+)

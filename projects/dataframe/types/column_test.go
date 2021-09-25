@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
+	"github.com/tobgu/qframe"
 )
 
 // insert for columns should fill any gaps in keys and Items with "", nil respectively
@@ -99,6 +100,103 @@ func BenchmarkColumn_GreaterOrEquals(b *testing.B)  {
 	// |--------------------------------|--------------------|-----------------------|-----------------------|---------|
 	// | None				    		| 871,616,373 ns/op	 | 97,562,900 B/op	     | 775,526 allocs/op     | x  	   |
 }
+
+// Filter with >= should return a slice of booleans where true is for values greater or equal to the value,
+// false is for otherwise
+func TestQFrame_GreaterOrEquals(t *testing.T)  {
+	operand := 2
+	colName := "hi"
+	df := qframe.New(map[string]interface{}{colName: []int{23, 10, 2, 69, 0, 67}})
+	expected := []int{23, 10, 2, 69, 67}
+	newDf := df.Filter(qframe.Filter{Column: colName, Comparator: ">=", Arg: operand})
+	col, err := newDf.IntView(colName)
+	if err != nil {
+		t.Fatalf("error on intview: %s", err)
+	}
+
+	output := col.Slice()
+
+	for i := 0; i < len(expected); i++ {
+		if output[i] != expected[i] {
+			t.Fatalf("index %d: expected: %v, got %v", i, expected[i], output[i])
+		}
+	}
+}
+
+func BenchmarkQFrame_GreaterOrEquals(b *testing.B)  {
+	numberOfItems := 9000000
+	items := make([]int, numberOfItems)
+
+	for i := 0; i < numberOfItems; i++ {
+		items[i] = i
+	}
+
+	f := qframe.New(map[string]interface{}{"COL1": items})
+
+	for i := 0; i < b.N; i++ {
+		f.Filter(qframe.Filter{Column: "COL1", Comparator: ">=", Arg: 1000})
+		// col, _ := newDf.IntView("COL1")
+		// col.Slice()
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 | memory 				 | allocations			 | Choice  |
+	// |--------------------------------|--------------------|-----------------------|-----------------------|---------|
+	// | None				    		| 38,577,437 ns/op	 | 45,185,974 B/op	     |  2 allocs/op          | x  	   |
+}
+
+// // XGreaterOrEquals should return a slice of booleans where true is for values greater or equal to the value,
+// // false is for otherwise
+// func TestColumn_XGreaterOrEquals(t *testing.T)  {
+// 	operand := 2
+// 	col := Column{Name: "hi", Dtype: StringType, items: map[int]interface{}{
+// 		0: 23.4, 1: 10, 2: 2, 3: 69, 4: 0.23, 5: 67}}
+// 	expected := filterType{true, true, true, true, false, true}
+// 	output := col.XGreaterOrEquals(float64(operand))
+
+// 	for i := 0; i < 6; i++ {
+// 		if output[i] != expected[i] {
+// 			t.Fatalf("index %d: expected: %v, got %v", i, expected[i], output[i])
+// 		}
+// 	}
+// }
+
+// func BenchmarkColumn_XGreaterOrEquals(b *testing.B)  {
+// 	items := map[int]interface{}{}
+// 	numberOfItems := 9000000
+
+// 	for i := 0; i < numberOfItems; i++ {
+// 		items[i] = i
+// 	}
+
+// 	col := Column{Name: "hi", Dtype: ObjectType, items: items}
+
+// 	for i := 0; i < b.N; i++ {
+// 		col.XGreaterOrEquals(1000)
+// 	}
+
+// 	// Results:
+// 	// ========
+// 	// benchtime=10s
+// 	// 
+// 	// | Change 						| time				 | memory 				 | allocations			 | Choice  |
+// 	// |--------------------------------|--------------------|-----------------------|-----------------------|---------|
+// 	// | NonX				    		| 871,616,373 ns/op	 | 97,562,900 B/op	     | 775,526 allocs/op     |  	   |
+// 	// | X								| 6,315,185,648 ns/op| 540,413,944 B/op	 	 | 4,653,417 allocs/op   | x       |
+// 	// portion size = 4, 9,536,656,396 ns/op	363,305,816 B/op	 3,102,418 allocs/op
+// 	// portion size = 20, 6,379,516,892 ns/op	221,575,688 B/op	 1,861,412 allocs/op
+// 	// portion size = 36, 7,710,833,247 ns/op	363,282,429 B/op	 3,102,308 allocs/op
+// 	// portion size = 40, 4,511,972,400 ns/op	221,576,900 B/op	 1,861,417 allocs/op
+// 	// portion size = 42, 5359138934 ns/op	274704190 B/op	 2326693 allocs/op
+// 	// portion size = 45, 5666726788 ns/op	274710688 B/op	 2326723 allocs/op
+// 	// portion size = 50, 5,698,110,606 ns/op	274,658,768 B/op	 2,326,475 allocs/op
+// 	// portion size = 400, 5,610,789,320 ns/op	274,702,634 B/op	 2,326,686 allocs/op
+// 	// portion size = 4000, 7,120,493,393 ns/op	363,237,666 B/op	 3,102,092 allocs/op
+// }
+
 
 // LessThan should return a slice of booleans where true is for values less than the value,
 // false is for otherwise

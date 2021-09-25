@@ -54,6 +54,20 @@ func TestFromArray(t *testing.T)  {
 	}
 }
 
+func BenchmarkFromArray(b *testing.B)  {
+	for i := 0; i < b.N; i++ {
+		FromArray(dataArray, primaryFields)
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 8560 ns/op	    	| 2216 B/op	     		 | 50 allocs/op   		 | x  	   |
+}
+
 // fromMap should create a dataframe from a map of maps
 func TestFromMap(t *testing.T)  {
 	df, err := FromMap(dataMap, primaryFields)
