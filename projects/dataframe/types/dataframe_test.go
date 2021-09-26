@@ -141,6 +141,25 @@ func TestDataframe_Insert(t *testing.T)  {
 	}
 }
 
+func BenchmarkDataframe_Insert(b *testing.B)  {
+	df, err := FromArray(dataArray[:1], primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.Insert(dataArray)
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 11225 ns/op	        | 904 B/op	      		 | 41 allocs/op			 | x 	   |
+}
+
 // Insert should add the new records at the end of the dtaframe,
 // while initializing the values for the non-existing columns to nil or its equivalent
 // for the other prexisting values

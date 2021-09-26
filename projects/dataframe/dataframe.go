@@ -44,6 +44,7 @@ type Dataframe struct {
 	pkFields []string
 	index map[string]int
 	fieldOrder []FieldConfig
+	columnOrder []string
 } 
 
 /*
@@ -60,7 +61,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 	noOfFields := len(fieldOrder)
 	numberOfRecords := len(records)
 	data := make(map[string]types.DataSlice, noOfFields)
-	columnOrder := make([]string, 0, noOfFields)
+	df.columnOrder = make([]string, 0, noOfFields)
 
 	for i, record := range records {
 		key, err := createKey(record, primaryFields)
@@ -74,43 +75,17 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 			df.index[key] = i
 		}
 
-		for _, fconfig := range fieldOrder {
-			switch fconfig.Type {
-			case IntType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]int, 0, numberOfRecords)
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]int), record[fconfig.Name].(int))
-			case Float64Type:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]float64, 0, numberOfRecords)
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]float64), record[fconfig.Name].(float64))
-			case StringType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]string, 0, numberOfRecords)	
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]string), record[fconfig.Name].(string))
-			case BooleanType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]bool, 0, numberOfRecords)	
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]bool), record[fconfig.Name].(bool))
-			default:
-				return nil, fmt.Errorf("'%v' dtype is unknown", fconfig.Type)	
-			}
+		err = addRecordToDataList(data, fieldOrder, numberOfRecords, record)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	for _, fconfig := range fieldOrder {
-		columnOrder = append(columnOrder, fconfig.Name)
+		df.columnOrder = append(df.columnOrder, fconfig.Name)
 	}
 
-	df.q = qframe.New(data, newqf.ColumnOrder(columnOrder...))
+	df.q = qframe.New(data, newqf.ColumnOrder(df.columnOrder...))
 	return &df, nil
 }
 
@@ -130,7 +105,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 	noOfFields := len(fieldOrder)
 	numberOfRecords := len(records)
 	data := make(map[string]types.DataSlice, noOfFields)
-	columnOrder := make([]string, 0, noOfFields)
+	df.columnOrder = make([]string, 0, noOfFields)
 
 	count := 0
 	for _, record := range records {
@@ -145,45 +120,19 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 			df.index[key] = count
 		}
 
-		for _, fconfig := range fieldOrder {
-			switch fconfig.Type {
-			case IntType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]int, 0, numberOfRecords)
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]int), record[fconfig.Name].(int))
-			case Float64Type:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]float64, 0, numberOfRecords)
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]float64), record[fconfig.Name].(float64))
-			case StringType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]string, 0, numberOfRecords)	
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]string), record[fconfig.Name].(string))
-			case BooleanType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]bool, 0, numberOfRecords)	
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]bool), record[fconfig.Name].(bool))
-			default:
-				return nil, fmt.Errorf("'%v' dtype is unknown", fconfig.Type)	
-			}
+		err = addRecordToDataList(data, fieldOrder, numberOfRecords, record)
+		if err != nil {
+			return nil, err
 		}
 
 		count++
 	}
 
 	for _, fconfig := range fieldOrder {
-		columnOrder = append(columnOrder, fconfig.Name)
+		df.columnOrder = append(df.columnOrder, fconfig.Name)
 	}
 
-	df.q = qframe.New(data, newqf.ColumnOrder(columnOrder...))
+	df.q = qframe.New(data, newqf.ColumnOrder(df.columnOrder...))
 	return &df, nil
 }
 
@@ -192,7 +141,6 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 func (d *Dataframe) Insert(records []map[string]interface{}) error {
 	noOfFields := len(d.fieldOrder)
 	data := make(map[string]types.DataSlice, noOfFields)
-	columnOrder := make([]string, 0, noOfFields)
 	allRecords, err := d.ToArray()
 	if err != nil {
 		return err
@@ -222,43 +170,49 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 
 		d.index[key] = i
 
-		for _, fconfig := range d.fieldOrder {
-			switch fconfig.Type {
-			case IntType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]int, 0, numberOfRecords)
-				}
+		err = addRecordToDataList(data, d.fieldOrder, numberOfRecords, record)
+		if err != nil {
+			return err
+		}		
+	}
 
-				data[fconfig.Name] = append(data[fconfig.Name].([]int), record[fconfig.Name].(int))
-			case Float64Type:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]float64, 0, numberOfRecords)
-				}
+	d.q = qframe.New(data, newqf.ColumnOrder(d.columnOrder...))
+	return nil
+}
 
-				data[fconfig.Name] = append(data[fconfig.Name].([]float64), record[fconfig.Name].(float64))
-			case StringType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]string, 0, numberOfRecords)	
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]string), record[fconfig.Name].(string))
-			case BooleanType:
-				if data[fconfig.Name] == nil {
-					data[fconfig.Name] = make([]bool, 0, numberOfRecords)	
-				}
-
-				data[fconfig.Name] = append(data[fconfig.Name].([]bool), record[fconfig.Name].(bool))
-			default:
-				return fmt.Errorf("'%v' dtype is unknown", fconfig.Type)	
+// Adds a record to a data map of DataSlice
+func addRecordToDataList(data map[string]types.DataSlice, fieldOrder []FieldConfig, finalColumnLength int, record map[string]interface{}) error {
+	for _, fconfig := range fieldOrder {
+		switch fconfig.Type {
+		case IntType:
+			if data[fconfig.Name] == nil {
+				data[fconfig.Name] = make([]int, 0, finalColumnLength)
 			}
+
+			data[fconfig.Name] = append(data[fconfig.Name].([]int), record[fconfig.Name].(int))
+		case Float64Type:
+			if data[fconfig.Name] == nil {
+				data[fconfig.Name] = make([]float64, 0, finalColumnLength)
+			}
+
+			data[fconfig.Name] = append(data[fconfig.Name].([]float64), record[fconfig.Name].(float64))
+		case StringType:
+			if data[fconfig.Name] == nil {
+				data[fconfig.Name] = make([]string, 0, finalColumnLength)	
+			}
+
+			data[fconfig.Name] = append(data[fconfig.Name].([]string), record[fconfig.Name].(string))
+		case BooleanType:
+			if data[fconfig.Name] == nil {
+				data[fconfig.Name] = make([]bool, 0, finalColumnLength)	
+			}
+
+			data[fconfig.Name] = append(data[fconfig.Name].([]bool), record[fconfig.Name].(bool))
+		default:
+			return fmt.Errorf("'%v' dtype is unknown", fconfig.Type)	
 		}
 	}
 
-	for _, fconfig := range d.fieldOrder {
-		columnOrder = append(columnOrder, fconfig.Name)
-	}
-
-	d.q = qframe.New(data, newqf.ColumnOrder(columnOrder...))
 	return nil
 }
 
