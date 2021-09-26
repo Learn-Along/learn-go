@@ -43,6 +43,7 @@ type Dataframe struct {
 	q qframe.QFrame
 	pkFields []string
 	index map[string]int
+	fieldOrder []FieldConfig
 } 
 
 /*
@@ -55,7 +56,7 @@ type Dataframe struct {
 * - bool
  */
 func FromArray(records []map[string]interface{}, primaryFields []string, fieldOrder []FieldConfig) (*Dataframe, error) {
-	df := Dataframe{pkFields: primaryFields, index: map[string]int{}}
+	df := Dataframe{pkFields: primaryFields, index: map[string]int{}, fieldOrder: fieldOrder}
 	noOfFields := len(fieldOrder)
 	numberOfRecords := len(records)
 	data := make(map[string]types.DataSlice, noOfFields)
@@ -125,7 +126,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 * - bool
  */
  func FromMap(records map[interface{}]map[string]interface{}, primaryFields []string, fieldOrder []FieldConfig) (*Dataframe, error) {
-	df := Dataframe{pkFields: primaryFields, index: map[string]int{}}
+	df := Dataframe{pkFields: primaryFields, index: map[string]int{}, fieldOrder: fieldOrder}
 	noOfFields := len(fieldOrder)
 	numberOfRecords := len(records)
 	data := make(map[string]types.DataSlice, noOfFields)
@@ -189,6 +190,75 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 // Inserts items passed as a list of maps into the Dataframe,
 // It will overwrite any record whose primary field values match with the new records
 func (d *Dataframe) Insert(records []map[string]interface{}) error {
+	noOfFields := len(d.fieldOrder)
+	data := make(map[string]types.DataSlice, noOfFields)
+	columnOrder := make([]string, 0, noOfFields)
+	allRecords, err := d.ToArray()
+	if err != nil {
+		return err
+	}
+
+	for _, record := range records {
+		key, err := createKey(record, d.pkFields)
+		if err != nil {
+			return err
+		}
+
+		if pos, ok := d.index[key]; ok {
+			// overwrite
+			allRecords[pos] = record
+		} else {
+			allRecords = append(allRecords, record)
+		}		
+	}
+
+	numberOfRecords := len(allRecords)
+
+	for i, record := range allRecords {
+		key, err := createKey(record, d.pkFields)
+		if err != nil {
+			return fmt.Errorf("error creating key: %s", err)
+		}
+
+		d.index[key] = i
+
+		for _, fconfig := range d.fieldOrder {
+			switch fconfig.Type {
+			case IntType:
+				if data[fconfig.Name] == nil {
+					data[fconfig.Name] = make([]int, 0, numberOfRecords)
+				}
+
+				data[fconfig.Name] = append(data[fconfig.Name].([]int), record[fconfig.Name].(int))
+			case Float64Type:
+				if data[fconfig.Name] == nil {
+					data[fconfig.Name] = make([]float64, 0, numberOfRecords)
+				}
+
+				data[fconfig.Name] = append(data[fconfig.Name].([]float64), record[fconfig.Name].(float64))
+			case StringType:
+				if data[fconfig.Name] == nil {
+					data[fconfig.Name] = make([]string, 0, numberOfRecords)	
+				}
+
+				data[fconfig.Name] = append(data[fconfig.Name].([]string), record[fconfig.Name].(string))
+			case BooleanType:
+				if data[fconfig.Name] == nil {
+					data[fconfig.Name] = make([]bool, 0, numberOfRecords)	
+				}
+
+				data[fconfig.Name] = append(data[fconfig.Name].([]bool), record[fconfig.Name].(bool))
+			default:
+				return fmt.Errorf("'%v' dtype is unknown", fconfig.Type)	
+			}
+		}
+	}
+
+	for _, fconfig := range d.fieldOrder {
+		columnOrder = append(columnOrder, fconfig.Name)
+	}
+
+	d.q = qframe.New(data, newqf.ColumnOrder(columnOrder...))
 	return nil
 }
 

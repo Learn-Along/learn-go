@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
-	"github.com/tobgu/qframe"
 )
 
 var (
@@ -153,10 +152,9 @@ func BenchmarkFromMap(b *testing.B)  {
 
 // Insert should insert more records to the dataframe, overwriting any of the same key
 func TestDataframe_Insert(t *testing.T)  {
-	df := Dataframe{
-		pkFields: primaryFields,
-		q: qframe.QFrame{},
-		index: map[string]int{},
+	df, err := FromArray(dataArray[:1], primaryFields, expectedColConfig)
+	if err != nil {
+		t.Fatalf("error creating df: %s", err)
 	}
 
 	// insert thrice, but still have the same data due to the primary keys...treat this like a db
