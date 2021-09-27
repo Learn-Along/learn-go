@@ -695,6 +695,116 @@ func TestDataframe_Update(t *testing.T)  {
 	}
 }
 
+func BenchmarkDataframe_Update_GreaterThan(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkUpdate(
+		df, 
+		df.Col("age").LessOrEquals(33), 
+		map[string]interface{}{"location": "Kapchorwa", "new field": "yay", "age": 16},
+		b,
+	)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 12150 ns/op	    	| 1400 B/op	      		 | 60 allocs/op		 	 | x	   |
+}
+
+func BenchmarkDataframe_Update_IsLike(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkUpdate(
+		df, 
+		df.Col("last name").IsLike(regexp.MustCompile("oe$")),
+		map[string]interface{}{"first name": "Hen", "age": 20,},
+		b,
+	)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 9061 ns/op	    	| 1048 B/op	      		 | 46 allocs/op		 	 | x	   |
+}
+
+func BenchmarkDataframe_Update_AND(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkUpdate(
+		df, 
+		AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)), 
+		map[string]interface{}{"age": 87},
+		b,
+	)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 14352 ns/op	    	| 1768 B/op	      		 | 63 allocs/op		 	 | x	   |
+}
+
+func BenchmarkDataframe_Update_OR(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkUpdate(
+		df, 
+		OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)), 
+		map[string]interface{}{"last name": "Rigobertha", "age": 73},
+		b,
+	)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 12275 ns/op	    	| 1400 B/op	      		 | 60 allocs/op			 | x	   |
+}
+
+func BenchmarkDataframe_Update_NOT(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkUpdate(
+		df,
+		NOT(df.Col("location").Equals("Kampala")), 
+		map[string]interface{}{"location": "Nebbi"},
+		b,
+	)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 13545 ns/op	    	| 1512 B/op	      		 | 61 allocs/op			 | x 	   |
+}
+
 // Select should be able to query data allowing for selection of fields,
 // sorting, grouping, filtering, applying etc.
 func TestDataframe_Select(t *testing.T)  {
@@ -812,6 +922,127 @@ func TestDataframe_Select(t *testing.T)  {
 	}
 }
 
+func BenchmarkDataframe_Select_Apply(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.Select("age", "first name", "last name", "date").Apply(
+			df.Col("age").Tx(func(v interface{}) interface{} {return v.(int) * 8}),
+			df.Col("first name").Tx(func(v interface{}) interface{} { return fmt.Sprintf("name is %s", v) }),
+		).Execute()
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+}
+
+func BenchmarkDataframe_Select_Sortby(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.Select("age", "first name", "last name", "location").SortBy(
+			df.Col("last name").Order(ASC),
+			df.Col("age").Order(DESC),                
+		).Execute()
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+}
+
+func BenchmarkDataframe_Select_Groupby(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.Select("age", "last name", "first name").GroupBy("last name").Agg(
+			df.Col("age").Agg(MEAN),
+			df.Col("location").Agg(func(arr []interface{}) interface{}{return "random"}),
+		).Execute()
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+}
+
+func BenchmarkDataframe_Select_Where(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.Select().Where(
+			AND(
+				OR(
+					df.Col("age").LessThan(20),
+					df.Col("last name").IsLike(regexp.MustCompile("^(?i)roe$")),
+				),
+				df.Col("location").Equals("Kampala"),
+			),
+		).Execute()
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+
+}
+
+func BenchmarkDataframe_Select_All_Combined(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.Select("age", "last name").Where(
+			df.Col("age").GreaterOrEquals(30),
+		).GroupBy("last name").Agg(
+			df.Col("age").Agg(SUM),
+		).SortBy(
+			df.Col("age").Order(DESC),
+		).Apply(
+			df.Col("age").Tx(func(v interface{}) interface{} {return fmt.Sprintf("total: %v", v)}),
+		).Execute()
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+
+}
 
 // Clear should clear all the cols, index and pks
 func TestDataframe_Clear(t *testing.T)  {
@@ -945,6 +1176,25 @@ func TestDataframe_Copy(t *testing.T)  {
 	}
 }
 
+func BenchmarkDataframe_Copy(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.Copy()
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+}
+
 // Merge combines into the given dataframe, the dataframes passed, overwriting any records that
 // have the same primary key value
 func TestDataframe_Merge(t *testing.T)  {
@@ -985,6 +1235,30 @@ func TestDataframe_Merge(t *testing.T)  {
 	if !utils.AreStringSliceEqual(keys, df1.Keys()) {
 		t.Fatalf("keys expected: %v, got: %v", keys, df1.Keys())
 	}
+}
+
+func BenchmarkDataframe_Merge(b *testing.B)  {
+	df1, err := FromArray(dataArray[:1], primaryFields)
+	if err != nil {
+		b.Fatalf("df1 error is: %s", err)
+	}
+
+	df2, err := FromArray(dataArray[1:3], primaryFields)
+	if err != nil {
+		b.Fatalf("df2 error is: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df1.Merge(df2)
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
 }
 
 // The PrettyPrintRecords method prints out the records in a pretty format
@@ -1039,6 +1313,13 @@ func ExampleDataframe_PrettyPrintRecords()  {
 func benchmarkDelete(df *Dataframe, filter filterType, b *testing.B)  {
 	for i := 0; i < b.N; i++ {
 		df.Delete(filter)
+		df.Insert(dataArray)
+	}
+}
+
+func benchmarkUpdate(df *Dataframe, filter filterType, data map[string]interface{}, b *testing.B)  {
+	for i := 0; i < b.N; i++ {
+		df.Update(filter, data)
 		df.Insert(dataArray)
 	}
 }
