@@ -487,6 +487,91 @@ func TestDataframe_DeleteReinsert(t *testing.T)  {
 	}
 }
 
+func BenchmarkDataframe_Delete_GreaterThan(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkDelete(df, df.Col("age").GreaterThan(33), b)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 12150 ns/op	    	| 1400 B/op	      		 | 60 allocs/op		 	 | x	   |
+}
+
+func BenchmarkDataframe_Delete_IsLike(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkDelete(df, df.Col("last name").IsLike(regexp.MustCompile("oe$")), b)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 9061 ns/op	    	| 1048 B/op	      		 | 46 allocs/op		 	 | x	   |
+}
+
+func BenchmarkDataframe_Delete_AND(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkDelete(df, AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)), b)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 14352 ns/op	    	| 1768 B/op	      		 | 63 allocs/op		 	 | x	   |
+}
+
+func BenchmarkDataframe_Delete_OR(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkDelete(df, OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)), b)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 12275 ns/op	    	| 1400 B/op	      		 | 60 allocs/op			 | x	   |
+}
+
+func BenchmarkDataframe_Delete_NOT(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	benchmarkDelete(df, NOT(df.Col("location").Equals("Kampala")), b)
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 13545 ns/op	    	| 1512 B/op	      		 | 61 allocs/op			 | x 	   |
+}
+
 // Update should update any records that fulfill a given condition,
 // however, the primary keys should not be touched
 // and any unknown columns are just added to all records, defaulting to nil for the rest
@@ -949,4 +1034,11 @@ func ExampleDataframe_PrettyPrintRecords()  {
 	// 		"location": "Kampala"
 	// 	}
 	// ]
+}
+
+func benchmarkDelete(df *Dataframe, filter filterType, b *testing.B)  {
+	for i := 0; i < b.N; i++ {
+		df.Delete(filter)
+		df.Insert(dataArray)
+	}
 }

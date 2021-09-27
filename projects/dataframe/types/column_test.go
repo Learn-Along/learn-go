@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
-	"github.com/tobgu/qframe"
 )
 
 // insert for columns should fill any gaps in keys and Items with "", nil respectively
@@ -101,52 +100,6 @@ func BenchmarkColumn_GreaterOrEquals(b *testing.B)  {
 	// | None				    		| 871,616,373 ns/op	 | 97,562,900 B/op	     | 775,526 allocs/op     | x  	   |
 }
 
-// Filter with >= should return a slice of booleans where true is for values greater or equal to the value,
-// false is for otherwise
-func TestQFrame_GreaterOrEquals(t *testing.T)  {
-	operand := 2
-	colName := "hi"
-	df := qframe.New(map[string]interface{}{colName: []int{23, 10, 2, 69, 0, 67}})
-	expected := []int{23, 10, 2, 69, 67}
-	newDf := df.Filter(qframe.Filter{Column: colName, Comparator: ">=", Arg: operand})
-	col, err := newDf.IntView(colName)
-	if err != nil {
-		t.Fatalf("error on intview: %s", err)
-	}
-
-	output := col.Slice()
-
-	for i := 0; i < len(expected); i++ {
-		if output[i] != expected[i] {
-			t.Fatalf("index %d: expected: %v, got %v", i, expected[i], output[i])
-		}
-	}
-}
-
-func BenchmarkQFrame_GreaterOrEquals(b *testing.B)  {
-	numberOfItems := 9000000
-	items := make([]int, numberOfItems)
-
-	for i := 0; i < numberOfItems; i++ {
-		items[i] = i
-	}
-
-	f := qframe.New(map[string]interface{}{"COL1": items})
-
-	for i := 0; i < b.N; i++ {
-		f.Filter(qframe.Filter{Column: "COL1", Comparator: ">=", Arg: 1000})
-		// col, _ := newDf.IntView("COL1")
-		// col.Slice()
-	}
-
-	// Results:
-	// ========
-	// benchtime=10s
-	// 
-	// | Change 						| time				 | memory 				 | allocations			 | Choice  |
-	// |--------------------------------|--------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 38,577,437 ns/op	 | 45,185,974 B/op	     |  2 allocs/op          | x  	   |
-}
 
 // // XGreaterOrEquals should return a slice of booleans where true is for values greater or equal to the value,
 // // false is for otherwise
