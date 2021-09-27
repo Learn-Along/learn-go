@@ -180,42 +180,6 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 	return nil
 }
 
-// Adds a record to a data map of DataSlice
-func addRecordToDataList(data map[string]types.DataSlice, fieldOrder []FieldConfig, finalColumnLength int, record map[string]interface{}) error {
-	for _, fconfig := range fieldOrder {
-		switch fconfig.Type {
-		case IntType:
-			if data[fconfig.Name] == nil {
-				data[fconfig.Name] = make([]int, 0, finalColumnLength)
-			}
-
-			data[fconfig.Name] = append(data[fconfig.Name].([]int), record[fconfig.Name].(int))
-		case Float64Type:
-			if data[fconfig.Name] == nil {
-				data[fconfig.Name] = make([]float64, 0, finalColumnLength)
-			}
-
-			data[fconfig.Name] = append(data[fconfig.Name].([]float64), record[fconfig.Name].(float64))
-		case StringType:
-			if data[fconfig.Name] == nil {
-				data[fconfig.Name] = make([]string, 0, finalColumnLength)	
-			}
-
-			data[fconfig.Name] = append(data[fconfig.Name].([]string), record[fconfig.Name].(string))
-		case BooleanType:
-			if data[fconfig.Name] == nil {
-				data[fconfig.Name] = make([]bool, 0, finalColumnLength)	
-			}
-
-			data[fconfig.Name] = append(data[fconfig.Name].([]bool), record[fconfig.Name].(bool))
-		default:
-			return fmt.Errorf("'%v' dtype is unknown", fconfig.Type)	
-		}
-	}
-
-	return nil
-}
-
 // Deletes the items that fulfill the filters
 func (d *Dataframe) Delete(filter internal.FilterType) error {
 	return nil
@@ -250,8 +214,14 @@ func (d *Dataframe) Copy() (*Dataframe, error) {
 // Converts that dataframe into a slice of records (maps). If selectedFields is a non-empty slice 
 // the fields are limited only to the passed fields
 func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{}, error) {	
+	q := d.q 
+
+	if len(selectedFields) > 0 {
+		q = d.q.Select(selectedFields...)
+	}
+	
 	w := new(bytes.Buffer)
-	err := d.q.ToJSON(w)
+	err := q.ToJSON(w)
 	if err != nil {
 		return nil, err
 	}
@@ -310,4 +280,41 @@ func createKey(record map[string]interface{}, primaryFields []string) (string, e
 	}
 	
 	return strings.TrimRight(key, separator), nil
+}
+
+
+// Adds a record to a data map of DataSlice
+func addRecordToDataList(data map[string]types.DataSlice, fieldOrder []FieldConfig, finalColumnLength int, record map[string]interface{}) error {
+	for _, fconfig := range fieldOrder {
+		switch fconfig.Type {
+		case IntType:
+			if data[fconfig.Name] == nil {
+				data[fconfig.Name] = make([]int, 0, finalColumnLength)
+			}
+
+			data[fconfig.Name] = append(data[fconfig.Name].([]int), record[fconfig.Name].(int))
+		case Float64Type:
+			if data[fconfig.Name] == nil {
+				data[fconfig.Name] = make([]float64, 0, finalColumnLength)
+			}
+
+			data[fconfig.Name] = append(data[fconfig.Name].([]float64), record[fconfig.Name].(float64))
+		case StringType:
+			if data[fconfig.Name] == nil {
+				data[fconfig.Name] = make([]string, 0, finalColumnLength)	
+			}
+
+			data[fconfig.Name] = append(data[fconfig.Name].([]string), record[fconfig.Name].(string))
+		case BooleanType:
+			if data[fconfig.Name] == nil {
+				data[fconfig.Name] = make([]bool, 0, finalColumnLength)	
+			}
+
+			data[fconfig.Name] = append(data[fconfig.Name].([]bool), record[fconfig.Name].(bool))
+		default:
+			return fmt.Errorf("'%v' dtype is unknown", fconfig.Type)	
+		}
+	}
+
+	return nil
 }

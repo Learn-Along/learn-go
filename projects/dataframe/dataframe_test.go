@@ -276,41 +276,41 @@ func TestDataframe_ToArray(t *testing.T)  {
 	}
 }
 
-// // ToArray should convert the data into an array. If string args are passed,
-// // the values have the specified fields only
-// func TestDataframe_ToArrayWithArgs(t *testing.T)  {
-// 	fields := []string{"age", "location"}
-// 	excludedFields := []string{"last name", "first name"}
+// ToArray should convert the data into an array. If string args are passed,
+// the values have the specified fields only
+func TestDataframe_ToArrayWithArgs(t *testing.T)  {
+	fields := []string{"age", "location"}
+	excludedFields := []string{"last name", "first name"}
 
-// 	df, err := FromArray(dataArray, primaryFields)
-// 	if err != nil {
-// 		t.Fatalf("df error is: %s", err)
-// 	}
+	df, err := FromArray(dataArray, primaryFields, expectedColConfig)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
 
-// 	records, err := df.ToArray(fields...)
-// 	if err != nil {
-// 		t.Fatalf("error on ToArray is: %s", err)
-// 	}
+	records, err := df.ToArray(fields...)
+	if err != nil {
+		t.Fatalf("error on ToArray is: %s", err)
+	}
 
-// 	if len(records) != len(dataArray) {
-// 		t.Fatalf("expected number of records: %d, got %d", len(records), len(dataArray))
-// 	}
+	if len(records) != len(dataArray) {
+		t.Fatalf("expected number of records: %d, got %d", len(records), len(dataArray))
+	}
 
-// 	for i, record := range records {
-// 		for field, value := range record {
-// 			expected := dataArray[i][field]
-// 			if expected != value {
-// 				t.Fatalf("the record %d expected %v, got %v", i, expected, value)
-// 			}
-// 		}
+	for i, record := range records {
+		for field, value := range record {
+			expected := dataArray[i][field]
+			if fmt.Sprintf("%v", expected) != fmt.Sprintf("%v", value) {
+				t.Fatalf("the record %d expected %v, got %v", i, expected, value)
+			}
+		}
 
-// 		for _, excludedField := range excludedFields {
-// 			if _, exists := record[excludedField]; exists {
-// 				t.Fatalf("excluded field %v has been included in \n %v", excludedField, record)
-// 			}
-// 		}
-// 	}
-// }
+		for _, excludedField := range excludedFields {
+			if _, exists := record[excludedField]; exists {
+				t.Fatalf("excluded field %v has been included in \n %v", excludedField, record)
+			}
+		}
+	}
+}
 
 // // Delete should delete any records that fulfill a given condition
 // func TestDataframe_Delete(t *testing.T)  {
