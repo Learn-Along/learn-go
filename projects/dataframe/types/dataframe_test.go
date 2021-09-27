@@ -714,7 +714,7 @@ func BenchmarkDataframe_Update_GreaterThan(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 12150 ns/op	    	| 1400 B/op	      		 | 60 allocs/op		 	 | x	   |
+	// | None				    		| 13711 ns/op	    	| 1248 B/op	      		 | 47 allocs/op		 	 | x	   |
 }
 
 func BenchmarkDataframe_Update_IsLike(b *testing.B)  {
@@ -736,7 +736,7 @@ func BenchmarkDataframe_Update_IsLike(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 9061 ns/op	    	| 1048 B/op	      		 | 46 allocs/op		 	 | x	   |
+	// | None				    		| 11797 ns/op	    	| 1248 B/op	      		 | 47 allocs/op	 	 	 | x	   |
 }
 
 func BenchmarkDataframe_Update_AND(b *testing.B)  {
@@ -758,7 +758,7 @@ func BenchmarkDataframe_Update_AND(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 14352 ns/op	    	| 1768 B/op	      		 | 63 allocs/op		 	 | x	   |
+	// | None				    		| 10454 ns/op	    	| 1248 B/op	      		 | 47 allocs/op		 	 | x	   |
 }
 
 func BenchmarkDataframe_Update_OR(b *testing.B)  {
@@ -802,7 +802,7 @@ func BenchmarkDataframe_Update_NOT(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 13545 ns/op	    	| 1512 B/op	      		 | 61 allocs/op			 | x 	   |
+	// | None				    		| 10809 ns/op	    	| 1248 B/op	      		 | 47 allocs/op			 | x 	   |
 }
 
 // Select should be able to query data allowing for selection of fields,
@@ -941,7 +941,7 @@ func BenchmarkDataframe_Select_Apply(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+	// | None				    		| 25936 ns/op	    	| 8481 B/op	     		 | 133 allocs/op		 | x	   |
 }
 
 func BenchmarkDataframe_Select_Sortby(b *testing.B)  {
@@ -963,7 +963,7 @@ func BenchmarkDataframe_Select_Sortby(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+	// | None				    		| 39902 ns/op	   		| 12745 B/op	     	 | 195 allocs/op		 | x	   |
 }
 
 func BenchmarkDataframe_Select_Groupby(b *testing.B)  {
@@ -985,7 +985,7 @@ func BenchmarkDataframe_Select_Groupby(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+	// | None				    		| 49311 ns/op	   		| 16498 B/op	     	 | 273 allocs/op		 | x	   |
 }
 
 func BenchmarkDataframe_Select_Where(b *testing.B)  {
@@ -1012,7 +1012,7 @@ func BenchmarkDataframe_Select_Where(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+	// | None				    		| 25799 ns/op	    	| 8514 B/op	     		 | 141 allocs/op		 | x	   |
 
 }
 
@@ -1040,7 +1040,7 @@ func BenchmarkDataframe_Select_All_Combined(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+	// | None				    		| 49662 ns/op	   		| 18394 B/op	    	 | 298 allocs/op		 | x	   |
 
 }
 
@@ -1109,7 +1109,7 @@ func BenchmarkDataframe_Clear(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+	// | None				    		| 8699 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
 }
 
 // Copy should make a new Dataframe that resembles the dataframe but
@@ -1192,7 +1192,7 @@ func BenchmarkDataframe_Copy(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+	// | None				    		| 11789 ns/op	    	| 4384 B/op	      		 | 66 allocs/op		 	 | x	   |
 }
 
 // Merge combines into the given dataframe, the dataframes passed, overwriting any records that
@@ -1258,7 +1258,7 @@ func BenchmarkDataframe_Merge(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+	// | None				    		| 5967 ns/op	    	| 1240 B/op	      		 | 30 allocs/op			 | x	   |
 }
 
 // The PrettyPrintRecords method prints out the records in a pretty format
