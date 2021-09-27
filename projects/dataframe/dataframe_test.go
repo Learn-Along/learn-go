@@ -276,6 +276,26 @@ func TestDataframe_ToArray(t *testing.T)  {
 	}
 }
 
+func BenchmarkDataframe_ToArray(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields, expectedColConfig)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.ToArray()
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | v1					    		| 3915 ns/op	   		| 2168 B/op	     		 | 16 allocs/op			 |  	   |
+	// | v2 using qframe				| 28440 ns/op	    	| 5288 B/op	     		 | 162 allocs/op		 | x        |
+}
+
 // ToArray should convert the data into an array. If string args are passed,
 // the values have the specified fields only
 func TestDataframe_ToArrayWithArgs(t *testing.T)  {
@@ -310,6 +330,27 @@ func TestDataframe_ToArrayWithArgs(t *testing.T)  {
 			}
 		}
 	}
+}
+
+func BenchmarkDataframe_ToArrayWithArgs(b *testing.B)  {
+	fields := []string{"age", "location"}
+	df, err := FromArray(dataArray, primaryFields, expectedColConfig)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.ToArray(fields...)
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | v1					    		| 3413 ns/op	    	| 2168 B/op	      		 | 16 allocs/op			 |  	   |
+	// | v2 using qframe				| 17970 ns/op	    	| 4616 B/op	     		 | 101 allocs/op		 | x       |
 }
 
 // // Delete should delete any records that fulfill a given condition
