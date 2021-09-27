@@ -2,9 +2,11 @@ package dataframe
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
+	"github.com/tobgu/qframe"
 )
 
 var (
@@ -353,97 +355,97 @@ func BenchmarkDataframe_ToArrayWithArgs(b *testing.B)  {
 	// | v2 using qframe				| 17970 ns/op	    	| 4616 B/op	     		 | 101 allocs/op		 | x       |
 }
 
-// // Delete should delete any records that fulfill a given condition
-// func TestDataframe_Delete(t *testing.T)  {
-// 	df, err := FromArray(dataArray, primaryFields)
-// 	if err != nil {
-// 		t.Fatalf("df error is: %s", err)
-// 	}
+// Delete should delete any records that fulfill a given condition
+func TestDataframe_Delete(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields, expectedColConfig)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
 
-// 	type testRecord struct {
-// 		filter filterType;
-// 		expected []map[string]interface{};
-// 	}
+	type testRecord struct {
+		filter qframe.FilterClause;
+		expected []map[string]interface{};
+	}
 
-// 	testTable := []testRecord{
-// 		{
-// 			filter: df.Col("age").GreaterThan(33), 
-// 			expected: []map[string]interface{}{
-// 				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
-// 				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
-// 			},
-// 		},
-// 		{
-// 			filter: df.Col("last name").IsLike(regexp.MustCompile("oe$")), 
-// 			expected: []map[string]interface{}{},
-// 		},
-// 		{
-// 			filter: df.Col("last name").IsLike(regexp.MustCompile("D")), 
-// 			expected: []map[string]interface{}{
-// 				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
-// 				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
-// 				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
-// 			},
-// 		},
-// 		{
-// 			filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)), 
-// 			expected: []map[string]interface{}{
-// 				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
-// 				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
-// 				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
-// 				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
-// 				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
-// 			},
-// 		},
-// 		{
-// 			filter: OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)), 
-// 			expected: []map[string]interface{}{
-// 				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
-// 				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
-// 			},
-// 		},
-// 		{
-// 			filter: NOT(df.Col("location").Equals("Kampala")), 
-// 			expected: []map[string]interface{}{
-// 				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
-// 				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
-// 				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
-// 			},
-// 		},
-// 	}
+	testTable := []testRecord{
+		{
+			filter: df.Col("age").GreaterThan(33), 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+			},
+		},
+		{
+			filter: df.Col("last name").IsLike(regexp.MustCompile("oe$")), 
+			expected: []map[string]interface{}{},
+		},
+		{
+			filter: df.Col("last name").IsLike(regexp.MustCompile("D")), 
+			expected: []map[string]interface{}{
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+		{
+			filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)), 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+			},
+		},
+		{
+			filter: OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)), 
+			expected: []map[string]interface{}{
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+			},
+		},
+		{
+			filter: NOT(df.Col("location").Equals("Kampala")), 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+	}
 
-// 	for loop, tr := range testTable {
-// 		df.Clear()
+	for loop, tr := range testTable {
+		df.Clear()
 
-// 		df.Insert(dataArray)
-// 		if err != nil {
-// 			t.Fatalf("df error is: %s", err)
-// 		}
+		df.Insert(dataArray)
+		if err != nil {
+			t.Fatalf("df error is: %s", err)
+		}
 
-// 		err = df.Delete(tr.filter)
-// 		if err != nil {
-// 			t.Fatalf("df delete error is: %s", err)
-// 		}
+		err = df.Delete(tr.filter)
+		if err != nil {
+			t.Fatalf("df delete error is: %s", err)
+		}
 
-// 		records, err := df.ToArray()
-// 		if err != nil {
-// 			t.Fatalf("error on ToArray is: %s", err)
-// 		}
+		records, err := df.ToArray()
+		if err != nil {
+			t.Fatalf("error on ToArray is: %s", err)
+		}
 
-// 		if len(records) != len(tr.expected) {
-// 			t.Fatalf("loop %d, expected number of records: %d, got %d", loop, len(tr.expected), len(records))
-// 		}
+		if len(records) != len(tr.expected) {
+			t.Fatalf("loop %d, expected number of records: %d, got %d", loop, len(tr.expected), len(records))
+		}
 
-// 		for i, record := range records {
-// 			for field, value := range record {
-// 				expectedValue := tr.expected[i][field]
-// 				if expectedValue != value {
-// 					t.Fatalf("loop %d, the record %d expected %v, got %v, \n records: %v", loop, i, expectedValue, value, records)
-// 				}
-// 			}
-// 		}		
-// 	}
-// }
+		for i, record := range records {
+			for field, value := range record {
+				expectedValue := tr.expected[i][field]
+				if expectedValue != value {
+					t.Fatalf("loop %d, the record %d expected %v, got %v, \n records: %v", loop, i, expectedValue, value, records)
+				}
+			}
+		}		
+	}
+}
 
 // // Insert, delete, insert should update only those records that don't exist
 // func TestDataframe_DeleteReinsert(t *testing.T)  {
@@ -773,53 +775,64 @@ func BenchmarkDataframe_ToArrayWithArgs(b *testing.B)  {
 // }
 
 
-// // Clear should clear all the cols, index and pks
-// func TestDataframe_Clear(t *testing.T)  {
-// 	df, err := FromArray(dataArray, primaryFields)
-// 	if err != nil {
-// 		t.Fatalf("df error is: %s", err)
-// 	}
+// Clear should clear all the cols, index and pks
+func TestDataframe_Clear(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields, expectedColConfig)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
 
-// 	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
-// 		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
-// 	}
+	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
+		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
+	}
 
-// 	noOfColumns := len(df.ColumnNames())
-// 	if noOfColumns != noOfExpectedCols {
-// 		t.Fatalf("number of cols expected: %v, got: %v", noOfExpectedCols, noOfColumns)
-// 	}
+	noOfKeys := len(df.Keys())
+	if noOfKeys != noOfExpectedKeys  {
+		t.Fatalf("numer of keys expected: %v, got: %v", noOfExpectedKeys, noOfKeys)
+	}
 
-// 	noOfKeys := len(df.Keys())
-// 	if noOfKeys != noOfExpectedKeys  {
-// 		t.Fatalf("numer of keys expected: %v, got: %v", noOfExpectedKeys, noOfKeys)
-// 	}
+	indices := len(df.index)
+	if indices != noOfKeys {
+		t.Fatalf("number of indices expected: %v; got: %v", noOfKeys, indices)
+	}
 
-// 	indices := len(df.index)
-// 	if indices != noOfKeys {
-// 		t.Fatalf("number of indices expected: %v; got: %v", noOfKeys, indices)
-// 	}
+	df.Clear()
 
-// 	df.Clear()
+	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
+		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
+	}
 
-// 	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
-// 		t.Fatalf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
-// 	}
+	noOfKeys = len(df.Keys())
+	if noOfKeys != 0  {
+		t.Fatalf("number of keys expected: %v, got: %v", 0, noOfKeys)
+	}
 
-// 	noOfColumns = len(df.ColumnNames())
-// 	if noOfColumns != 0 {
-// 		t.Fatalf("number of cols expected: %v, got: %v", 0, noOfColumns)
-// 	}
+	indices = len(df.index)
+	if indices != 0 {
+		t.Fatalf("number of indices expected: %v; got: %v", 0, indices)
+	}
+}
 
-// 	noOfKeys = len(df.Keys())
-// 	if noOfKeys != 0  {
-// 		t.Fatalf("number of keys expected: %v, got: %v", 0, noOfKeys)
-// 	}
+func BenchmarkDataframe_Clear(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields, expectedColConfig)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
 
-// 	indices = len(df.index)
-// 	if indices != 0 {
-// 		t.Fatalf("number of indices expected: %v; got: %v", 0, indices)
-// 	}
-// }
+	for i := 0; i < b.N; i++ {
+		df.Clear()
+		df.Insert(dataArray)
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | v1					    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 |  	   |
+	// | v2 using qframe				| 14808 ns/op	    	| 5136 B/op	     		 | 144 allocs/op		 | x       |
+}
 
 // // Copy should make a new Dataframe that resembles the dataframe but
 // // has no reference to the items of the previous Dataframe

@@ -12,24 +12,23 @@ import (
 	"github.com/tobgu/qframe/config/newqf"
 )
 
-type View interface {
-	ItemAt(i int) bool
-	Len() int
-	Slice() []bool
-}
-
 //// external
 type FieldConfig struct {
 	Name string
 	Type Dtype
 }
 
-
 const (
 	IntType Dtype = iota
 	Float64Type
 	StringType
 	BooleanType
+)
+
+var (
+	AND = qframe.And
+	OR = qframe.Or
+	NOT = qframe.Not
 )
 
 type Dtype int
@@ -44,6 +43,7 @@ type Dataframe struct {
 	pkFields []string
 	index map[string]int
 	fieldOrder []FieldConfig
+	fieldTypeMap map[string]Dtype
 	columnOrder []string
 } 
 
@@ -57,7 +57,7 @@ type Dataframe struct {
 * - bool
  */
 func FromArray(records []map[string]interface{}, primaryFields []string, fieldOrder []FieldConfig) (*Dataframe, error) {
-	df := Dataframe{pkFields: primaryFields, index: map[string]int{}, fieldOrder: fieldOrder}
+	df := Dataframe{pkFields: primaryFields, index: map[string]int{}, fieldOrder: fieldOrder, fieldTypeMap: map[string]Dtype{}}
 	noOfFields := len(fieldOrder)
 	numberOfRecords := len(records)
 	data := make(map[string]types.DataSlice, noOfFields)
@@ -83,6 +83,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 
 	for _, fconfig := range fieldOrder {
 		df.columnOrder = append(df.columnOrder, fconfig.Name)
+		df.fieldTypeMap[fconfig.Name] = fconfig.Type
 	}
 
 	df.q = qframe.New(data, newqf.ColumnOrder(df.columnOrder...))
@@ -101,7 +102,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 * - bool
  */
  func FromMap(records map[interface{}]map[string]interface{}, primaryFields []string, fieldOrder []FieldConfig) (*Dataframe, error) {
-	df := Dataframe{pkFields: primaryFields, index: map[string]int{}, fieldOrder: fieldOrder}
+	df := Dataframe{pkFields: primaryFields, index: map[string]int{}, fieldOrder: fieldOrder, fieldTypeMap: map[string]Dtype{}}
 	noOfFields := len(fieldOrder)
 	numberOfRecords := len(records)
 	data := make(map[string]types.DataSlice, noOfFields)
@@ -130,6 +131,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string, fieldOr
 
 	for _, fconfig := range fieldOrder {
 		df.columnOrder = append(df.columnOrder, fconfig.Name)
+		df.fieldTypeMap[fconfig.Name] = fconfig.Type
 	}
 
 	df.q = qframe.New(data, newqf.ColumnOrder(df.columnOrder...))
@@ -181,12 +183,12 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 }
 
 // Deletes the items that fulfill the filters
-func (d *Dataframe) Delete(filter internal.FilterType) error {
+func (d *Dataframe) Delete(filter qframe.FilterClause) error {
 	return nil
 }
 
 // Updates the items that fulfill the given filters with the new value
-func (d *Dataframe) Update(filter internal.FilterType, value map[string]interface{}) error  {
+func (d *Dataframe) Update(filter qframe.FilterClause, value map[string]interface{}) error  {
 	return nil
 }
 
@@ -237,11 +239,67 @@ func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{},
 
 // Clears all the data held by the dataframe except the primary key fields
 func (d *Dataframe) Clear() {
+	d.index = map[string]int{}
+	data := make(map[string]types.DataSlice, len(d.fieldOrder))
+
+	for _, fconfig := range d.fieldOrder {
+		switch fconfig.Type {
+		case IntType:
+			data[fconfig.Name] = []int{}
+		case Float64Type:
+			data[fconfig.Name] = []float64{}
+		case StringType:
+			data[fconfig.Name] = []string{}
+		case BooleanType:
+			data[fconfig.Name] = []bool{}
+		}
+	}
+
+	d.q = qframe.New(data, newqf.ColumnOrder(d.columnOrder...))
 }
 
 // Gets the pointer to a given column, or creates it if it does not exist
-func (d *Dataframe) Col(name string) View {
-	return qframe.BoolView{}
+func (d *Dataframe) Col(name string) internal.Column {
+	dtype, ok := d.fieldTypeMap[name]
+	if !ok {
+		return nil
+	}
+
+	switch dtype {
+	case IntType:
+		col, err := internal.NewIntColumn(d.q, name)
+		if err != nil {
+			return nil
+		}
+
+		return col
+
+	case Float64Type:
+		col, err := internal.NewFloatColumn(d.q, name)
+		if err != nil {
+			return nil
+		}
+
+		return col
+
+	case StringType:
+		col, err := internal.NewStringColumn(d.q, name)
+		if err != nil {
+			return nil
+		}
+
+		return col
+
+	case BooleanType:
+		col, err := internal.NewBoolColumn(d.q, name)
+		if err != nil {
+			return nil
+		}
+
+		return col
+	}
+	
+	return nil
 }
 
 // Access method to return the keys in order

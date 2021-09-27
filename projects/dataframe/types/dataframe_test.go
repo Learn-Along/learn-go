@@ -776,6 +776,26 @@ func TestDataframe_Clear(t *testing.T)  {
 	}
 }
 
+func BenchmarkDataframe_Clear(b *testing.B)  {
+	df, err := FromArray(dataArray, primaryFields)
+	if err != nil {
+		b.Fatalf("error creating df: %s", err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		df.Clear()
+		df.Insert(dataArray)
+	}
+
+	// Results:
+	// ========
+	// benchtime=10s
+	// 
+	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
+	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
+	// | None				    		| 7827 ns/op	    	| 1704 B/op	     		 | 47 allocs/op			 | x	   |
+}
+
 // Copy should make a new Dataframe that resembles the dataframe but
 // has no reference to the items of the previous Dataframe
 func TestDataframe_Copy(t *testing.T)  {
