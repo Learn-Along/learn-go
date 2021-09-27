@@ -248,78 +248,33 @@ func BenchmarkDataframe_Insert(b *testing.B)  {
 	// | v2 using qframe				| 43102 ns/op	    	| 8465 B/op	     		 | 271 allocs/op		 | x        |
 }
 
-// // Insert should add the new records at the end of the dtaframe,
-// // while initializing the values for the non-existing columns to nil or its equivalent
-// // for the other prexisting values
-// func TestDataframe_InsertNonExistingCols(t *testing.T)  {
-// 	extraData := []map[string]interface{}{
-// 		{"first name": "Roy", "last name": "Roe", "address": "Nairobi" },
-// 		{"first name": "David", "last name": "Doe", "address": "Nairobi" },
-// 	}
-// 	allCols := utils.SortStringSlice(append(expectedCols, "address"), utils.ASC)
-// 	allKeys := append(keys, "Roy_Roe", "David_Doe")
 
-// 	df := Dataframe{
-// 		pkFields: primaryFields,
-// 		cols: map[string]*Column{},
-// 		index: map[interface{}]int{},
-// 		// pks: orderedMapType{},
-// 	}
+// ToArray should convert the data into an array. If no string args are passed,
+// the values have all the fields
+func TestDataframe_ToArray(t *testing.T)  {
+	df, err := FromArray(dataArray, primaryFields, expectedColConfig)
+	if err != nil {
+		t.Fatalf("df error is: %s", err)
+	}
 
-// 	// Insert the two sets of records
-// 	df.Insert(dataArray)
-// 	df.Insert(extraData)
+	records, err := df.ToArray()
+	if err != nil {
+		t.Fatalf("error on ToArray is: %s", err)
+	}
 
-// 	if !utils.AreStringSliceEqual(df.pkFields, primaryFields){
-// 		t.Errorf("pkFields expected: %v, got %v", primaryFields, df.pkFields)
-// 	}
+	if len(records) != len(dataArray) {
+		t.Fatalf("expected number of records: %d, got %d", len(records), len(dataArray))
+	}
 
-// 	colNames := utils.SortStringSlice(df.ColumnNames(), utils.ASC)
-// 	if !utils.AreStringSliceEqual(colNames, allCols){
-// 		t.Fatalf("cols expected: %v, got: %v", allCols, colNames)
-// 	}
-
-// 	if !utils.AreStringSliceEqual(allKeys, df.Keys()) {
-// 		t.Fatalf("keys expected: %v, got: %v", keys, df.Keys())
-// 	}
-
-// 	for _, col := range df.cols {
-// 		initialExpectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name)
-// 		extraExpectedItems := utils.ExtractFieldFromMapList(extraData, col.Name)
-// 		expectedItems := append(initialExpectedItems, extraExpectedItems...)
-
-// 		if !utils.AreSliceEqual(col.Items(), expectedItems){
-// 			t.Errorf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items())
-// 		}
-// 	}	
-// }
-
-// // ToArray should convert the data into an array. If no string args are passed,
-// // the values have all the fields
-// func TestDataframe_ToArray(t *testing.T)  {
-// 	df, err := FromArray(dataArray, primaryFields)
-// 	if err != nil {
-// 		t.Fatalf("df error is: %s", err)
-// 	}
-
-// 	records, err := df.ToArray()
-// 	if err != nil {
-// 		t.Fatalf("error on ToArray is: %s", err)
-// 	}
-
-// 	if len(records) != len(dataArray) {
-// 		t.Fatalf("expected number of records: %d, got %d", len(records), len(dataArray))
-// 	}
-
-// 	for i, record := range records {
-// 		for field, value := range record {
-// 			expected := dataArray[i][field]
-// 			if expected != value {
-// 				t.Fatalf("the record %d expected %v, got %v", i, expected, value)
-// 			}
-// 		}
-// 	}
-// }
+	for i, record := range records {
+		for field, value := range record {
+			expected := dataArray[i][field]
+			if fmt.Sprintf("%v", expected) != fmt.Sprintf("%v", value) {
+				t.Fatalf("the record %d expected %v, got %v", i, expected, value)
+			}
+		}
+	}
+}
 
 // // ToArray should convert the data into an array. If string args are passed,
 // // the values have the specified fields only
