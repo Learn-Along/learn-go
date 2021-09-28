@@ -19,159 +19,151 @@ var (
 type aggregation map[string]aggregateFunc
 
 // aggregation function to convert array of values into single value especially during grouping
-type aggregateFunc func([]interface{}) interface{}
+type aggregateFunc func(ItemSlice) Item
 
 
 // Aggregation function to get the maximum value in the list of values
-func getMax(values []interface{}) interface{} {
-	var a interface{} = nil
-
-	defer func() {
-		if r := recover(); r != nil {
-			a = nil
-		}
-	}()
-
-	for _, v := range values {
-		if v == nil { continue }
-		if a == nil { 
-			isStr := false
-			if a, isStr = v.(string); !isStr {
-				a = convertToFloat64(v)
+func getMax(values ItemSlice) Item {
+	switch records := values.(type) {
+	case []string:
+		var maxV string
+		for i, v := range records {
+			if maxV < v || i == 0 {
+				maxV = v
 			}
 		}
-		
-		switch v := v.(type) {
-		case int:				
-			if val := float64(v); a.(float64) < val { a = val }
-		case int8:
-			if val := float64(v); a.(float64) < val { a = val }
-		case int16:
-			if val := float64(v); a.(float64) < val { a = val }
-		case int32:
-			if val := float64(v); a.(float64) < val { a = val }
-		case int64:
-			if val := float64(v); a.(float64) < val { a = val }
-		case float32:
-			if val := float64(v); a.(float64) < val { a = val }
-		case float64:
-			if val := float64(v); a.(float64) < val { a = val }
-		case string:
-			if a.(string) < v { a = v }
-		}			
-	}
 
-	return a
+		return maxV
+
+	case []int:
+		var maxV int
+		for i, v := range records {
+			if maxV < v || i == 0 {
+				maxV = v
+			}
+		}
+
+		return maxV
+
+	case []float64:
+		var maxV float64
+		for i, v := range records {
+			if maxV < v || i == 0 {
+				maxV = v
+			}
+		}
+
+		return maxV
+
+	case []bool:
+		var maxV bool = false
+		for _, v := range records {
+			if v {
+				return true
+			}
+		}
+
+		return maxV
+
+	default:
+		return nil		
+	}
 }
 
 // Aggregation function to get the minimum value in the list of values
-func getMin(values []interface{}) interface{} {
-	var a interface{} = nil
-
-	defer func() {
-		if r := recover(); r != nil {
-			a = nil
-		}
-	}()
-
-	for _, v := range values {
-		if v == nil { continue }
-		if a == nil { 
-			isStr := false
-			if a, isStr = v.(string); !isStr {
-				a = convertToFloat64(v)
+func getMin(values ItemSlice) Item {
+	switch records := values.(type) {
+	case []string:
+		var minV string
+		for i, v := range records {
+			if minV > v || i == 0 {
+				minV = v
 			}
 		}
 
-		switch v := v.(type) {
-		case int:
-			if val := float64(v); a.(float64) > val { a = val }	
-		case int8:
-			if val := float64(v); a.(float64) > val { a = val }	
-		case int16:
-			if val := float64(v); a.(float64) > val { a = val }	
-		case int32:
-			if val := float64(v); a.(float64) > val { a = val }	
-		case int64:
-			if val := float64(v); a.(float64) > val { a = val }	
-		case float32:
-			if val := float64(v); a.(float64) > val { a = val }	
-		case float64:
-			if val := float64(v); a.(float64) > val { a = val }	
-		case string:
-			if a.(string) > v { a = v }
-		}			
+		return minV
+
+	case []int:
+		var minV int
+		for i, v := range records {
+			if minV > v || i == 0 {
+				minV = v
+			}
+		}
+
+		return minV
+
+	case []float64:
+		var minV float64
+		for i, v := range records {
+			if minV > v || i == 0 {
+				minV = v
+			}
+		}
+
+		return minV
+
+	case []bool:
+		var minV bool
+		for i, v := range records {
+			if i == 0 {
+				minV = v
+			}
+
+			if !v {
+				return false
+			}
+		}
+
+		return minV
+
+	default:
+		return nil		
 	}
 
-	return a
 }
 
 // Aggregation function to get the sum of the values
-func getSum(values []interface{}) interface{} {
-	var a interface{} = nil
-
-	defer func() {
-		if r := recover(); r != nil {
-			a = nil
-		}
-	}()
-
-	for _, v := range values {
-		if v == nil { continue }
-		if a == nil { 
-			a = convertToFloat64(v)
-			continue
+func getSum(values ItemSlice) Item {
+	switch records := values.(type) {
+	case []int:
+		var a int = 0
+		for _, v := range records {
+			a += v
 		}
 
-		switch v := v.(type) {
-		case int:
-			a = a.(float64) + float64(v)
-		case int8:
-			a = a.(float64) + float64(v)
-		case int16:
-			a = a.(float64) + float64(v)
-		case int32:
-			a = a.(float64) + float64(v)
-		case int64:
-			a = a.(float64) + float64(v)
-		case float32:
-			a = a.(float64) + float64(v)
-		case float64:
-			a = a.(float64) + float64(v)
-		default:
-			return nil
-		}			
+		return a
+
+	case []float64:
+		var a float64 = 0
+		for _, v := range records {
+			a += v
+		}
+
+		return a
+
+	default:
+		return nil		
 	}
-
-	return a
 }
 
 // Aggregation function to get the mean value in the list of values 
 // It returns nil if there are some nil values
-func getMean(values []interface{}) interface{} {
+func getMean(values ItemSlice) Item {
 	a := getSum(values)
 
-	defer func() {
-		if r := recover(); r != nil {
-			a = nil
-		}
-	}()
-
 	if a != nil {
-		count := float64(len(values))
+		var count float64 = 0
+
+		switch records := values.(type) {
+		case []float64:
+			count = float64(len(records))
+		case []int:
+			count = float64(len(records))
+		}
 
 		switch a := a.(type) {
 		case int:
-			return float64(a) / count
-		case int8:
-			return float64(a) / count
-		case int16:
-			return float64(a) / count
-		case int32:
-			return float64(a) / count
-		case int64:
-			return float64(a) / count
-		case float32:
 			return float64(a) / count
 		case float64:
 			return float64(a) / count
@@ -182,75 +174,57 @@ func getMean(values []interface{}) interface{} {
 }
 
 // Returns the number of items in the values array
-func getCount(values []interface{}) interface{} {
-	return len(values)
+func getCount(values ItemSlice) Item {
+	switch records := values.(type) {
+	case []float64:
+		return len(records)
+	case []int:
+		return len(records)
+	case []string:
+		return len(records)
+	case []bool:
+		return len(records)
+	}
+
+	return 0
 }
 
 // Returns the difference between the biggest and the smallest value in the values array,
 // if all values are numbers (or nil which are ignored), else it returns nil
-func getRange(values []interface{}) interface{} {
-	var max interface{} = nil
-	var min interface{} = nil
+func getRange(values ItemSlice) Item {
+	switch records := values.(type) {
+	case []int:
+		var max int
+		var min int 
 
-	defer func() {
-		if r := recover(); r != nil {
-			min = nil
-			max = nil
-		}
-	}()
+		for i, v := range records {
+			if max < v || i == 0 {
+				max = v
+			}
 
-	for _, v := range values {
-		if v == nil { continue }
-		if max == nil { 
-			isStr := false
-			if max, isStr = v.(string); !isStr {
-				max = convertToFloat64(v)
+			if min > v || i == 0 {
+				min = v
 			}
 		}
 
-		if min == nil { 
-			isStr := false
-			if min, isStr = v.(string); !isStr {
-				min = convertToFloat64(v)
+		return max - min
+
+	case []float64:
+		var max float64
+		var min float64 
+
+		for i, v := range records {
+			if max < v || i == 0 {
+				max = v
+			}
+
+			if min > v || i == 0 {
+				min = v
 			}
 		}
+
+		return max - min
 		
-		switch v := v.(type) {
-		case int:	
-			val := float64(v)
-			if max.(float64) < val { max = val }
-			if min.(float64) > val { min = val }
-		case int8:
-			val := float64(v)
-			if max.(float64) < val { max = val }
-			if min.(float64) > val { min = val }
-		case int16:
-			val := float64(v)
-			if max.(float64) < val { max = val }
-			if min.(float64) > val { min = val }
-		case int32:
-			val := float64(v)
-			if max.(float64) < val { max = val }
-			if min.(float64) > val { min = val }
-		case int64:
-			val := float64(v)
-			if max.(float64) < val { max = val }
-			if min.(float64) > val { min = val }
-		case float32:
-			val := float64(v)
-			if max.(float64) < val { max = val }
-			if min.(float64) > val { min = val }
-		case float64:
-			val := float64(v)
-			if max.(float64) < val { max = val }
-			if min.(float64) > val { min = val }
-		case string:
-			return nil
-		}			
-	}
-
-	if min != nil && max != nil {
-		return max.(float64) - min.(float64)
 	}
 
 	return nil
