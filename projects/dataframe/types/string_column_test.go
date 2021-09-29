@@ -315,7 +315,7 @@ func TestStringColumn_Equals(t *testing.T)  {
 		{
 			operand: -2, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "69", 4: "-2", 5: "67"},
-			expected: filterType{false, false, true, false, true, false},
+			expected: filterType{false, false, false, false, false, false},
 		},
 		{
 			operand: StringColumn{name: "foo", items: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
@@ -323,7 +323,7 @@ func TestStringColumn_Equals(t *testing.T)  {
 			expected: filterType{true, false, true, true, false, false},
 		},
 		{
-			operand: 0, 
+			operand: "0", 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
 			expected: filterType{false, false, false, false, true, false},
 		},
@@ -353,7 +353,7 @@ func BenchmarkStringColumn_Equals(b *testing.B)  {
 	col := StringColumn{name: "hi", items: items}
 
 	for i := 0; i < b.N; i++ {
-		col.Equals(1000)
+		col.Equals("1000")
 	}
 
 	// Results:
@@ -362,7 +362,7 @@ func BenchmarkStringColumn_Equals(b *testing.B)  {
 	// 
 	// | Change 						| time				  | memory 				  | allocations			  | Choice  |
 	// |--------------------------------|---------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 1,199,388,041 ns/op | 127101200 B/op	      | 1034124 allocs/op     | x  	    |
+	// | None				    		| 1,199,388,041 ns/op | 127,101,200 B/op	  | 103,4124 allocs/op    | x  	    |
 }
 
 
@@ -379,7 +379,7 @@ func TestStringColumn_IsLike(t *testing.T)  {
 		{
 			operand: regexp.MustCompile("(?i)^L"), 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{true, true, true, false, false, false},
+			expected: filterType{false, false, false, false, false, false},
 		},
 		{
 			operand: regexp.MustCompile(`^\d`), 
@@ -387,9 +387,9 @@ func TestStringColumn_IsLike(t *testing.T)  {
 			expected: filterType{true, true, true, true, true, true},
 		},
 		{
-			operand: regexp.MustCompile("^Duhaga"), 
+			operand: regexp.MustCompile("^69"), 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: filterType{false, false, false, true, false, false},
 		},
 	}
 
@@ -426,7 +426,7 @@ func BenchmarkStringColumn_IsLike(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				| allocations			| Choice  |
 	// |--------------------------------|-----------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 12,941,657,683 ns/op	| 287,952,280 B/op		| 27,307,263 allocs/op  | x  	  |
+	// | None 							| 5,173,150,662 ns/op	| 508,459,324 B/op		| 22,576,725 allocs/op  | x		  |
 }
 
 

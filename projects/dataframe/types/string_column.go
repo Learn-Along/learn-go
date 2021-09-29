@@ -220,27 +220,24 @@ func (c *StringColumn) Equals(operand LiteralOrColumn) filterType {
 	var operands []string
 
 	switch v := operand.(type) {
+	case string:
+		for i, v := range c.items {
+			flags[i] = v == operand
+		}	
+		return flags
+
 	case StringColumn:
 		operands = v.items.ToSlice().([]string)
-	default:
-		return flags
-	}
-
-	if operands != nil {
 		for i, op := range operands {
 			if v, ok := c.items[i]; ok {
 				flags[i] = v == op
 			}
 		}
-
 		return flags
-	}
 
-	for i, v := range c.items {
-		flags[i] = v == operand
-	}
-
-	return flags
+	default:
+		return flags
+	}	
 }
 
 // Returns an array of booleans corresponding in position to each item,
