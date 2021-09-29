@@ -110,9 +110,8 @@ func BenchmarkFromMap(b *testing.B)  {
 func TestDataframe_Insert(t *testing.T)  {
 	df := Dataframe{
 		pkFields: primaryFields,
-		cols: map[string]*Column{},
+		cols: map[string]Column{},
 		index: map[interface{}]int{},
-		// pks: orderedMapType{},
 	}
 
 	// insert thrice, but still have the same data due to the primary keys...treat this like a db
@@ -134,9 +133,9 @@ func TestDataframe_Insert(t *testing.T)  {
 	}
 
 	for _, col := range df.cols {
-		expectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name)
-		if !utils.AreSliceEqual(col.Items(), expectedItems){
-			t.Fatalf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items())
+		expectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name())
+		if !utils.AreSliceEqual(col.Items().([]interface{}), expectedItems){
+			t.Fatalf("col '%s' items expected: %v, got %v", col.Name(), expectedItems, col.Items())
 		}
 	}
 }
@@ -173,9 +172,8 @@ func TestDataframe_InsertNonExistingCols(t *testing.T)  {
 
 	df := Dataframe{
 		pkFields: primaryFields,
-		cols: map[string]*Column{},
+		cols: map[string]Column{},
 		index: map[interface{}]int{},
-		// pks: orderedMapType{},
 	}
 
 	// Insert the two sets of records
@@ -196,12 +194,12 @@ func TestDataframe_InsertNonExistingCols(t *testing.T)  {
 	}
 
 	for _, col := range df.cols {
-		initialExpectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name)
-		extraExpectedItems := utils.ExtractFieldFromMapList(extraData, col.Name)
+		initialExpectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name())
+		extraExpectedItems := utils.ExtractFieldFromMapList(extraData, col.Name())
 		expectedItems := append(initialExpectedItems, extraExpectedItems...)
 
-		if !utils.AreSliceEqual(col.Items(), expectedItems){
-			t.Errorf("col '%s' items expected: %v, got %v", col.Name, expectedItems, col.Items())
+		if !utils.AreSliceEqual(col.Items().([]interface{}), expectedItems){
+			t.Errorf("col '%s' items expected: %v, got %v", col.Name(), expectedItems, col.Items())
 		}
 	}	
 }
@@ -854,7 +852,7 @@ func TestDataframe_Select(t *testing.T)  {
 			q: df.Select("age", "last name", "first name").GroupBy("last name").Agg(
                 df.Col("age").Agg(MEAN),
 				// even a custom agggregate functions are possible
-                df.Col("location").Agg(func(arr []interface{}) interface{}{return "random"}),
+                df.Col("location").Agg(func(arr ItemSlice) Item {return "random"}),
             ), 
 			expected: []map[string]interface{}{
 				{"last name": "Doe", "age": float64(33) },
@@ -975,7 +973,7 @@ func BenchmarkDataframe_Select_Groupby(b *testing.B)  {
 	for i := 0; i < b.N; i++ {
 		df.Select("age", "last name", "first name").GroupBy("last name").Agg(
 			df.Col("age").Agg(MEAN),
-			df.Col("location").Agg(func(arr []interface{}) interface{}{return "random"}),
+			df.Col("location").Agg(func(arr ItemSlice) Item {return "random"}),
 		).Execute()
 	}
 

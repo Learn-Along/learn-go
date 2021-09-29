@@ -10,7 +10,7 @@ import (
 )
 
 type Dataframe struct {
-	cols map[string]*Column;
+	cols map[string]Column;
 	pkFields []string;
 	index map[interface{}]int;
 }
@@ -19,7 +19,7 @@ type Dataframe struct {
 func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataframe, error) {
 	df := Dataframe{
 		pkFields: primaryFields,
-		cols: map[string]*Column{},
+		cols: map[string]Column{},
 		index: map[interface{}]int{},
 	}
 
@@ -40,7 +40,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 func FromMap(records map[interface{}]map[string]interface{}, primaryFields []string) (*Dataframe, error) {
 	df := Dataframe{
 		pkFields: primaryFields,
-		cols: map[string]*Column{},
+		cols: map[string]Column{},
 		index: map[interface{}]int{},
 	}
 
@@ -200,7 +200,7 @@ func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{},
 	count := d.Count()
 	pkIndices := d.getIndicesInOrder()
 	data := make([]map[string]interface{}, count)
-	cols := map[string]*Column{}
+	cols := map[string]Column{}
 
 	for _, field := range selectedFields {
 		// FIXME: concurrency possible
@@ -218,10 +218,10 @@ func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{},
 
 		// FIXME: The column names are unique, the columns are independent, concurrency is thus possible
 		for _, col := range cols {
-			if i < len(col.items) {
-				record[col.Name] = col.items[pkIndex]
+			if i < col.Len() {
+				record[col.Name()] = col.ItemAt(pkIndex)
 			} else {
-				record[col.Name] = nil
+				record[col.Name()] = nil
 			}			
 		}
 		
@@ -247,14 +247,14 @@ func (d *Dataframe) Clear() {
 }
 
 // Gets the pointer to a given column, or creates it if it does not exist
-func (d *Dataframe) Col(name string) *Column {
+func (d *Dataframe) Col(name string) Column {
 	col := d.cols[name]
 
-	if col == nil {
-		newCol := Column{Name: name, items: map[int]interface{}{}, Dtype: ObjectType}
-		d.cols[name] = &newCol 
-		return &newCol
-	}
+	// if col == nil {
+	// 	newCol := ColumnStruct{Name: name, items: map[int]interface{}{}, Dtype: ObjectType}
+	// 	d.cols[name] = &newCol 
+	// 	return &newCol
+	// }
 
 	return col
 }
@@ -262,19 +262,13 @@ func (d *Dataframe) Col(name string) *Column {
 // Access method to return the keys in order
 func (d *Dataframe) Keys() []string {
 	count := len(d.index)
-	orderedKeyMap := make(orderedMapType, count)
+	orderedKeyMap := make(OrderedStringMapType, count)
 
-	// FIXME:
-	// Could we cache this result and save it on the dataframe itself,
-	// and recalculate it only and update it, only when the d.index changes?
-	// Imagine having to go through this loop every time someone calls keys 
-	// but then again, since it is a method, we could leave it to the user to cache
-	// that result themselves
 	for key, i := range d.index {
-		orderedKeyMap[i] = key
+		orderedKeyMap[i] = key.(string)
 	}
 
-	return utils.ConvertToStringSlice(orderedKeyMap.ToSlice(), true)
+	return orderedKeyMap.ToSlice().([]string)
 }
 
 // access method to return all column names
@@ -282,11 +276,9 @@ func (d *Dataframe) ColumnNames() []string {
 	count := len(d.cols)
 	names := make([]string, count)
 
-	// FIXME:
-	// Could we just get the keys of the map of d.cols. I believe the keys are the actual names of the columns
 	i := 0
-	for _, col := range d.cols {
-		names[i] = col.Name
+	for key := range d.cols {
+		names[i] = key
 		i++
 	}
 
@@ -363,8 +355,7 @@ func (d *Dataframe) normalizeCols(defaultValue interface{})  {
 	finalLength := len(pkIndices)
 
 	for _, col := range d.cols {
-		// FIXME: This could be done concurrently as the cols are independent of each other
-		colLength := len(col.items)
+		colLength := col.Len()
 		
 		for i := colLength; i < finalLength; i++ {
 			pkIndex := pkIndices[i]
@@ -410,7 +401,7 @@ func (d *Dataframe) defragmentize()  {
 	for _, col := range d.cols {
 		// FIXME:
 		// These columns are independent. Their defragmentation can be done concurrently
-		col.items.Defragmentize(pkIndices)
+		col.Defragmentize(pkIndices)
 	}
 
 	for newRow, key := range keys {
@@ -577,8 +568,26 @@ func (d *Dataframe) apply(rowWiseFuncMap map[string][]rowWiseFunc) error {
 			if col, ok := d.cols[field]; ok {
 				// FIXME: This third for loop works on individual items,
 				// and so this too can be done concurrently
-				for i, v := range col.items {
-					col.items[i] = tx(v)
+				switch col.GetDatatype() {
+				case IntType:
+					for i, v := range col.Items().([]int) {
+						col.insert(i, tx(v))
+					}
+
+				case FloatType:
+					for i, v := range col.Items().([]int) {
+						col.insert(i, tx(v))
+					}
+
+				case StringType:
+					for i, v := range col.Items().([]int) {
+						col.insert(i, tx(v))
+					}
+
+				case BoolType:
+					for i, v := range col.Items().([]int) {
+						col.insert(i, tx(v))
+					}
 				}
 			}	
 		}			
