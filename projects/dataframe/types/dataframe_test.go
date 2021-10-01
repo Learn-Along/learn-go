@@ -658,7 +658,7 @@ func BenchmarkDataframe_Delete_GreaterThan(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 12150 ns/op	    	| 1400 B/op	      		 | 60 allocs/op		 	 | x	   |
+	// | None				    		| 11431 ns/op	    	| 3232 B/op	      		 |76 allocs/op		 	 | x	   |
 }
 
 func BenchmarkDataframe_Delete_IsLike(b *testing.B)  {
@@ -675,7 +675,7 @@ func BenchmarkDataframe_Delete_IsLike(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 9061 ns/op	    	| 1048 B/op	      		 | 46 allocs/op		 	 | x	   |
+	// | None				    		| 9229 ns/op	   		| 2176 B/op	      		 | 60 allocs/op		 	 | x	   |
 }
 
 func BenchmarkDataframe_Delete_AND(b *testing.B)  {
@@ -692,7 +692,7 @@ func BenchmarkDataframe_Delete_AND(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 14352 ns/op	    	| 1768 B/op	      		 | 63 allocs/op		 	 | x	   |
+	// | None				    		| 11980 ns/op	    	| 3504 B/op	      		 | 79 allocs/op		 	 | x	   |
 }
 
 func BenchmarkDataframe_Delete_OR(b *testing.B)  {
@@ -709,7 +709,7 @@ func BenchmarkDataframe_Delete_OR(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 12275 ns/op	    	| 1400 B/op	      		 | 60 allocs/op			 | x	   |
+	// | None				    		| 11395 ns/op	        | 3232 B/op	     		 | 76 allocs/op			 | x	   |
 }
 
 func BenchmarkDataframe_Delete_NOT(b *testing.B)  {
@@ -726,7 +726,7 @@ func BenchmarkDataframe_Delete_NOT(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 13545 ns/op	    	| 1512 B/op	      		 | 61 allocs/op			 | x 	   |
+	// | None				    		| 12073 ns/op	    	| 3312 B/op	      		 | 77 allocs/op			 | x 	   |
 }
 
 // Update should update any records that fulfill a given condition,
