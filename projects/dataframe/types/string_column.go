@@ -44,6 +44,7 @@ func (c *StringColumn) Defragmentize(newOrder []int) {
 // Inserts a given value at the given index.
 // If the index is beyond the length of keys,
 // it fills the gap in both Items and keys with nil and "" respectively
+// it ignores the insert if the value is not a string
 func (c *StringColumn) insert(index int, value Item) {
 	nextIndex := c.items.Len()
 
@@ -53,7 +54,10 @@ func (c *StringColumn) insert(index int, value Item) {
 		}
 	}
 
-	c.items[index] = value.(string)
+	switch v := value.(type) {
+	case string:
+		c.items[index] = v
+	}
 }
 
 // Deletes many indices at once

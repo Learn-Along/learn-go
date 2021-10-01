@@ -3,32 +3,84 @@ package types
 import (
 	"regexp"
 	"testing"
-
-	"github.com/learn-along/learn-go/projects/dataframe/utils"
 )
 
 // insert for Float64Columns should fill any gaps in keys and Items with "", nil respectively
 func TestFloat64Column_insert(t *testing.T)  {
 	col := Float64Column{name: "hi", items: OrderedFloat64MapType{0: 6, 1: 70}}
 	col.insert(4, 60)
-	expectedItems := []interface{}{6.0, 70.0, 0.0, 0.0, 60.0}
-
-	if !utils.AreSliceEqual(expectedItems, col.Items().([]interface{})) {
-		t.Fatalf("items expected: %v, got %v", expectedItems, col.Items())
+	expectedItems := []float64{6.0, 70.0, 0.0, 0.0, 60.0}
+	gotItems := col.Items().([]float64)
+	
+	for i := range expectedItems {
+		got := gotItems[i]
+		expected := expectedItems[i]
+		if got != expected {
+			t.Fatalf("Index %d had %v; expected %v", i, got, expected)
+		}
 	}
+}
+
+func BenchmarkFloat64Column_insert(b *testing.B)  {
+	col := Float64Column{name: "hi", items: OrderedFloat64MapType{0: 6, 1: 70}}
+
+	for i := 0; i < b.N; i++ {
+		col.insert(4, 60)
+	}
+
+	// Results:
+	// ========
+	// 
+	// | Change 					| time				 | memory 				 | allocations			 | Choice  |
+	// |----------------------------|--------------------|-----------------------|-----------------------|---------|
+	// | None				  		| 20.00 ns/op	     | 0 B/op	       		 | 0 allocs/op           |  x  	   |
 }
 
 // GreaterThan should return a slice of booleans where true is for values greater than the value,
 // false is for otherwise
 func TestFloat64Column_GreaterThan(t *testing.T)  {
-	operand := 2
-	col := Float64Column{name: "hi", items: OrderedFloat64MapType{0: 23, 1: 10, 2: -2, 3: 69, 4: 0, 5: 67}}
-	expected := filterType{true, true, false, true, false, true}
-	output := col.GreaterThan(operand)
+	type testRecord struct {
+		operand interface{};
+		items OrderedFloat64MapType;
+		expected filterType
+	}
 
-	for i := 0; i < 6; i++ {
-		if output[i] != expected[i] {
-			t.Fatalf("index %d: expected: %v, got %v", i, expected[i], output[i])
+	testData := []testRecord{
+		{
+			operand: "hi", 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
+			expected: filterType{false, false, false, false, false, false},
+		},
+		{
+			operand: -2, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
+			expected: filterType{true, true, false, false, false, true},
+		},
+		{
+			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 690, 4: -2, 5: 67},
+			expected: filterType{false, false, false, true, false, false},
+		},
+		{
+			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 690, 4: -2, 5: 67},
+			expected: filterType{false, false, false, true, false, false},
+		},
+		{
+			operand: 4, 
+			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
+			expected: filterType{true, true, false, true, false, true},
+		},
+	}
+
+	for index, tr := range testData {
+		col := Float64Column{name: "hi", items: tr.items}
+		output := col.GreaterThan(tr.operand)
+	
+		for i := 0; i < 6; i++ {
+			if output[i] != tr.expected[i] {
+				t.Fatalf("test record #%d, index %d: expected: %v, got %v", index, i, tr.expected[i], output[i])
+			}
 		}
 	}
 }
@@ -53,23 +105,49 @@ func BenchmarkFloat64Column_GreaterThan(b *testing.B)  {
 	// 
 	// | Change 						| time				 | memory 				 | allocations			 | Choice  |
 	// |--------------------------------|--------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 855,400,310 ns/op	 | 97,572,326 B/op	     | 775,572 allocs/op     | x  	   |
-	// | Add goroutine in for loop		| 4,449,787,656 ns/op| 363,255,202 B/op	     | 3,102,174 allocs/op   |		   |
-	// | With wrapper around goroutine	| 4,437,230,299 ns/op| 363251869 B/op	     | 3102156 allocs/op 	 |         |
-	// | With wait groups 				| 4,067,743,934 ns/op| 714,285,405 B/op	     | 8,164,777 allocs/op   |         |
+	// | None				    		| 919,153,136 ns/op	 | 37,289,891 B/op	     | 12,302 allocs/op      | x  	   |
 }
 
 // GreaterOrEquals should return a slice of booleans where true is for values greater or equal to the value,
 // false is for otherwise
 func TestFloat64Column_GreaterOrEquals(t *testing.T)  {
-	operand := 2
-	col := Float64Column{name: "hi", items: OrderedFloat64MapType{0: 23, 1: 10, 2: 2, 3: 69, 4: 0, 5: 67}}
-	expected := filterType{true, true, true, true, false, true}
-	output := col.GreaterOrEquals(operand)
+	type testRecord struct {
+		operand interface{};
+		items OrderedFloat64MapType;
+		expected filterType
+	}
 
-	for i := 0; i < 6; i++ {
-		if output[i] != expected[i] {
-			t.Fatalf("index %d: expected: %v, got %v", i, expected[i], output[i])
+	testData := []testRecord{
+		{
+			operand: "hi", 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
+			expected: filterType{false, false, false, false, false, false},
+		},
+		{
+			operand: -2, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
+			expected: filterType{true, true, true, false, true, true},
+		},
+		{
+			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
+			expected: filterType{true, false, true, true, false, false},
+		},
+		{
+			operand: 4, 
+			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
+			expected: filterType{true, true, false, true, false, true},
+		},
+	}
+
+	for index, tr := range testData {
+		col := Float64Column{name: "hi", items: tr.items}
+		output := col.GreaterOrEquals(tr.operand)
+	
+		for i := 0; i < 6; i++ {
+			if output[i] != tr.expected[i] {
+				t.Fatalf("test record #%d, index %d: expected: %v, got %v", index, i, tr.expected[i], output[i])
+			}
 		}
 	}
 }
@@ -94,20 +172,54 @@ func BenchmarkFloat64Column_GreaterOrEquals(b *testing.B)  {
 	// 
 	// | Change 						| time				 | memory 				 | allocations			 | Choice  |
 	// |--------------------------------|--------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 871,616,373 ns/op	 | 97,562,900 B/op	     | 775,526 allocs/op     | x  	   |
+	// | None				    		| 990,669,059 ns/op	 | 41142735 B/op	     | 13943 allocs/op       | x  	   |
 }
 
 // LessThan should return a slice of booleans where true is for values less than the value,
 // false is for otherwise
 func TestFloat64Column_LessThan(t *testing.T)  {
-	operand := 2
-	col := Float64Column{name: "hi", items: OrderedFloat64MapType{0: 23, 1: 10, 2: -2, 3: 69, 4: 0, 5: 67}}
-	expected := filterType{false, false, true, false, true, false}
-	output := col.LessThan(operand)
+	type testRecord struct {
+		operand interface{};
+		items OrderedFloat64MapType;
+		expected filterType
+	}
 
-	for i := 0; i < 6; i++ {
-		if output[i] != expected[i] {
-			t.Fatalf("index %d: expected: %v, got %v", i, expected[i], output[i])
+	testData := []testRecord{
+		{
+			operand: "hi", 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
+			expected: filterType{false, false, false, false, false, false},
+		},
+		{
+			operand: -2, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
+			expected: filterType{false, false, false, true, false, false},
+		},
+		{
+			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
+			expected: filterType{false, true, false, false, false, false},
+		},
+		{
+			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
+			expected: filterType{false, true, false, false, false, false},
+		},
+		{
+			operand: 4, 
+			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
+			expected: filterType{false, false, true, false, true, false},
+		},
+	}
+
+	for index, tr := range testData {
+		col := Float64Column{name: "hi", items: tr.items}
+		output := col.LessThan(tr.operand)
+	
+		for i := 0; i < 6; i++ {
+			if output[i] != tr.expected[i] {
+				t.Fatalf("test record #%d, index %d: expected: %v, got %v", index, i, tr.expected[i], output[i])
+			}
 		}
 	}
 }
@@ -132,20 +244,54 @@ func BenchmarkFloat64Column_LessThan(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 1,142,363,432 ns/op	|	97,571,606 B/op	     | 775,569 allocs/op     | x  	   |
+	// | None				    		| 941,402,221 ns/op		| 38462338 B/op	   		 | 12767 allocs/op       | x  	   |
 }
 
 // LessOrEquals should return a slice of booleans where true is for values less or equal to the value,
 // false is for otherwise
 func TestFloat64Column_LessOrEquals(t *testing.T)  {
-	operand := 2
-	col := Float64Column{name: "hi", items: OrderedFloat64MapType{0: 23, 1: 10, 2: 2, 3: 69, 4: 0, 5: 67}}
-	expected := filterType{false, false, true, false, true, false}
-	output := col.LessOrEquals(float64(operand))
+	type testRecord struct {
+		operand interface{};
+		items OrderedFloat64MapType;
+		expected filterType
+	}
 
-	for i := 0; i < 6; i++ {
-		if output[i] != expected[i] {
-			t.Fatalf("index %d: expected: %v, got %v", i, expected[i], output[i])
+	testData := []testRecord{
+		{
+			operand: "hi", 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
+			expected: filterType{false, false, false, false, false, false},
+		},
+		{
+			operand: -2, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
+			expected: filterType{false, false, true, true, true, false},
+		},
+		{
+			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			items: OrderedFloat64MapType{0: 23, 1: 690, 2: -2, 3: 69, 4: -2, 5: 67},
+			expected: filterType{true, false, true, true, false, false},
+		},
+		{
+			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			items: OrderedFloat64MapType{0: 23, 1: 690, 2: -2, 3: 69, 4: -2, 5: 67},
+			expected: filterType{true, false, true, true, false, false},
+		},
+		{
+			operand: 4, 
+			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
+			expected: filterType{false, false, true, false, true, false},
+		},
+	}
+
+	for index, tr := range testData {
+		col := Float64Column{name: "hi", items: tr.items}
+		output := col.LessOrEquals(tr.operand)
+	
+		for i := 0; i < 6; i++ {
+			if output[i] != tr.expected[i] {
+				t.Fatalf("test record #%d, index %d: expected: %v, got %v", index, i, tr.expected[i], output[i])
+			}
 		}
 	}
 }
@@ -170,7 +316,7 @@ func BenchmarkFloat64Column_LessOrEquals(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				| allocations			| Choice  |
 	// |--------------------------------|-----------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 5,437,853,397 ns/op	| 540,413,572 B/op	    | 4653405 allocs/op     | x  	  |
+	// | None				    		| 939,445,430 ns/op		| 38465104 B/op	   		| 12792 allocs/op       | x  	  |
 }
 
 // Equals should return a slice of booleans where true is for values equal to the value,
@@ -194,7 +340,12 @@ func TestFloat64Column_Equals(t *testing.T)  {
 			expected: filterType{false, false, true, false, true, false},
 		},
 		{
-			operand: 0.23, 
+			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
+			expected: filterType{true, false, true, true, false, false},
+		},
+		{
+			operand: 0, 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
 			expected: filterType{false, false, false, false, true, false},
 		},
@@ -210,7 +361,6 @@ func TestFloat64Column_Equals(t *testing.T)  {
 			}
 		}
 	}
-
 }
 
 func BenchmarkFloat64Column_Equals(b *testing.B)  {
@@ -233,7 +383,7 @@ func BenchmarkFloat64Column_Equals(b *testing.B)  {
 	// 
 	// | Change 						| time				  | memory 				  | allocations			  | Choice  |
 	// |--------------------------------|---------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 1,199,388,041 ns/op | 127101200 B/op	      | 1034124 allocs/op     | x  	    |
+	// | None				    		| 334,640,964 ns/op	  | 20051509 B/op	      | 4797 allocs/op        | x  	    |
 }
 
 
@@ -250,7 +400,7 @@ func TestFloat64Column_IsLike(t *testing.T)  {
 		{
 			operand: regexp.MustCompile("(?i)^L"), 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, true, false, false, false},
+			expected: filterType{false, false, false, false, false, false},
 		},
 		{
 			operand: regexp.MustCompile(`^\d`), 
@@ -297,7 +447,7 @@ func BenchmarkFloat64Column_IsLike(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				| allocations			| Choice  |
 	// |--------------------------------|-----------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 12,941,657,683 ns/op	| 287,952,280 B/op		| 27,307,263 allocs/op  | x  	  |
+	// | None				    		| 6,285,800,090 ns/op	| 393,864,724 B/op		| 18,077,117 allocs/op  | x  	  |
 }
 
 
