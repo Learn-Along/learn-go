@@ -44,16 +44,20 @@ func (c *BoolColumn) Defragmentize(newOrder []int) {
 // Inserts a given value at the given index.
 // If the index is beyond the length of keys,
 // it fills the gap in both Items and keys with nil and "" respectively
+// It ignores value is not a boolean
 func (c *BoolColumn) insert(index int, value Item) {
-	// nextIndex := c.items.Len()
+	nextIndex := c.items.Len()
 
-	// if nextIndex <= index {
-	// 	for i := nextIndex; i <= index; i++ {
-	// 		c.items[i] = nil		
-	// 	}
-	// }
+	if nextIndex <= index {
+		for i := nextIndex; i <= index; i++ {
+			c.items[i] = false		
+		}
+	}
 
-	c.items[index] = value.(bool)
+	switch v := value.(type) {
+	case bool:
+		c.items[index] = v
+	}	
 }
 
 // Deletes many indices at once
@@ -64,56 +68,148 @@ func (c *BoolColumn) deleteMany(indices []int)  {
 }
 
 // Returns an array of booleans corresponding in position to each item,
-// true if item is greater than operand or else false
+// true if item is true and operand is false or else false
 // The operand can reference a constant, or a Col
 func (c *BoolColumn) GreaterThan(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
-	
+	var operandAsBool bool
+	var operands []bool
+
+	switch v := operand.(type) {
+	case bool:
+		operandAsBool = v
+	case BoolColumn:
+		operands = v.items.ToSlice().([]bool)
+	default:
+		return flags
+	}
+
+	if operands != nil {
+		for i, op := range operands {
+			if v, ok := c.items[i]; ok {
+				flags[i] = !op && v
+			}
+		}
+
+		return flags
+	}
+
 	for i := 0; i < count; i++ {
-		flags[i] = true
+		if v, ok := c.items[i]; ok {
+			flags[i] = !operandAsBool && v
+		}
 	}
 
 	return flags
 }
 
 // Returns an array of booleans corresponding in position to each item,
-// true if item is greater than or equal to the operand or else false
+// true if operand is false, or if operand is true and item is true or else false
 // The operand can reference a constant, or a Col
 func (c *BoolColumn) GreaterOrEquals(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
+	var operandAsBool bool
+	var operands []bool
+
+	switch v := operand.(type) {
+	case bool:
+		operandAsBool = v
+	case BoolColumn:
+		operands = v.items.ToSlice().([]bool)
+	default:
+		return flags
+	}
+
+	if operands != nil {
+		for i, op := range operands {
+			if v, ok := c.items[i]; ok {
+				flags[i] = !op || (v && op)
+			}
+		}
+
+		return flags
+	}
 
 	for i := 0; i < count; i++ {
-		flags[i] = true
+		if v, ok := c.items[i]; ok {
+			flags[i] = !operandAsBool || (v && operandAsBool)
+		}
 	}
 
 	return flags
 }
 
 // Returns an array of booleans corresponding in position to each item,
-// true if item is less than operand or else false
+// true if item is false, and operand is true or else false
 // The operand can reference a constant, or a Col
 func (c *BoolColumn) LessThan(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
+	var operandAsBool bool
+	var operands []bool
+
+	switch v := operand.(type) {
+	case bool:
+		operandAsBool = v
+	case BoolColumn:
+		operands = v.items.ToSlice().([]bool)
+	default:
+		return flags
+	}
+
+	if operands != nil {
+		for i, op := range operands {
+			if v, ok := c.items[i]; ok {
+				flags[i] = !v && op
+			}
+		}
+
+		return flags
+	}
 
 	for i := 0; i < count; i++ {
-		flags[i] = true
+		if v, ok := c.items[i]; ok {
+			flags[i] = !v && operandAsBool
+		}
 	}
 
 	return flags
 }
 
 // Returns an array of booleans corresponding in position to each item,
-// true if item is less than or equal to the operand or else false
+// true if operand is true or if both operand and item are false or else false
 // The operand can reference a constant, or a Col
 func (c *BoolColumn) LessOrEquals(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
-	
+	var operandAsBool bool
+	var operands []bool
+
+	switch v := operand.(type) {
+	case bool:
+		operandAsBool = v
+	case BoolColumn:
+		operands = v.items.ToSlice().([]bool)
+	default:
+		return flags
+	}
+
+	if operands != nil {
+		for i, op := range operands {
+			if v, ok := c.items[i]; ok {
+				flags[i] = op || (!v && !op)
+			}
+		}
+
+		return flags
+	}
+
 	for i := 0; i < count; i++ {
-		flags[i] = true
+		if v, ok := c.items[i]; ok {
+			flags[i] = operandAsBool || (!v && !operandAsBool)
+		}
 	}
 
 	return flags
@@ -134,10 +230,6 @@ func (c *BoolColumn) Equals(operand LiteralOrColumn) filterType {
 	case BoolColumn:
 		operands = v.items.ToSlice().([]bool)
 	default:
-		for i := 0; i < count; i++ {
-			flags[i] = true
-		}
-
 		return flags
 	}
 
