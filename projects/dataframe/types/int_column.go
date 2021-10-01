@@ -45,13 +45,13 @@ func (c *IntColumn) Defragmentize(newOrder []int) {
 // If the index is beyond the length of keys,
 // it fills the gap in both Items and keys with nil and "" respectively
 func (c *IntColumn) insert(index int, value Item) {
-	// nextIndex := c.items.Len()
+	nextIndex := c.items.Len()
 
-	// if nextIndex <= index {
-	// 	for i := nextIndex; i <= index; i++ {
-	// 		c.items[i] = nil		
-	// 	}
-	// }
+	if nextIndex <= index {
+		for i := nextIndex; i <= index; i++ {
+			c.items[i] = 0		
+		}
+	}
 
 	c.items[index] = value.(int)
 }

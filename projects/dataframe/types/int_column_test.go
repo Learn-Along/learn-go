@@ -3,19 +3,37 @@ package types
 import (
 	"regexp"
 	"testing"
-
-	"github.com/learn-along/learn-go/projects/dataframe/utils"
 )
 
 // insert for IntColumns should fill any gaps in keys and Items with "", nil respectively
 func TestIntColumn_insert(t *testing.T)  {
 	col := IntColumn{name: "hi", items: OrderedIntMapType{0: 6, 1: 70}}
 	col.insert(4, 60)
-	expectedItems := []interface{}{6, 70, 0, 0, 60}
-
-	if !utils.AreSliceEqual(expectedItems, col.Items().([]interface{})) {
-		t.Fatalf("items expected: %v, got %v", expectedItems, col.Items())
+	expectedItems := []int{6, 70, 0, 0, 60}
+	gotItems := col.Items().([]int)
+	
+	for i := range expectedItems {
+		got := gotItems[i]
+		expected := expectedItems[i]
+		if got != expected {
+			t.Fatalf("Index %d had %v; expected %v", i, got, expected)
+		}
 	}
+}
+
+func BenchmarkIntColumn_insert(b *testing.B)  {
+	col := IntColumn{name: "hi", items: OrderedIntMapType{0: 6, 1: 70}}
+
+	for i := 0; i < b.N; i++ {
+		col.insert(4, 60)
+	}
+
+	// Results:
+	// ========
+	// 
+	// | Change 					| time				 | memory 				 | allocations			 | Choice  |
+	// |----------------------------|--------------------|-----------------------|-----------------------|---------|
+	// | None				  		| 17.84 ns/op	     | 0 B/op	       		 | 0 allocs/op           |  x  	   |
 }
 
 // GreaterThan should return a slice of booleans where true is for values greater than the value,
@@ -36,12 +54,12 @@ func TestIntColumn_GreaterThan(t *testing.T)  {
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{false, false, false, true, true, false},
+			expected: filterType{true, true, false, false, false, true},
 		},
 		{
 			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
-			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, true, false, false, false, false},
+			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 690, 4: -2, 5: 67},
+			expected: filterType{false, false, false, true, false, false},
 		},
 		{
 			operand: 4, 
@@ -82,10 +100,7 @@ func BenchmarkIntColumn_GreaterThan(b *testing.B)  {
 	// 
 	// | Change 						| time				 | memory 				 | allocations			 | Choice  |
 	// |--------------------------------|--------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 855,400,310 ns/op	 | 97,572,326 B/op	     | 775,572 allocs/op     | x  	   |
-	// | Add goroutine in for loop		| 4,449,787,656 ns/op| 363,255,202 B/op	     | 3,102,174 allocs/op   |		   |
-	// | With wrapper around goroutine	| 4,437,230,299 ns/op| 363251869 B/op	     | 3102156 allocs/op 	 |         |
-	// | With wait groups 				| 4,067,743,934 ns/op| 714,285,405 B/op	     | 8,164,777 allocs/op   |         |
+	// | None				    		| 749,171,660 ns/op	 | 31,813,476 B/op	     | 9907 allocs/op        | x  	   |
 }
 
 // GreaterOrEquals should return a slice of booleans where true is for values greater or equal to the value,
@@ -106,12 +121,12 @@ func TestIntColumn_GreaterOrEquals(t *testing.T)  {
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{false, false, true, true, true, false},
+			expected: filterType{true, true, true, false, true, true},
 		},
 		{
 			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, true, true, false, false, false},
+			expected: filterType{true, false, true, true, false, false},
 		},
 		{
 			operand: 4, 
@@ -152,7 +167,7 @@ func BenchmarkIntColumn_GreaterOrEquals(b *testing.B)  {
 	// 
 	// | Change 						| time				 | memory 				 | allocations			 | Choice  |
 	// |--------------------------------|--------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 871,616,373 ns/op	 | 97,562,900 B/op	     | 775,526 allocs/op     | x  	   |
+	// | None				    		| 784,941,139 ns/op	 | 36,202,119 B/op	     | 11,826 allocs/op     	 | x  	   |
 }
 
 // LessThan should return a slice of booleans where true is for values less than the value,
@@ -173,7 +188,7 @@ func TestIntColumn_LessThan(t *testing.T)  {
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{true, true, false, false, false, false},
+			expected: filterType{false, false, false, true, false, false},
 		},
 		{
 			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
@@ -183,7 +198,7 @@ func TestIntColumn_LessThan(t *testing.T)  {
 		{
 			operand: 4, 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, false, true, false, true},
+			expected: filterType{false, false, true, false, true, false},
 		},
 	}
 
@@ -219,7 +234,7 @@ func BenchmarkIntColumn_LessThan(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 1,142,363,432 ns/op	|	97,571,606 B/op	     | 775,569 allocs/op     | x  	   |
+	// | None				    		| 795,008,458 ns/op		| 32574746 B/op	   		 | 10243 allocs/op       | x  	   |
 }
 
 // LessOrEquals should return a slice of booleans where true is for values less or equal to the value,
@@ -240,17 +255,17 @@ func TestIntColumn_LessOrEquals(t *testing.T)  {
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{true, true, true, false, true, false},
+			expected: filterType{false, false, true, true, true, false},
 		},
 		{
 			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
-			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
+			items: OrderedIntMapType{0: 23, 1: 690, 2: -2, 3: 69, 4: -2, 5: 67},
 			expected: filterType{true, false, true, true, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, false, true, false, true},
+			expected: filterType{false, false, true, false, true, false},
 		},
 	}
 
@@ -286,7 +301,7 @@ func BenchmarkIntColumn_LessOrEquals(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				| allocations			| Choice  |
 	// |--------------------------------|-----------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 5,437,853,397 ns/op	| 540,413,572 B/op	    | 4653405 allocs/op     | x  	  |
+	// | None				    		| 756,376,738 ns/op	    | 31,814,971 B/op	    	| 9,917 allocs/op       | x  	  |
 }
 
 // Equals should return a slice of booleans where true is for values equal to the value,
@@ -354,7 +369,7 @@ func BenchmarkIntColumn_Equals(b *testing.B)  {
 	// 
 	// | Change 						| time				  | memory 				  | allocations			  | Choice  |
 	// |--------------------------------|---------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 1,199,388,041 ns/op | 127101200 B/op	      | 1034124 allocs/op     | x  	    |
+	// | None				    		| 244,137,151 ns/op	  | 16,773,965 B/op	    	  | 3,378 allocs/op        | x  	    |
 }
 
 
@@ -371,7 +386,7 @@ func TestIntColumn_IsLike(t *testing.T)  {
 		{
 			operand: regexp.MustCompile("(?i)^L"), 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, true, false, false, false},
+			expected: filterType{false, false, false, false, false, false},
 		},
 		{
 			operand: regexp.MustCompile(`^\d`), 
@@ -418,7 +433,7 @@ func BenchmarkIntColumn_IsLike(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				| allocations			| Choice  |
 	// |--------------------------------|-----------------------|-----------------------|-----------------------|---------|
-	// | None				    		| 12,941,657,683 ns/op	| 287,952,280 B/op		| 27,307,263 allocs/op  | x  	  |
+	// | None				    		| 3,343,612,836 ns/op	| 254037489 B/op	    | 18043603 allocs/op    | x  	  |
 }
 
 
