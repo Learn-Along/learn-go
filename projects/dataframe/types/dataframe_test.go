@@ -406,7 +406,7 @@ func BenchmarkDataframe_ToArray(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 3915 ns/op	   		| 2168 B/op	     		 | 16 allocs/op			 | x	   |
+	// | None				    		| 3815 ns/op	    	| 2456 B/op	      		 | 34 allocs/op			 | x	   |
 }
 
 // ToArray should convert the data into an array. If string args are passed,
