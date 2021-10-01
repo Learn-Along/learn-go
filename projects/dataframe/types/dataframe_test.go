@@ -462,7 +462,7 @@ func BenchmarkDataframe_ToArrayWithArgs(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 3413 ns/op	    	| 2168 B/op	      		 | 16 allocs/op			 |  	   |
+	// | None				    		| 2884 ns/op	    	| 2264 B/op	      		 | 22 allocs/op			 |  	   |
 }
 
 // Delete should delete any records that fulfill a given condition
