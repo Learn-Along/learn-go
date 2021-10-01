@@ -36,7 +36,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 		}
 	}
 
-	df.normalizeCols(nil)
+	df.normalizeCols()
 	return &df, nil
 }
 
@@ -56,7 +56,7 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 		}
 	}
 
-	df.normalizeCols(nil)
+	df.normalizeCols()
 
 	return &df, nil
 }
@@ -74,7 +74,7 @@ func (d *Dataframe) Insert(records []map[string]interface{}) error {
 		}
 	}	
 
-	d.normalizeCols(nil)
+	d.normalizeCols()
 	return nil
 }
 
@@ -125,8 +125,6 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 
 	counter := 0
 	for i, shouldUpdate := range filter {
-		// FIXME: Concurrency should be possible here, possibly by ranging over 0 to len(filter)
-		// The pkIndex could be pushed to a channel and another goroutine just updates that index
 		if shouldUpdate && i < count {
 			indicesToUpdate[counter] = pkIndices[i]		
 			counter++	
@@ -134,7 +132,6 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 	}
 
 	for k, v := range value {
-		// FIXME: Concurrency possible
 		if _, ok := pkFieldMap[k]; !ok {
 			valueCopy[k] = v
 		}
@@ -144,10 +141,23 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 	// This could a range over a channel instead...see FIXME at "for i, shouldUpdate := range filter"
 	for _, pkIndex := range indicesToUpdate[:counter] {
 		// FIXME: concurrency is possible for this inner loop
-		for colName, v := range valueCopy {		
-			d.Col(colName).insert(pkIndex, v)			
+		for colName, v := range valueCopy {	
+			col := d.Col(colName)
+			
+			if col == nil {
+				var err error
+
+				col, err = d.createColumnBySampleValueType(colName, v)
+				if err != nil {
+					return err
+				}
+			}
+
+			col.insert(pkIndex, v)			
 		}		
 	}
+
+	d.normalizeCols()
 
 	return nil
 }
@@ -249,13 +259,6 @@ func (d *Dataframe) Clear() {
 // Gets the pointer to a given column, or creates it if it does not exist
 func (d *Dataframe) Col(name string) Column {
 	col := d.cols[name]
-
-	// if col == nil {
-	// 	newCol := ColumnStruct{Name: name, items: map[int]interface{}{}, Dtype: ObjectType}
-	// 	d.cols[name] = &newCol 
-	// 	return &newCol
-	// }
-
 	return col
 }
 
@@ -378,12 +381,24 @@ func (d *Dataframe) createColumnBySampleValueType(name string, sampleValue inter
 }
 
 // Fills up the columns with the given value to reach a given length for all columns
-func (d *Dataframe) normalizeCols(defaultValue interface{})  {
+func (d *Dataframe) normalizeCols()  {
+	var defaultValue interface{}
 	pkIndices := d.getIndicesInOrder()
 	finalLength := len(pkIndices)
 
 	for _, col := range d.cols {
 		colLength := col.Len()
+
+		switch col.GetDatatype() {
+		case IntType:
+			defaultValue = 0
+		case FloatType:
+			defaultValue = 0
+		case StringType:
+			defaultValue = ""
+		case BoolType:
+			defaultValue = false
+		}
 		
 		for i := colLength; i < finalLength; i++ {
 			pkIndex := pkIndices[i]

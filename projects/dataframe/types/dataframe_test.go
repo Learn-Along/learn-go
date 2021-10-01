@@ -659,6 +659,7 @@ func BenchmarkDataframe_Delete_GreaterThan(b *testing.B)  {
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
 	// | None				    		| 11431 ns/op	    	| 3232 B/op	      		 |76 allocs/op		 	 | x	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 func BenchmarkDataframe_Delete_IsLike(b *testing.B)  {
@@ -676,6 +677,7 @@ func BenchmarkDataframe_Delete_IsLike(b *testing.B)  {
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
 	// | None				    		| 9229 ns/op	   		| 2176 B/op	      		 | 60 allocs/op		 	 | x	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 func BenchmarkDataframe_Delete_AND(b *testing.B)  {
@@ -693,6 +695,7 @@ func BenchmarkDataframe_Delete_AND(b *testing.B)  {
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
 	// | None				    		| 11980 ns/op	    	| 3504 B/op	      		 | 79 allocs/op		 	 | x	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 func BenchmarkDataframe_Delete_OR(b *testing.B)  {
@@ -710,6 +713,7 @@ func BenchmarkDataframe_Delete_OR(b *testing.B)  {
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
 	// | None				    		| 11395 ns/op	        | 3232 B/op	     		 | 76 allocs/op			 | x	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 func BenchmarkDataframe_Delete_NOT(b *testing.B)  {
@@ -727,11 +731,12 @@ func BenchmarkDataframe_Delete_NOT(b *testing.B)  {
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
 	// | None				    		| 12073 ns/op	    	| 3312 B/op	      		 | 77 allocs/op			 | x 	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 // Update should update any records that fulfill a given condition,
 // however, the primary keys should not be touched
-// and any unknown columns are just added to all records, defaulting to nil for the rest
+// and any unknown columns are just added to all records, defaulting to nil values of the types of the rest
 func TestDataframe_Update(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
@@ -750,73 +755,73 @@ func TestDataframe_Update(t *testing.T)  {
 			newData: map[string]interface{}{"location": "Kapchorwa", "new field": "yay", "age": 16},
 			expected: []map[string]interface{}{
 				{"first name": "John", "last name": "Doe", "age": 16, "location": "Kapchorwa", "new field": "yay" },
-				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka", "new field": nil },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka", "new field": "" },
 				{"first name": "Paul", "last name": "Doe", "age": 16, "location": "Kapchorwa", "new field": "yay" },
-				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi", "new field": nil },
-				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi", "new field": nil },
-				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala", "new field": nil },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi", "new field": "" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi", "new field": "" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala", "new field": "" },
 			},
 		},
-		// {
-		// 	filter: df.Col("last name").IsLike(regexp.MustCompile("oe$")), 
-		// 	newData: map[string]interface{}{"first name": "Hen", "age": 20,},
-		// 	expected: []map[string]interface{}{
-		// 		{"first name": "John", "last name": "Doe", "age": 20, "location": "Kampala" },
-		// 		{"first name": "Jane", "last name": "Doe", "age": 20, "location": "Lusaka" },
-		// 		{"first name": "Paul", "last name": "Doe", "age": 20, "location": "Kampala" },
-		// 		{"first name": "Richard", "last name": "Roe", "age": 20, "location": "Nairobi" },
-		// 		{"first name": "Reyna", "last name": "Roe", "age": 20, "location": "Nairobi" },
-		// 		{"first name": "Ruth", "last name": "Roe", "age": 20, "location": "Kampala" },
-		// 	},
-		// },
-		// {
-		// 	filter: df.Col("last name").IsLike(regexp.MustCompile("D")), 
-		// 	newData: map[string]interface{}{"location": "Bujumbura"},
-		// 	expected: []map[string]interface{}{
-		// 		{"first name": "John", "last name": "Doe", "age": 30, "location": "Bujumbura" },
-		// 		{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Bujumbura" },
-		// 		{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Bujumbura" },
-		// 		{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
-		// 		{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
-		// 		{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
-		// 	},
-		// },
-		// {
-		// 	filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)),
-		// 	newData: map[string]interface{}{"age": 87}, 
-		// 	expected: []map[string]interface{}{
-		// 		{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
-		// 		{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
-		// 		{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
-		// 		{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
-		// 		{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
-		// 		{"first name": "Ruth", "last name": "Roe", "age": 87, "location": "Kampala" },
-		// 	},
-		// },
-		// {
-		// 	filter: OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)),
-		// 	newData: map[string]interface{}{"last name": "Rigobertha", "age": 73}, 
-		// 	expected: []map[string]interface{}{
-		// 		{"first name": "John", "last name": "Doe", "age": 73, "location": "Kampala" },
-		// 		{"first name": "Jane", "last name": "Doe", "age": 73, "location": "Lusaka" },
-		// 		{"first name": "Paul", "last name": "Doe", "age": 73, "location": "Kampala" },
-		// 		{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
-		// 		{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
-		// 		{"first name": "Ruth", "last name": "Roe", "age": 73, "location": "Kampala" },
-		// 	},
-		// },
-		// {
-		// 	filter: NOT(df.Col("location").Equals("Kampala")), 
-		// 	newData: map[string]interface{}{"location": "Nebbi"},
-		// 	expected: []map[string]interface{}{
-		// 		{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
-		// 		{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Nebbi" },
-		// 		{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
-		// 		{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nebbi" },
-		// 		{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nebbi" },
-		// 		{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
-		// 	},
-		// },
+		{
+			filter: df.Col("last name").IsLike(regexp.MustCompile("oe$")), 
+			newData: map[string]interface{}{"first name": "Hen", "age": 20,},
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 20, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 20, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 20, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 20, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 20, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 20, "location": "Kampala" },
+			},
+		},
+		{
+			filter: df.Col("last name").IsLike(regexp.MustCompile("D")), 
+			newData: map[string]interface{}{"location": "Bujumbura"},
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Bujumbura" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Bujumbura" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Bujumbura" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
+		{
+			filter: AND(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(33)),
+			newData: map[string]interface{}{"age": 87}, 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 87, "location": "Kampala" },
+			},
+		},
+		{
+			filter: OR(df.Col("location").Equals("Kampala"), df.Col("age").GreaterThan(45)),
+			newData: map[string]interface{}{"last name": "Rigobertha", "age": 73}, 
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 73, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 73, "location": "Lusaka" },
+				{"first name": "Paul", "last name": "Doe", "age": 73, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nairobi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nairobi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 73, "location": "Kampala" },
+			},
+		},
+		{
+			filter: NOT(df.Col("location").Equals("Kampala")), 
+			newData: map[string]interface{}{"location": "Nebbi"},
+			expected: []map[string]interface{}{
+				{"first name": "John", "last name": "Doe", "age": 30, "location": "Kampala" },
+				{"first name": "Jane", "last name": "Doe", "age": 50, "location": "Nebbi" },
+				{"first name": "Paul", "last name": "Doe", "age": 19, "location": "Kampala" },
+				{"first name": "Richard", "last name": "Roe", "age": 34, "location": "Nebbi" },
+				{"first name": "Reyna", "last name": "Roe", "age": 45, "location": "Nebbi" },
+				{"first name": "Ruth", "last name": "Roe", "age": 60, "location": "Kampala" },
+			},
+		},
 	}
 
 	for loop, tr := range testTable {
@@ -871,7 +876,8 @@ func BenchmarkDataframe_Update_GreaterThan(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 13711 ns/op	    	| 1248 B/op	      		 | 47 allocs/op		 	 | x	   |
+	// | None				    		| 9,656 ns/op	    	| 2,496 B/op	      	 | 60 allocs/op	 	 	 | x	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 func BenchmarkDataframe_Update_IsLike(b *testing.B)  {
@@ -893,7 +899,8 @@ func BenchmarkDataframe_Update_IsLike(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 11797 ns/op	    	| 1248 B/op	      		 | 47 allocs/op	 	 	 | x	   |
+	// | None				    		| 9408 ns/op	    	| 2240 B/op	      		 | 58 allocs/op	 	 	 | x	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 func BenchmarkDataframe_Update_AND(b *testing.B)  {
@@ -915,7 +922,8 @@ func BenchmarkDataframe_Update_AND(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 10454 ns/op	    	| 1248 B/op	      		 | 47 allocs/op		 	 | x	   |
+	// | None				    		| 8850 ns/op	    	| 2240 B/op      		 | 58 allocs/op		 	 | x	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 func BenchmarkDataframe_Update_OR(b *testing.B)  {
@@ -937,7 +945,8 @@ func BenchmarkDataframe_Update_OR(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 12275 ns/op	    	| 1400 B/op	      		 | 60 allocs/op			 | x	   |
+	// | None				    		| 9,249 ns/op	    	| 2240 B/op	      		 | 58 allocs/op			 | x	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 func BenchmarkDataframe_Update_NOT(b *testing.B)  {
@@ -959,7 +968,8 @@ func BenchmarkDataframe_Update_NOT(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 10809 ns/op	    	| 1248 B/op	      		 | 47 allocs/op			 | x 	   |
+	// | None				    		| 9,032 ns/op	    	| 2240 B/op	      		 | 58 allocs/op			 | x 	   |
+	// | minus that for Insert 			| - 7,575 ns/op	    	| -1792 B/op	      	 | -49 allocs/op		 |		   |
 }
 
 // Select should be able to query data allowing for selection of fields,
