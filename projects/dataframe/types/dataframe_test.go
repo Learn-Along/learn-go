@@ -1052,11 +1052,11 @@ func TestDataframe_Select(t *testing.T)  {
 			).SortBy(
 				df.Col("age").Order(DESC),
 			).Apply(
-				df.Col("age").Tx(func(v interface{}) interface{} {return fmt.Sprintf("total: %v", v)}),
+				df.Col("last name").Tx(func(v interface{}) interface{} {return fmt.Sprintf("last name: %v", v)}),
 			),
 			expected: []map[string]interface{}{
-				{"last name": "Roe", "age": "total: 139",},
-				{"last name": "Doe", "age": "total: 80",},
+				{"last name": "last name: Roe", "age": 139,},
+				{"last name": "last name: Doe", "age": 80,},
 			},
 		},
 	}
@@ -1108,7 +1108,7 @@ func BenchmarkDataframe_Select_Apply(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 25936 ns/op	    	| 8481 B/op	     		 | 133 allocs/op		 | x	   |
+	// | None				    		| 25453 ns/op	   		| 10385 B/op	     	 | 194 allocs/op		 | x	   |
 }
 
 func BenchmarkDataframe_Select_Sortby(b *testing.B)  {
@@ -1130,7 +1130,7 @@ func BenchmarkDataframe_Select_Sortby(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 39902 ns/op	   		| 12745 B/op	     	 | 195 allocs/op		 | x	   |
+	// | None				    		| 36987 ns/op	    	| 14490 B/op	     	 | 259 allocs/op		 | x	   |
 }
 
 func BenchmarkDataframe_Select_Groupby(b *testing.B)  {
@@ -1152,7 +1152,7 @@ func BenchmarkDataframe_Select_Groupby(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 49311 ns/op	   		| 16498 B/op	     	 | 273 allocs/op		 | x	   |
+	// | None				    		| 26228 ns/op	    	| 9922 B/op	     		 | 186 allocs/op		 | x	   |
 }
 
 func BenchmarkDataframe_Select_Where(b *testing.B)  {
@@ -1179,7 +1179,7 @@ func BenchmarkDataframe_Select_Where(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 25799 ns/op	    	| 8514 B/op	     		 | 141 allocs/op		 | x	   |
+	// | None				    		| 25300 ns/op	    	| 9922 B/op	     		 | 186 allocs/op		 | x	   |
 
 }
 
@@ -1207,7 +1207,7 @@ func BenchmarkDataframe_Select_All_Combined(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 49662 ns/op	   		| 18394 B/op	    	 | 298 allocs/op		 | x	   |
+	// | None				    		| 46572 ns/op	   		| 20243 B/op	     	 | 354 allocs/op		 | x	   |
 
 }
 

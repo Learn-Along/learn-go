@@ -618,17 +618,17 @@ func (d *Dataframe) apply(rowWiseFuncMap map[string][]rowWiseFunc) error {
 					}
 
 				case FloatType:
-					for i, v := range col.Items().([]int) {
+					for i, v := range col.Items().([]float64) {
 						col.insert(i, tx(v))
 					}
 
 				case StringType:
-					for i, v := range col.Items().([]int) {
+					for i, v := range col.Items().([]string) {
 						col.insert(i, tx(v))
 					}
 
 				case BoolType:
-					for i, v := range col.Items().([]int) {
+					for i, v := range col.Items().([]bool) {
 						col.insert(i, tx(v))
 					}
 				}
