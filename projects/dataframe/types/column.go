@@ -41,6 +41,9 @@ Or it can be a Column
 */
 type LiteralOrColumn interface{}
 
+/*
+The base column interface for all column types
+*/
 type Column interface{
 	Items() ItemSlice
 	insert(index int, value Item)

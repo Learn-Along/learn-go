@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sort"
 	"testing"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
@@ -52,6 +53,34 @@ func TestFromArray(t *testing.T)  {
 	if !utils.AreStringSliceEqual(keys, df.Keys()) {
 		t.Fatalf("keys expected: %v, got: %v", keys, df.Keys())
 	}
+
+	for _, col := range df.cols {
+		expectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name())
+		var gotItems []interface{}
+
+		switch items := col.Items().(type) {
+		case []bool:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+		case []int:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+		case []string:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+		case []float64:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}		
+		}
+
+		if !utils.AreSliceEqual(gotItems, expectedItems){
+			t.Fatalf("col '%s' items expected: %v, got %v", col.Name(), expectedItems, col.Items())
+		}
+	}
 }
 
 func BenchmarkFromArray(b *testing.B)  {
@@ -65,7 +94,7 @@ func BenchmarkFromArray(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 8560 ns/op	    	| 2216 B/op	     		 | 50 allocs/op   		 | x  	   |
+	// | None				    		| 10,265 ns/op	    	| 2248 B/op	      		 | 51 allocs/op  		 | x  	   |
 }
 
 // fromMap should create a dataframe from a map of maps
@@ -90,6 +119,65 @@ func TestFromMap(t *testing.T)  {
 	if !utils.AreStringSliceEqual(expectedKeys, sortedKeys) {
 		t.Fatalf("keys expected: %v, got: %v", expectedKeys, sortedKeys)
 	}
+
+	for _, col := range df.cols {
+		expectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name())
+		var gotItems []interface{}
+
+		switch items := col.Items().(type) {
+		case []bool:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+
+			sort.Slice(gotItems, func(i, j int) bool {
+				return gotItems[i].(bool) && gotItems[j].(bool)
+			})
+			sort.Slice(expectedItems, func(i, j int) bool {
+				return expectedItems[i].(bool) && expectedItems[j].(bool)
+			})
+
+		case []int:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+
+			sort.Slice(gotItems, func(i, j int) bool {
+				return gotItems[i].(int) < gotItems[j].(int)
+			})
+			sort.Slice(expectedItems, func(i, j int) bool {
+				return expectedItems[i].(int) < expectedItems[j].(int)
+			})
+
+		case []string:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+
+			sort.Slice(gotItems, func(i, j int) bool {
+				return gotItems[i].(string) < gotItems[j].(string)
+			})
+			sort.Slice(expectedItems, func(i, j int) bool {
+				return expectedItems[i].(string) < expectedItems[j].(string)
+			})
+
+		case []float64:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}	
+			
+			sort.Slice(gotItems, func(i, j int) bool {
+				return gotItems[i].(float64) < gotItems[j].(float64)
+			})
+			sort.Slice(expectedItems, func(i, j int) bool {
+				return expectedItems[i].(float64) < expectedItems[j].(float64)
+			})
+		}
+
+		if !utils.AreSliceEqual(gotItems, expectedItems){
+			t.Fatalf("col '%s' items expected: %v, got %v", col.Name(), expectedItems, col.Items())
+		}
+	}
 }
 
 func BenchmarkFromMap(b *testing.B)  {
@@ -103,7 +191,7 @@ func BenchmarkFromMap(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None					    	| 7214 ns/op	    	| 2212 B/op	     		 | 50 allocs/op 		 | x  	   |
+	// | None					    	| 8,609 ns/op	    	| 2244 B/op	      		 | 51 allocs/op		 	 | x  	   |
 }
 
 // Insert should insert more records to the dataframe, overwriting any of the same key

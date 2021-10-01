@@ -3,16 +3,21 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
 	"github.com/learn-along/learn-go/projects/dataframe/utils"
 )
 
+/*
+The data structure that makes it easy to select, filter, sort and group data records
+*/
 type Dataframe struct {
 	cols map[string]Column;
 	pkFields []string;
 	index map[interface{}]int;
+	dtypes map[string]Datatype;
 }
 
 // Constructs a Dataframe from an array of maps and returns a pointer to it
@@ -21,6 +26,7 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 		pkFields: primaryFields,
 		cols: map[string]Column{},
 		index: map[interface{}]int{},
+		dtypes: map[string]Datatype{},
 	}
 
 	// FIXME: what if we just generate the primary keys and the col items in one loop and just update
@@ -42,6 +48,7 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 		pkFields: primaryFields,
 		cols: map[string]Column{},
 		index: map[interface{}]int{},
+		dtypes: map[string]Datatype{},
 	}
 
 	// FIXME: what if we just generate the primary keys and the col items in one loop and just update
@@ -339,14 +346,42 @@ func (d *Dataframe) insertRecord(record map[string]interface{}) error {
 	}		
 
 	for fieldName, value := range record {
-		// FIXME:
-		// to take advantage of having values in separate columns,
-		// these values can be saved concurrently
-		col := d.Col(fieldName)			
+		col := d.Col(fieldName)	
+		
+		if col == nil {
+			col, err = d.createColumnBySampleValueType(fieldName, value)
+			if err != nil {
+				return err
+			}
+		}
+
 		col.insert(row, value)
 	}
 
 	return nil
+}
+
+// Creates the column basing on the type of the sample value passed to it
+func (d *Dataframe) createColumnBySampleValueType(name string, sampleValue interface{}) (Column, error) {
+	var col Column
+
+	switch sampleValue.(type) {
+	case int:
+		col = &IntColumn{name: name, items: OrderedIntMapType{}}
+	case float64:
+		col = &Float64Column{name: name, items: OrderedFloat64MapType{}}
+	case string:
+		col = &StringColumn{name: name, items: OrderedStringMapType{}}
+	case bool:
+		col = &BoolColumn{name: name, items: OrderedBoolMapType{}}
+	case nil:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("%v data type is not supported", reflect.TypeOf(sampleValue))
+	}
+
+	d.cols[name] = col
+	return col, nil
 }
 
 // Fills up the columns with the given value to reach a given length for all columns
