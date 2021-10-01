@@ -222,7 +222,28 @@ func TestDataframe_Insert(t *testing.T)  {
 
 	for _, col := range df.cols {
 		expectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name())
-		if !utils.AreSliceEqual(col.Items().([]interface{}), expectedItems){
+		var gotItems []interface{}
+
+		switch items := col.Items().(type) {
+		case []bool:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+		case []int:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+		case []string:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+		case []float64:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}		
+		}
+
+		if !utils.AreSliceEqual(gotItems, expectedItems){
 			t.Fatalf("col '%s' items expected: %v, got %v", col.Name(), expectedItems, col.Items())
 		}
 	}
@@ -244,7 +265,7 @@ func BenchmarkDataframe_Insert(b *testing.B)  {
 	// 
 	// | Change 						| time				 	| memory 				 | allocations			 | Choice  |
 	// |--------------------------------|-----------------------|------------------------|-----------------------|---------|
-	// | None				    		| 11225 ns/op	        | 904 B/op	      		 | 41 allocs/op			 | x 	   |
+	// | None				    		| 7,575 ns/op	    	| 1792 B/op	      		 | 49 allocs/op			 | x 	   |
 }
 
 // Insert should add the new records at the end of the dtaframe,
@@ -285,9 +306,59 @@ func TestDataframe_InsertNonExistingCols(t *testing.T)  {
 		initialExpectedItems := utils.ExtractFieldFromMapList(dataArray, col.Name())
 		extraExpectedItems := utils.ExtractFieldFromMapList(extraData, col.Name())
 		expectedItems := append(initialExpectedItems, extraExpectedItems...)
+		var gotItems []interface{}
 
-		if !utils.AreSliceEqual(col.Items().([]interface{}), expectedItems){
-			t.Errorf("col '%s' items expected: %v, got %v", col.Name(), expectedItems, col.Items())
+		switch items := col.Items().(type) {
+		case []bool:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+
+			// replace the nils with false
+			for i, v := range expectedItems {
+				if v == nil {
+					expectedItems[i] = false
+				}
+			}
+		case []int:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+
+			// replace the nils with false
+			for i, v := range expectedItems {
+				if v == nil {
+					expectedItems[i] = 0
+				}
+			}
+			
+		case []string:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+
+			// replace the nils with false
+			for i, v := range expectedItems {
+				if v == nil {
+					expectedItems[i] = ""
+				}
+			}
+
+		case []float64:
+			for _, v := range items {
+				gotItems = append(gotItems, v)
+			}
+			
+			// replace the nils with false
+			for i, v := range expectedItems {
+				if v == nil {
+					expectedItems[i] = 0
+				}
+			}
+		}
+
+		if !utils.AreSliceEqual(gotItems, expectedItems){
+			t.Fatalf("col '%s' items expected: %v, got %v", col.Name(), expectedItems, col.Items())
 		}
 	}	
 }

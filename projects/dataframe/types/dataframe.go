@@ -29,8 +29,6 @@ func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataf
 		dtypes: map[string]Datatype{},
 	}
 
-	// FIXME: what if we just generate the primary keys and the col items in one loop and just update
-	// the created dataframe's cols and index. There would be no need for even calling normalizeCols
 	for _, record := range records {
 		err := df.insertRecord(record)
 		if err != nil {
@@ -51,8 +49,6 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 		dtypes: map[string]Datatype{},
 	}
 
-	// FIXME: what if we just generate the primary keys and the col items in one loop and just update
-	// the created dataframe's cols and index. There would be no need for even calling normalizeCols
 	for _, record := range records {
 		err := df.insertRecord(record)
 		if err != nil {
@@ -70,9 +66,6 @@ func FromMap(records map[interface{}]map[string]interface{}, primaryFields []str
 func (d *Dataframe) Insert(records []map[string]interface{}) error {
 	d.defragmentize()
 
-	// FIXME:
-	// To quicken this even further, we could transpose the matrix at this point 
-	// and have slices corresponding to each column. These can then be bulk inserted into the columns.
 	for _, record := range records {
 		err := d.insertRecord(record)
 		if err != nil {
