@@ -143,7 +143,7 @@ func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
 	// update only upto counter
 	// This could a range over a channel instead...see FIXME at "for i, shouldUpdate := range filter"
 	for _, pkIndex := range indicesToUpdate[:counter] {
-		// FIXME: concurrenyc is possible for this inner loop
+		// FIXME: concurrency is possible for this inner loop
 		for colName, v := range valueCopy {		
 			d.Col(colName).insert(pkIndex, v)			
 		}		
