@@ -1,9 +1,9 @@
-package types
+package internal
 
 import (
 	"testing"
 
-	"github.com/learn-along/learn-go/projects/dataframe/utils"
+	"github.com/learn-along/learn-go/projects/dataframe/internal/utils"
 )
 
 // Len returns the length of the map

@@ -82,8 +82,7 @@ Go: [Go 1.17.1](https://golang.org/dl/)
     "log"
     "regexp"
 
-    "github.com/learn-along/learn-go/projects/dataframe/types"
-    "github.com/learn-along/learn-go/projects/dataframe/utils"
+    "github.com/learn-along/learn-go/projects/dataframe"
   )
 
   var dataArray = []map[string]interface{}{
@@ -97,7 +96,7 @@ Go: [Go 1.17.1](https://golang.org/dl/)
 
   func main() {
     pkFields := []string{"first name", "last name"}
-      df, err := types.FromArray(dataArray, pkFields)
+    df, err := dataframe.FromArray(dataArray, pkFields)
     if err != nil {
       log.Fatal("initialiation: ", err)
     }
@@ -109,8 +108,8 @@ Go: [Go 1.17.1](https://golang.org/dl/)
       log.Fatal("pretty print (Df): ", err)
     }
 
-      txData, err := df.Select().Apply(
-      df.Col("first name").Tx(
+    txData, err := df.Select().Apply(
+    df.Col("first name").Tx(
         func (v interface{}) interface{} {return fmt.Sprintf("Edit-%v", v)},
       ),
     ).Execute()
@@ -125,31 +124,43 @@ Go: [Go 1.17.1](https://golang.org/dl/)
 
     // Pretty prints txData
     fmt.Printf("\ntxData:\n")
-    err = utils.PrettyPrintJSON(txJSON)
+    err = prettyPrintJSON(txJSON)
     if err != nil {
       log.Fatal("pretty print (txData): ", err)
     }
 
-      df.Insert(txData)
+    df.Insert(txData)
 
-      // prints the original dataArray plus txData appended to the bottom
+    // prints the original dataArray plus txData appended to the bottom
     fmt.Printf("\nmerged Df:\n")
     err = df.PrettyPrintRecords()
     if err != nil {
       log.Fatal("pretty print (merged Df): ", err)
     }
 
-      // delete all the records you added as txData
-      df.Delete(df.Col("first name").IsLike(regexp.MustCompile("^Edit")))
+    // delete all the records you added as txData
+    df.Delete(df.Col("first name").IsLike(regexp.MustCompile("^Edit")))
 
-      // prints dataArray without txData
+    // prints dataArray without txData
     fmt.Printf("\nstripped Df:\n")
     err = df.PrettyPrintRecords()
     if err != nil {
       log.Fatal("pretty print (stripped Df): ", err)
     }
 
-      // ... etc....there is Update, Merge, Copy, FromMap etc.
+    // ... etc....there is Update, Merge, Copy, FromMap etc.
+  }
+
+  // Pretty prints JSON data
+  func prettyPrintJSON(data []byte) error {
+    var prettyJSON bytes.Buffer
+      err := json.Indent(&prettyJSON, data, "", "\t")
+      if err != nil {
+          log.Println("JSON parse error: ", err)
+      return err
+      }
+    fmt.Println(prettyJSON.String())
+    return nil
   }
   ```
 
@@ -159,7 +170,7 @@ Go: [Go 1.17.1](https://golang.org/dl/)
   go run main.go
   ```
 
-_Side note: Or...you can just clone this repo and run the [example.go](./example.go) file as `go run example.go`_
+_Side note: Or...you can copy the [example.go.txt](./example.go.txt) file and rename it to `main.go` in your project as `go run main.go`_
 
 ## How to Test
 
@@ -257,16 +268,16 @@ data, err = df1.Select(...).Where(...).GroupBy(...).SortBy(...).Apply(...).Execu
 
 This library has a lot of opportunity to improve. Some include:
 
-- [ ] There is a lot of reallocation due to saving and returning interface{}, thus the GC slows down the entire app trying to follow up on each allocation
+- [x] There is a lot of reallocation due to saving and returning interface{}, thus the GC slows down the entire app trying to follow up on each allocation
 - [ ] Actually make use of the columnar structure in filtering, selecting, grouping etc. [Right now it seems to make things just more complicated than rowise structure as most if not all these operations are done in row-wise manner]
 - [ ] Optimize memory usage. There is a lot of copying and heavy use of suboptimal type methods
 - [ ] Optimize speed. There are way too many loops.
 - [ ] Take advantage of concurrent design. No goroutines were used. These might help improve speed or readability or both.
 - [ ] Clean up the code. Some of the functions arre really dirty. The tests also are quite dirty.
-- [ ] Add benchmark tests
+- [x] Add benchmark tests
 - [ ] Add the features for accessing any set of records using their indices (x and y) like pandas does it or just add `Limit(int)` and `Skip(int)` methods. I actually feel `Limit` and `Skip` would align better with the current API which mimics SQL.
 - [ ] More stuff you will find. Just create an issue. If I am taking too long to respond (as I have been known to in the past), shoot me an email at [sales@sopherapps.com](mailto:sales@sopherapps.com)
-- [ ] Saving the data as interface{} caused a lot of reallocations and poor performance. There was need to convert the data straight into given data tyes to make the operations faster
+- [x] Saving the data as interface{} caused a lot of reallocations and poor performance. There was need to convert the data straight into given data tyes to make the operations faster
 
 ## License
 

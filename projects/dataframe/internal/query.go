@@ -1,4 +1,4 @@
-package types
+package internal
 
 const (
 	ASC sortOrder = iota

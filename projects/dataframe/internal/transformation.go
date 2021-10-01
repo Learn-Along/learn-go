@@ -1,4 +1,4 @@
-package types
+package internal
 
 // struct with k as column name and v as the array function to apply to its values
 type transformation struct{k string; v rowWiseFunc}

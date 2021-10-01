@@ -1,4 +1,4 @@
-package types
+package internal
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/learn-along/learn-go/projects/dataframe/utils"
+	"github.com/learn-along/learn-go/projects/dataframe/internal/utils"
 )
 
 var (

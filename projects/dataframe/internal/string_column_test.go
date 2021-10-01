@@ -1,11 +1,11 @@
-package types
+package internal
 
 import (
 	"fmt"
 	"regexp"
 	"testing"
 
-	"github.com/learn-along/learn-go/projects/dataframe/utils"
+	"github.com/learn-along/learn-go/projects/dataframe/internal/utils"
 )
 
 // insert for StringColumns should fill any gaps in keys and Items with "", nil respectively

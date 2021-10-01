@@ -1,86 +1,95 @@
-package types
+package internal
 
 import (
 	"fmt"
 	"regexp"
 )
 
-type BoolColumn struct {
+type Float64Column struct {
 	name string
-	items OrderedBoolMapType
+	items OrderedFloat64MapType
 }
 
 // returns the name of the column
-func (c *BoolColumn) Name() string {
+func (c *Float64Column) Name() string {
 	return c.name
 }
 
 // Number of items in int column
-func (c *BoolColumn) Len() int {
+func (c *Float64Column) Len() int {
 	return c.items.Len()
 }
 
 // Number of items in int column
-func (c *BoolColumn) ItemAt(index int) Item {
+func (c *Float64Column) ItemAt(index int) Item {
 	return c.items[index]
 }
 
 // Returns a list of Items
-func (c *BoolColumn) Items() ItemSlice {
+func (c *Float64Column) Items() ItemSlice {
 	return c.items.ToSlice()
 }
 
 // Returns the data type of the given column
-func (c *BoolColumn) GetDatatype() Datatype {
-	return BoolType
+func (c *Float64Column) GetDatatype() Datatype {
+	return FloatType
 }
 
 // Reorders the OrderedMapType ensuring that any gaps in the data are removed
 // So as to go back to a sequantial key list
-func (c *BoolColumn) Defragmentize(newOrder []int) {
+func (c *Float64Column) Defragmentize(newOrder []int) {
 	c.items.Defragmentize(newOrder)
 }
 
 // Inserts a given value at the given index.
 // If the index is beyond the length of keys,
 // it fills the gap in both Items and keys with nil and "" respectively
-// It ignores value is not a boolean
-func (c *BoolColumn) insert(index int, value Item) {
+// it ignores the insert if the value is not an int or float64
+func (c *Float64Column) insert(index int, value Item) {
 	nextIndex := c.items.Len()
 
 	if nextIndex <= index {
 		for i := nextIndex; i <= index; i++ {
-			c.items[i] = false		
+			c.items[i] = 0		
 		}
 	}
 
 	switch v := value.(type) {
-	case bool:
+	case int:
+		c.items[index] = float64(v)
+	case float64:
 		c.items[index] = v
-	}	
+	}
 }
 
 // Deletes many indices at once
-func (c *BoolColumn) deleteMany(indices []int)  {
+func (c *Float64Column) deleteMany(indices []int)  {
 	for _, i := range indices {
 		delete(c.items, i)
 	}	
 }
 
 // Returns an array of booleans corresponding in position to each item,
-// true if item is true and operand is false or else false
+// true if item is greater than operand or else false
 // The operand can reference a constant, or a Col
-func (c *BoolColumn) GreaterThan(operand LiteralOrColumn) filterType {
+func (c *Float64Column) GreaterThan(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
-	var operandAsBool bool
-	var operands []bool
+	var operandAsFloat float64
+	var operands []float64
 
 	switch v := operand.(type) {
-	case bool:
-		operandAsBool = v
-	case BoolColumn:
-		operands = v.items.ToSlice().([]bool)
+	case int:
+		operandAsFloat = float64(v)
+	case float64:
+		operandAsFloat = v
+	case Float64Column:
+		operands = v.items.ToSlice().([]float64)
+	case IntColumn:
+		operands = make([]float64, 0, count)
+		for _, v := range v.items.ToSlice().([]int) {
+			operands = append(operands, float64(v))
+		} 
 	default:
 		return flags
 	}
@@ -88,7 +97,7 @@ func (c *BoolColumn) GreaterThan(operand LiteralOrColumn) filterType {
 	if operands != nil {
 		for i, op := range operands {
 			if v, ok := c.items[i]; ok {
-				flags[i] = !op && v
+				flags[i] = v > op
 			}
 		}
 
@@ -97,7 +106,7 @@ func (c *BoolColumn) GreaterThan(operand LiteralOrColumn) filterType {
 
 	for i := 0; i < count; i++ {
 		if v, ok := c.items[i]; ok {
-			flags[i] = !operandAsBool && v
+			flags[i] = v > operandAsFloat
 		}
 	}
 
@@ -105,19 +114,26 @@ func (c *BoolColumn) GreaterThan(operand LiteralOrColumn) filterType {
 }
 
 // Returns an array of booleans corresponding in position to each item,
-// true if operand is false, or if operand is true and item is true or else false
+// true if item is greater than or equal to the operand or else false
 // The operand can reference a constant, or a Col
-func (c *BoolColumn) GreaterOrEquals(operand LiteralOrColumn) filterType {
+func (c *Float64Column) GreaterOrEquals(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
-	var operandAsBool bool
-	var operands []bool
+	var operandAsFloat float64
+	var operands []float64
 
 	switch v := operand.(type) {
-	case bool:
-		operandAsBool = v
-	case BoolColumn:
-		operands = v.items.ToSlice().([]bool)
+	case int:
+		operandAsFloat = float64(v)
+	case float64:
+		operandAsFloat = v
+	case Float64Column:
+		operands = v.items.ToSlice().([]float64)
+	case IntColumn:
+		operands = make([]float64, 0, count)
+		for _, v := range v.items.ToSlice().([]int) {
+			operands = append(operands, float64(v))
+		} 
 	default:
 		return flags
 	}
@@ -125,7 +141,7 @@ func (c *BoolColumn) GreaterOrEquals(operand LiteralOrColumn) filterType {
 	if operands != nil {
 		for i, op := range operands {
 			if v, ok := c.items[i]; ok {
-				flags[i] = !op || (v && op)
+				flags[i] = v >= op
 			}
 		}
 
@@ -134,7 +150,7 @@ func (c *BoolColumn) GreaterOrEquals(operand LiteralOrColumn) filterType {
 
 	for i := 0; i < count; i++ {
 		if v, ok := c.items[i]; ok {
-			flags[i] = !operandAsBool || (v && operandAsBool)
+			flags[i] = v >= operandAsFloat
 		}
 	}
 
@@ -142,19 +158,26 @@ func (c *BoolColumn) GreaterOrEquals(operand LiteralOrColumn) filterType {
 }
 
 // Returns an array of booleans corresponding in position to each item,
-// true if item is false, and operand is true or else false
+// true if item is less than operand or else false
 // The operand can reference a constant, or a Col
-func (c *BoolColumn) LessThan(operand LiteralOrColumn) filterType {
+func (c *Float64Column) LessThan(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
-	var operandAsBool bool
-	var operands []bool
+	var operandAsFloat float64
+	var operands []float64
 
 	switch v := operand.(type) {
-	case bool:
-		operandAsBool = v
-	case BoolColumn:
-		operands = v.items.ToSlice().([]bool)
+	case int:
+		operandAsFloat = float64(v)
+	case float64:
+		operandAsFloat = v
+	case Float64Column:
+		operands = v.items.ToSlice().([]float64)
+	case IntColumn:
+		operands = make([]float64, 0, count)
+		for _, v := range v.items.ToSlice().([]int) {
+			operands = append(operands, float64(v))
+		} 
 	default:
 		return flags
 	}
@@ -162,7 +185,7 @@ func (c *BoolColumn) LessThan(operand LiteralOrColumn) filterType {
 	if operands != nil {
 		for i, op := range operands {
 			if v, ok := c.items[i]; ok {
-				flags[i] = !v && op
+				flags[i] = v < op
 			}
 		}
 
@@ -171,7 +194,7 @@ func (c *BoolColumn) LessThan(operand LiteralOrColumn) filterType {
 
 	for i := 0; i < count; i++ {
 		if v, ok := c.items[i]; ok {
-			flags[i] = !v && operandAsBool
+			flags[i] = v < operandAsFloat
 		}
 	}
 
@@ -179,19 +202,26 @@ func (c *BoolColumn) LessThan(operand LiteralOrColumn) filterType {
 }
 
 // Returns an array of booleans corresponding in position to each item,
-// true if operand is true or if both operand and item are false or else false
+// true if item is less than or equal to the operand or else false
 // The operand can reference a constant, or a Col
-func (c *BoolColumn) LessOrEquals(operand LiteralOrColumn) filterType {
+func (c *Float64Column) LessOrEquals(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
-	var operandAsBool bool
-	var operands []bool
+	var operandAsFloat float64 
+	var operands []float64
 
 	switch v := operand.(type) {
-	case bool:
-		operandAsBool = v
-	case BoolColumn:
-		operands = v.items.ToSlice().([]bool)
+	case int:
+		operandAsFloat = float64(v)
+	case float64:
+		operandAsFloat = v
+	case Float64Column:
+		operands = v.items.ToSlice().([]float64)
+	case IntColumn:
+		operands = make([]float64, 0, count)
+		for _, v := range v.items.ToSlice().([]int) {
+			operands = append(operands, float64(v))
+		}  
 	default:
 		return flags
 	}
@@ -199,7 +229,7 @@ func (c *BoolColumn) LessOrEquals(operand LiteralOrColumn) filterType {
 	if operands != nil {
 		for i, op := range operands {
 			if v, ok := c.items[i]; ok {
-				flags[i] = op || (!v && !op)
+				flags[i] = v <= op
 			}
 		}
 
@@ -208,7 +238,7 @@ func (c *BoolColumn) LessOrEquals(operand LiteralOrColumn) filterType {
 
 	for i := 0; i < count; i++ {
 		if v, ok := c.items[i]; ok {
-			flags[i] = operandAsBool || (!v && !operandAsBool)
+			flags[i] = v <= operandAsFloat
 		}
 	}
 
@@ -218,17 +248,24 @@ func (c *BoolColumn) LessOrEquals(operand LiteralOrColumn) filterType {
 // Returns an array of booleans corresponding in position to each item,
 // true if item is equal to operand or else false
 // The operand can reference a constant, or a Col
-func (c *BoolColumn) Equals(operand LiteralOrColumn) filterType {
+func (c *Float64Column) Equals(operand LiteralOrColumn) filterType {
 	count := len(c.items)
 	flags := make(filterType, count)
-	var operands []bool
-	var operandAsBool bool
+	var operands []float64
+	var operandAsFloat float64
 
 	switch v := operand.(type) {
-	case bool:
-		operandAsBool = v
-	case BoolColumn:
-		operands = v.items.ToSlice().([]bool)
+	case int:
+		operandAsFloat = float64(v)
+	case float64:
+		operandAsFloat = v
+	case Float64Column:
+		operands = v.items.ToSlice().([]float64)
+	case IntColumn:
+		operands = make([]float64, 0, count)
+		for _, v := range v.items.ToSlice().([]int) {
+			operands = append(operands, float64(v))
+		} 
 	default:
 		return flags
 	}
@@ -244,7 +281,7 @@ func (c *BoolColumn) Equals(operand LiteralOrColumn) filterType {
 	}
 
 	for i, v := range c.items {
-		flags[i] = v == operandAsBool
+		flags[i] = v == operandAsFloat
 	}
 
 	return flags
@@ -252,7 +289,7 @@ func (c *BoolColumn) Equals(operand LiteralOrColumn) filterType {
 
 // Returns an array of booleans corresponding in position to each item,
 // true if item is like the regex expression or else false
-func (c *BoolColumn) IsLike(pattern *regexp.Regexp) filterType  {
+func (c *Float64Column) IsLike(pattern *regexp.Regexp) filterType  {
 	count := len(c.items)
 	flags := make(filterType, count)
 
@@ -267,17 +304,17 @@ func (c *BoolColumn) IsLike(pattern *regexp.Regexp) filterType  {
 
 // Returns transformer method specific to this column to transform its values from one thing to another
 // It is passed a function expecting a value any type
-func (c *BoolColumn) Tx(op rowWiseFunc) transformation {
+func (c *Float64Column) Tx(op rowWiseFunc) transformation {
 	return transformation{k: c.name, v: op}
 }
 
 // Returns an aggregation function specific to this column to
 // merge its values into a single value. It works when GroupBy is used
-func (c *BoolColumn) Agg(aggFunc aggregateFunc) aggregation {
+func (c *Float64Column) Agg(aggFunc aggregateFunc) aggregation {
 	return aggregation{c.name: aggFunc}
 }
 
 // Returns a Sort Option that is attached to this column, for the given order
-func (c *BoolColumn) Order(option sortOrder) sortOption {
+func (c *Float64Column) Order(option sortOrder) sortOption {
 	return sortOption{c.name: option}
 }

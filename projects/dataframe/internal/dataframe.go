@@ -1,4 +1,4 @@
-package types
+package internal
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/learn-along/learn-go/projects/dataframe/utils"
+	"github.com/learn-along/learn-go/projects/dataframe/internal/utils"
 )
 
 /*

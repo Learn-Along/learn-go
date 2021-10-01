@@ -6,8 +6,7 @@ import (
 	"log"
 	"regexp"
 
-	"github.com/learn-along/learn-go/projects/dataframe/types"
-	"github.com/learn-along/learn-go/projects/dataframe/utils"
+	"github.com/learn-along/learn-go/projects/dataframe"
 )
 
 var dataArray = []map[string]interface{}{
@@ -21,7 +20,7 @@ var dataArray = []map[string]interface{}{
 
 func main() {
 	pkFields := []string{"first name", "last name"}
-    df, err := types.FromArray(dataArray, pkFields)
+    df, err := dataframe.FromArray(dataArray, pkFields)
 	if err != nil {
 		log.Fatal("initialiation: ", err)
 	}
@@ -49,7 +48,7 @@ func main() {
 
 	// Pretty prints txData
 	fmt.Printf("\ntxData:\n")
-	err = utils.PrettyPrintJSON(txJSON)
+	err = prettyPrintJSON(txJSON)
 	if err != nil {
 		log.Fatal("pretty print (txData): ", err)
 	}
@@ -74,4 +73,16 @@ func main() {
 	}
 
     // ... etc....there is Update, Merge, Copy, FromMap etc.
+}
+
+// Pretty prints JSON data
+func prettyPrintJSON(data []byte) error {
+	var prettyJSON bytes.Buffer
+    err := json.Indent(&prettyJSON, data, "", "\t")
+    if err != nil {
+        log.Println("JSON parse error: ", err)
+		return err
+    }
+	fmt.Println(prettyJSON.String())
+	return nil
 }
