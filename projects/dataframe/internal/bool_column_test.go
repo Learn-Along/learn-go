@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-// insert for BoolColumns should fill any gaps in keys and Items with "", nil respectively
+// Insert for BoolColumns should fill any gaps in keys and Items with "", nil respectively
 func TestBoolColumn_insert(t *testing.T)  {
-	col := BoolColumn{name: "hi", items: OrderedBoolMapType{0: false, 1: true}}
-	col.insert(4, true)
+	col := BoolColumn{Title: "hi", Values: OrderedBoolMapType{0: false, 1: true}}
+	col.Insert(4, true)
 	expectedItems := []bool{false, true, false, false, true}
 	gotItems := col.Items().([]bool)
 	
@@ -22,10 +22,10 @@ func TestBoolColumn_insert(t *testing.T)  {
 }
 
 func BenchmarkBoolColumn_insert(b *testing.B)  {
-	col := BoolColumn{name: "hi", items: OrderedBoolMapType{0: false, 1: true}}
+	col := BoolColumn{Title: "hi", Values: OrderedBoolMapType{0: false, 1: true}}
 
 	for i := 0; i < b.N; i++ {
-		col.insert(4, true)
+		col.Insert(4, true)
 	}
 
 	// Results:
@@ -42,39 +42,39 @@ func TestBoolColumn_GreaterThan(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedBoolMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: false, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{true, false, true, true, false, true},
+			expected: FilterType{true, false, true, true, false, true},
 		},
 		{
-			operand: BoolColumn{name: "foo", items: OrderedBoolMapType{0: true, 1: false, 2: false, 3: true}}, 
+			operand: BoolColumn{Title: "foo", Values: OrderedBoolMapType{0: true, 1: false, 2: false, 3: true}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, true, false, false, false},
+			expected: FilterType{false, false, true, false, false, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: -1, 1: 7, 2: 6, 3: 5}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: -1, 1: 7, 2: 6, 3: 5}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: true, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := BoolColumn{name: "hi", items: tr.items}
+		col := BoolColumn{Title: "hi", Values: tr.items}
 		output := col.GreaterThan(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -93,7 +93,7 @@ func BenchmarkBoolColumn_GreaterThan(b *testing.B)  {
 		items[i] = false
 	}
 
-	col := BoolColumn{name: "hi", items: items}
+	col := BoolColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.GreaterThan(1000)
@@ -114,39 +114,39 @@ func TestBoolColumn_GreaterOrEquals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedBoolMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: false, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{true, true, true, true, true, true},
+			expected: FilterType{true, true, true, true, true, true},
 		},
 		{
-			operand: BoolColumn{name: "foo", items: OrderedBoolMapType{0: true, 1: false, 2: false, 3: true}}, 
+			operand: BoolColumn{Title: "foo", Values: OrderedBoolMapType{0: true, 1: false, 2: false, 3: true}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{true, true, true, true, false, false},
+			expected: FilterType{true, true, true, true, false, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: -1, 1: 7, 2: 6, 3: 5}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: -1, 1: 7, 2: 6, 3: 5}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: true, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{true, false, true, true, false, true},
+			expected: FilterType{true, false, true, true, false, true},
 		},
 	}
 
 	for index, tr := range testData {
-		col := BoolColumn{name: "hi", items: tr.items}
+		col := BoolColumn{Title: "hi", Values: tr.items}
 		output := col.GreaterOrEquals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -165,7 +165,7 @@ func BenchmarkBoolColumn_GreaterOrEquals(b *testing.B)  {
 		items[i] = false
 	}
 
-	col := BoolColumn{name: "hi", items: items}
+	col := BoolColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.GreaterOrEquals(1000)
@@ -186,39 +186,39 @@ func TestBoolColumn_LessThan(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedBoolMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: false, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
-			operand: BoolColumn{name: "foo", items: OrderedBoolMapType{0: true, 1: false, 2: false, 3: true}}, 
+			operand: BoolColumn{Title: "foo", Values: OrderedBoolMapType{0: true, 1: false, 2: false, 3: true}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{ false, false, false, false, false, false},
+			expected: FilterType{ false, false, false, false, false, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: -1, 1: 7, 2: 6, 3: 5}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: -1, 1: 7, 2: 6, 3: 5}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: true, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{ false, true, false, false, true, false},
+			expected: FilterType{ false, true, false, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := BoolColumn{name: "hi", items: tr.items}
+		col := BoolColumn{Title: "hi", Values: tr.items}
 		output := col.LessThan(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -237,7 +237,7 @@ func BenchmarkBoolColumn_LessThan(b *testing.B)  {
 		items[i] = true
 	}
 
-	col := BoolColumn{name: "hi", items: items}
+	col := BoolColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.LessThan(1000)
@@ -258,39 +258,39 @@ func TestBoolColumn_LessOrEquals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedBoolMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: false, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, true, false, false, true, false},
+			expected: FilterType{false, true, false, false, true, false},
 		},
 		{
-			operand: BoolColumn{name: "foo", items: OrderedBoolMapType{0: true, 1: false, 2: false, 3: true}}, 
+			operand: BoolColumn{Title: "foo", Values: OrderedBoolMapType{0: true, 1: false, 2: false, 3: true}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{ true, true, false, true, false, false},
+			expected: FilterType{ true, true, false, true, false, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: -1, 1: 7, 2: 6, 3: 5}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: -1, 1: 7, 2: 6, 3: 5}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: true, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{ true, true, true, true, true, true},
+			expected: FilterType{ true, true, true, true, true, true},
 		},
 	}
 
 	for index, tr := range testData {
-		col := BoolColumn{name: "hi", items: tr.items}
+		col := BoolColumn{Title: "hi", Values: tr.items}
 		output := col.LessOrEquals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -309,7 +309,7 @@ func BenchmarkBoolColumn_LessOrEquals(b *testing.B)  {
 		items[i] = false
 	}
 
-	col := BoolColumn{name: "hi", items: items}
+	col := BoolColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.LessOrEquals(1000)
@@ -330,29 +330,29 @@ func TestBoolColumn_Equals(t *testing.T)  {
 	type testRecord struct {
 		operand LiteralOrColumn;
 		items OrderedBoolMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: false, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, true, false, false, true, false},
+			expected: FilterType{false, true, false, false, true, false},
 		},
 		{
-			operand: BoolColumn{name: "hoo", items: OrderedBoolMapType{0: false, 1: true, 2: true, 3: false, 4: false, 5: false}}, 
+			operand: BoolColumn{Title: "hoo", Values: OrderedBoolMapType{0: false, 1: true, 2: true, 3: false, 4: false, 5: false}}, 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, true, false, true, false},
+			expected: FilterType{false, false, true, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := BoolColumn{name: "hi", items: tr.items}
+		col := BoolColumn{Title: "hi", Values: tr.items}
 		output := col.Equals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -372,7 +372,7 @@ func BenchmarkBoolColumn_Equals(b *testing.B)  {
 		items[i] = true
 	}
 
-	col := BoolColumn{name: "hi", items: items}
+	col := BoolColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.Equals(1000)
@@ -394,29 +394,29 @@ func TestBoolColumn_IsLike(t *testing.T)  {
 	type testRecord struct {
 		operand *regexp.Regexp;
 		items OrderedBoolMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: regexp.MustCompile("(?i)^L"), 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: regexp.MustCompile(`^true$`), 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{true, false, true, true, false, true},
+			expected: FilterType{true, false, true, true, false, true},
 		},
 		{
 			operand: regexp.MustCompile("^fa"), 
 			items: OrderedBoolMapType{0: true, 1: false, 2: true, 3: true, 4: false, 5: true},
-			expected: filterType{false, true, false, false, true, false},
+			expected: FilterType{false, true, false, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := BoolColumn{name: "hi", items: tr.items}
+		col := BoolColumn{Title: "hi", Values: tr.items}
 		output := col.IsLike(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -436,7 +436,7 @@ func BenchmarkBoolColumn_IsLike(b *testing.B)  {
 		items[i] = true
 	}
 
-	col := BoolColumn{name: "hi", items: items}
+	col := BoolColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.IsLike(regexp.MustCompile("^tru"))

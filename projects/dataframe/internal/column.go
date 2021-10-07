@@ -46,17 +46,17 @@ The base column interface for all column types
 */
 type Column interface{
 	Items() ItemSlice
-	insert(index int, value Item)
-	deleteMany(indices []int)
-	GreaterThan(operand LiteralOrColumn) filterType
-	GreaterOrEquals(operand LiteralOrColumn) filterType
-	LessThan(operand LiteralOrColumn) filterType
-	LessOrEquals(operand LiteralOrColumn) filterType
-	Equals(operand LiteralOrColumn) filterType
-	IsLike(pattern *regexp.Regexp) filterType
-	Tx(op rowWiseFunc) transformation
-	Agg(aggFunc aggregateFunc) aggregation
-	Order(option sortOrder) sortOption
+	Insert(index int, value Item)
+	DeleteMany(indices []int)
+	GreaterThan(operand LiteralOrColumn) FilterType
+	GreaterOrEquals(operand LiteralOrColumn) FilterType
+	LessThan(operand LiteralOrColumn) FilterType
+	LessOrEquals(operand LiteralOrColumn) FilterType
+	Equals(operand LiteralOrColumn) FilterType
+	IsLike(pattern *regexp.Regexp) FilterType
+	Tx(op RowWiseFunc) Transformation
+	Agg(aggFunc AggregateFunc) Aggregation
+	Order(option SortOrder) SortOption
 	Len() int 
 	Name() string 
 	ItemAt(index int) Item

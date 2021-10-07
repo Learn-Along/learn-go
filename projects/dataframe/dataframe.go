@@ -1,95 +1,640 @@
-/*
-the dataframe package offers a data structure that makes it easy to manipulate a collection of records.
-
-The operations that can be done on Dataframe include:
-
-- Select
-- Filter (using Where)
-- Sortby
-- Groupby
-
-TODO:
-
-- Limit
-- Offset
-
-*/
 package dataframe
 
-import "github.com/learn-along/learn-go/projects/dataframe/internal"
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"sort"
+	"strings"
+
+	"github.com/learn-along/learn-go/projects/dataframe/internal"
+	"github.com/learn-along/learn-go/projects/dataframe/internal/utils"
+)
 
 /*
-The Dataframe data structure that acts like a database, allowing selection, filtering, grouping and sorting.
-
-- Planned: Add pagination
+The data structure that makes it easy to select, filter, sort and group data records
 */
-type Dataframe internal.Dataframe
+type Dataframe struct {
+	cols map[string]internal.Column;
+	pkFields []string;
+	index map[interface{}]int;
+	dtypes map[string]internal.Datatype;
+}
 
-const (
-	// Sortby 
+// Constructs a Dataframe from an array of maps and returns a pointer to it
+func FromArray(records []map[string]interface{}, primaryFields []string) (*Dataframe, error) {
+	df := Dataframe{
+		pkFields: primaryFields,
+		cols: map[string]internal.Column{},
+		index: map[interface{}]int{},
+		dtypes: map[string]internal.Datatype{},
+	}
 
-	/*
-	Enum Value for sorting in Ascending order
-	*/
-	ASC = internal.ASC
-	/*
-	Enum Value for sorting in Descending order
-	*/
-	DESC = internal.DESC
-)
+	for _, record := range records {
+		err := df.insertRecord(record)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-var (
-	// Initialization
+	df.normalizeCols()
+	return &df, nil
+}
 
-	/*
-	Constructs a Dataframe from an array of maps and returns a pointer to it
-	*/
-	FromArray = internal.FromArray
-	/*
-	Constructs a Dataframe from an array of maps and returns a pointer to it
-	*/
-	FromMap = internal.FromMap
+// Constructs a Dataframe from a map of maps and returns a pointer to it
+func FromMap(records map[interface{}]map[string]interface{}, primaryFields []string) (*Dataframe, error) {
+	df := Dataframe{
+		pkFields: primaryFields,
+		cols: map[string]internal.Column{},
+		index: map[interface{}]int{},
+		dtypes: map[string]internal.Datatype{},
+	}
 
-	// Filter 
+	for _, record := range records {
+		err := df.insertRecord(record)
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	/*
-	Combines a list of filters to produce a combined AND logical filter
-	*/
-	AND = internal.AND
-	/*
-	Combines a list of filters to produce a combined OR logical filter
-	*/
-	OR = internal.OR 
-	/*
-	Combines a list of filters to produce a combined NOT logical filter
-	*/
-	NOT = internal.NOT
+	df.normalizeCols()
 
-	// GroupBy
+	return &df, nil
+}
 
-	/*
-	Aggregation function to get the sum of a given field in each group after a Groupby is done
-	*/
-	SUM = internal.SUM
-	/*
-	Aggregation function to get the maximum value of a given field in each group after a Groupby is done
-	*/
-	MAX = internal.MAX 
-	/*
-	Aggregation function to get the minimum value of a given field in each group after a Groupby is done
-	*/
-	MIN = internal.MIN 
-	/*
-	Aggregation function to get the mean value of a given field in each group after a Groupby is done
-	*/
-	MEAN = internal.MEAN
-	/*
-	Aggregation function to get the difference between maximum and minimum values 
-	of a given field in each group after a Groupby is done
-	*/
-	RANGE = internal.RANGE
-	/*
-	Aggregation function to get the number of records in each group after a Groupby is done
-	*/
-	COUNT = internal.COUNT
-)
+// Inserts items passed as a list of maps into the Dataframe,
+// It will overwrite any record whose primary field values match with the new records
+func (d *Dataframe) Insert(records []map[string]interface{}) error {
+	d.defragmentize()
+
+	for _, record := range records {
+		err := d.insertRecord(record)
+		if err != nil {
+			// FIXME: This should probably rollback; might need to make snapshots
+			return err
+		}
+	}	
+
+	d.normalizeCols()
+	return nil
+}
+
+// Deletes the items that fulfill the filters
+func (d *Dataframe) Delete(filter internal.FilterType) error {
+	count := d.Count()
+	indicesToDelete := make([]int, count)
+	pkIndices := d.getIndicesInOrder()
+	keys := d.Keys()
+
+	counter := 0
+	for i, shouldDelete := range filter {
+		// FIXME:
+		// aside from the mutation delete(d.index,..) which might have race conditions,
+		// these others could be done concurrently
+		// as they don't affect themselves.
+		if shouldDelete && i < count {
+			indicesToDelete[counter] = pkIndices[i]
+			counter++
+
+			// FIXME:
+			// remove this from here. Look for a bulk way of removing keys from a map quickly
+			delete(d.index, keys[i])
+		}		
+	}
+
+	// delete the items in each col 
+	for _, col := range d.cols {
+		// FIXME:
+		// These again can be done concurrently since the data is saved in separate columns.
+		col.DeleteMany(indicesToDelete[:counter])
+	}
+
+	// defragmentize the pks, index and cols 
+	d.defragmentize()
+
+	return nil
+}
+
+// Updates the items that fulfill the given filters with the new value
+func (d *Dataframe) Update(filter []bool, value map[string]interface{}) error  {
+	count := d.Count()
+	sizeOfValue := len(value)
+	indicesToUpdate := make([]int, count)
+	pkIndices := d.getIndicesInOrder()
+	valueCopy := make(map[string]interface{}, sizeOfValue)
+	pkFieldMap := d.getPkFieldMap()
+
+	counter := 0
+	for i, shouldUpdate := range filter {
+		if shouldUpdate && i < count {
+			indicesToUpdate[counter] = pkIndices[i]		
+			counter++	
+		}		
+	}
+
+	for k, v := range value {
+		if _, ok := pkFieldMap[k]; !ok {
+			valueCopy[k] = v
+		}
+	}
+
+	// update only upto counter
+	// This could a range over a channel instead...see FIXME at "for i, shouldUpdate := range filter"
+	for _, pkIndex := range indicesToUpdate[:counter] {
+		// FIXME: concurrency is possible for this inner loop
+		for colName, v := range valueCopy {	
+			col := d.Col(colName)
+			
+			if col == nil {
+				var err error
+
+				col, err = d.createColumnBySampleValueType(colName, v)
+				if err != nil {
+					return err
+				}
+			}
+
+			col.Insert(pkIndex, v)			
+		}		
+	}
+
+	d.normalizeCols()
+
+	return nil
+}
+
+// Selects a given number of fields, and returns a query instance of the same
+func (d *Dataframe) Select(fields ...string) *query {
+	// Creates a new query with this df and one SELECT action in the ops list
+	return &query{df: d, ops: []action{{_type: SELECT_ACTION, payload: fields}}}
+}
+
+// Merges the dataframes dfs to d
+func (d *Dataframe) Merge(dfs ...*Dataframe) error {
+	for _, df := range dfs {
+		// FIXME: Is it possible to merge without having to change to row-wise structure first.
+		// that is basing on the assumption that columnar is more efficient as we claimed
+		records, err := df.ToArray()
+		if err != nil {
+			return err
+		}
+
+		err = d.Insert(records)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Returns the number of actual active items
+func (d *Dataframe) Count() int {
+	return len(d.index)
+}
+
+// Copies the dataframe and returns the new copy
+func (d *Dataframe) Copy() (*Dataframe, error) {
+	// FIXME: Why not just copy the columns, the index, and the pkFields
+	// Having to call ToArray is very inefficient 
+	records, err := d.ToArray()
+	if err != nil {
+		return nil, err
+	}
+
+	return FromArray(records, d.pkFields)
+}
+
+// Converts that dataframe into a slice of records (maps). If selectedFields is a non-empty slice 
+// the fields are limited only to the passed fields
+func (d *Dataframe) ToArray(selectedFields ...string) ([]map[string]interface{}, error) {
+	count := d.Count()
+	pkIndices := d.getIndicesInOrder()
+	data := make([]map[string]interface{}, count)
+	cols := map[string]internal.Column{}
+
+	for _, field := range selectedFields {
+		// FIXME: concurrency possible
+		if val, ok := d.cols[field]; ok {
+			cols[field] = val
+		}
+	}
+
+	if len(cols) == 0 {
+		cols = d.cols
+	}
+
+	for i, pkIndex := range pkIndices {
+		record := map[string]interface{}{}
+
+		// FIXME: The column names are unique, the columns are independent, concurrency is thus possible
+		for _, col := range cols {
+			if i < col.Len() {
+				record[col.Name()] = col.ItemAt(pkIndex)
+			} else {
+				record[col.Name()] = nil
+			}			
+		}
+		
+		data[i] = record
+	}
+
+	return data, nil
+}
+
+// Clears all the data held by the dataframe except the primary key fields
+func (d *Dataframe) Clear() {
+	// clear the cols
+	for k := range d.cols {
+		// FIXME: can be done concurrently
+		delete(d.cols, k)
+	}
+
+	// clear the index
+	for k := range d.index {
+		// FIXME: Can be done concurrently
+		delete(d.index, k)
+	}	
+}
+
+// Gets the pointer to a given column, or creates it if it does not exist
+func (d *Dataframe) Col(name string) internal.Column {
+	col := d.cols[name]
+	return col
+}
+
+// Access method to return the keys in order
+func (d *Dataframe) Keys() []string {
+	count := len(d.index)
+	orderedKeyMap := make(internal.OrderedStringMapType, count)
+
+	for key, i := range d.index {
+		orderedKeyMap[i] = key.(string)
+	}
+
+	return orderedKeyMap.ToSlice().([]string)
+}
+
+// access method to return all column names
+func (d *Dataframe) ColumnNames() []string {
+	count := len(d.cols)
+	names := make([]string, count)
+
+	i := 0
+	for key := range d.cols {
+		names[i] = key
+		i++
+	}
+
+	return names
+}
+
+// Pretty prints the record in this dataframe
+func (d *Dataframe) PrettyPrintRecords() error {
+	// FIXME:
+	// Is it possible to print the data as a table instead of row-wise data,
+	// so as to give the actual picture of how the data is stored.
+	// e.g.
+	// ----------------------------------------
+	// | Col 1   | Col 2   | Col 3 | Col 4    |
+	// ----------------------------------------
+	// | foo     | 45      | 90    | hyu      |
+	data, err := d.ToArray()
+	if err != nil {
+		return err
+	}
+
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+
+	return utils.PrettyPrintJSON(dataJSON)
+}
+
+// Returns the indices of the pks that have not been deleted, i.e. that have no nil
+func (d *Dataframe) getIndicesInOrder() []int {
+	count := len(d.index)
+	indices := make([]int, count)
+
+	// FIXME:What if this were converted into a range from zero to count, instead of range d.index
+	// wouldn't this allow for concurrently updating the indices slice as no data races would be expected.
+	counter := 0
+	for _, i := range d.index {
+		indices[counter] = i
+		counter++
+	}
+
+	sort.Slice(indices, func(i, j int) bool {	return indices[i] < indices[j]	})
+	return indices
+}
+
+// Inserts a single record
+func (d *Dataframe) insertRecord(record map[string]interface{}) error {
+	key, err := createKey(record, d.pkFields)
+	if err != nil {
+		return fmt.Errorf("failed to create key for %v using field %v", record, d.pkFields)
+	}
+
+	row, ok := d.index[key]
+	if !ok {
+		row = len(d.index)
+		d.index[key] = row
+	}		
+
+	for fieldName, value := range record {
+		col := d.Col(fieldName)	
+		
+		if col == nil {
+			col, err = d.createColumnBySampleValueType(fieldName, value)
+			if err != nil {
+				return err
+			}
+		}
+
+		col.Insert(row, value)
+	}
+
+	return nil
+}
+
+// Creates the column basing on the type of the sample value passed to it
+func (d *Dataframe) createColumnBySampleValueType(name string, sampleValue interface{}) (internal.Column, error) {
+	var col internal.Column
+
+	switch sampleValue.(type) {
+	case int:
+		col = &internal.IntColumn{Title: name, Values: internal.OrderedIntMapType{}}
+	case float64:
+		col = &internal.Float64Column{Title: name, Values: internal.OrderedFloat64MapType{}}
+	case string:
+		col = &internal.StringColumn{Title: name, Values: internal.OrderedStringMapType{}}
+	case bool:
+		col = &internal.BoolColumn{Title: name, Values: internal.OrderedBoolMapType{}}
+	case nil:
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("%v data type is not supported", reflect.TypeOf(sampleValue))
+	}
+
+	d.cols[name] = col
+	return col, nil
+}
+
+// Fills up the columns with the given value to reach a given length for all columns
+func (d *Dataframe) normalizeCols()  {
+	var defaultValue interface{}
+	pkIndices := d.getIndicesInOrder()
+	finalLength := len(pkIndices)
+
+	for _, col := range d.cols {
+		colLength := col.Len()
+
+		switch col.GetDatatype() {
+		case internal.IntType:
+			defaultValue = 0
+		case internal.FloatType:
+			defaultValue = 0
+		case internal.StringType:
+			defaultValue = ""
+		case internal.BoolType:
+			defaultValue = false
+		}
+		
+		for i := colLength; i < finalLength; i++ {
+			pkIndex := pkIndices[i]
+			col.Insert(pkIndex, defaultValue)
+		}
+	}
+}
+
+// Converts the primary key field list to a map for easy checking against, to see if field is pkField or not
+func (d *Dataframe) getPkFieldMap() map[string]struct{} {
+	_map := make(map[string]struct{}, len(d.pkFields))
+
+	for _, field := range d.pkFields {
+		// FIXME: This can be done concurrently
+		_map[field] = struct{}{}
+	}
+
+	return _map
+}
+
+// Creates a Key to be used to identify the given record
+func createKey(record map[string]interface{}, primaryFields []string) (string, error)  {
+	key := ""
+	separator := "_"
+
+	// FIXME: Could using strings.Join more expressive of what is actually being done here? Try that.
+	for _, pkField := range primaryFields {
+		if value, ok := record[pkField]; ok {
+			key += fmt.Sprintf("%v_", value)
+		} else {
+			return "", fmt.Errorf("key error: %s in record %v", pkField, record)
+		}
+	}
+	
+	return strings.TrimRight(key, separator), nil
+}
+
+// reorders pks and indices and the cols
+func (d *Dataframe) defragmentize()  {
+	pkIndices := d.getIndicesInOrder()
+	keys := d.Keys()
+
+	for _, col := range d.cols {
+		// FIXME:
+		// These columns are independent. Their defragmentation can be done concurrently
+		col.Defragmentize(pkIndices)
+	}
+
+	for newRow, key := range keys {
+		// FIXME:
+		// This could be done concurrently
+		// even if two keys were alike, this is supposed to be an index, and thus only one key should be present
+		d.index[key] = newRow
+	}
+}
+
+// Filters this dataframe and returns the filtered **copy** of this dataframe
+func (d *Dataframe) getFilteredDf(filter internal.FilterType) (*Dataframe, error) {
+	newDf, err := d.Copy()
+	if err != nil {
+		return nil, err
+	}
+
+	if filter == nil {
+		return newDf, nil
+	}
+
+	// toggle the values in the filter, and delete the unwanted items
+	for i, v := range filter {
+		// FIXME:
+		// This can be done concurrently
+		filter[i] = !v
+	}
+
+	err = newDf.Delete(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	return newDf, nil
+
+}
+
+// Groups this dataframe, basing on the groupbyOption passed, and returns a new grouped Dataframe copy
+func (d *Dataframe) getGroupedDf(gopt *groupByOption) (*Dataframe, error) {
+	aggs := internal.MergeAggregations(gopt.aggs)
+	groupedData := map[string][]map[string]interface{}{}
+	mergedRecords := []map[string]interface{}{}
+	index := []string{}
+
+	// FIXME:
+	// Is it possible to group these items without first going back to row-wise structure?
+	// Afterall, we claimed it was more efficient to group when the data is columnar, or was that wishful thinking?
+	records, err := d.ToArray()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range records {
+		key, err := createKey(record, gopt.fields)
+		if err != nil {
+			return nil, err
+		}
+
+		if data, ok := groupedData[key]; ok {
+			groupedData[key] = append(data, record)
+		} else {
+			// index maintains order of the groups
+			index = append(index, key)
+			
+			mergedRecord := map[string]interface{}{}
+			for _, field := range gopt.fields {
+				mergedRecord[field] = record[field]
+			}
+			mergedRecords = append(mergedRecords, mergedRecord)
+
+			groupedData[key] = []map[string]interface{}{record}
+		}
+	}
+
+
+	for i, key := range index {
+		mergedRecord := mergedRecords[i]
+		df, err := FromArray(groupedData[key], d.pkFields)
+		if err != nil {
+			return nil, err
+		}
+
+		for field, aggFunc := range aggs {
+			mergedRecord[field] = aggFunc(df.Col(field).Items())
+		}
+
+		mergedRecords[i] = mergedRecord
+	}	
+	
+	return FromArray(mergedRecords, gopt.fields)
+}
+
+// Orders the items in the columns of this dataframe basing on the sort options passed.
+func (d *Dataframe) getSortedDf(options... internal.SortOption) (*Dataframe, error) {
+	// FIXME: 
+	// Is it possible to sort this dataframe without going back to row-wise structure?
+	// Afterall we claimed it was more efficient to do so when the data was columnar, or was that wishful thinking?
+	records, err := d.ToArray()
+	if err != nil {
+		return nil, err
+	}
+
+	if options == nil {
+		return d.Copy()
+	}
+		
+	sort.SliceStable(records, func(i, j int) bool {
+		prev := records[i]
+		next := records[j]
+
+		for _, opt := range options {
+			for field, order := range opt {	
+				nextValue := next[field]
+				prevValue := prev[field]
+
+				if nextValue == prevValue {
+					continue
+				}
+
+				if prevValue == nil {
+					// nils will be pushed up by default
+					return order == ASC
+				}
+
+				if nextValue == nil {
+					// nils will be pushed up by default
+					return order == DESC
+				}
+
+				switch p := prevValue.(type) {
+				case string:
+					if order == ASC {
+						return p < nextValue.(string)
+					} else {
+						return p > nextValue.(string)
+					}
+				default:
+					prevAsFloat := internal.ConvertToFloat64(prevValue)
+					nextAsFloat := internal.ConvertToFloat64(nextValue)
+
+					if order == ASC {
+						return prevAsFloat < nextAsFloat
+					} else {
+						return prevAsFloat > nextAsFloat
+					}
+				}	
+				
+			}
+		}
+
+		return true
+	})
+	
+
+	return FromArray(records, d.pkFields)
+}
+
+// Applys the given RowWiseFunc functions on the dataframe
+func (d *Dataframe) apply(rowWiseFuncMap map[string][]internal.RowWiseFunc) error {
+	for field, txs := range rowWiseFuncMap {
+		// FIXME: This second for loop works on each field/column at a time,
+		// and so this should be done concurrently
+		for _, tx := range txs {
+			if col, ok := d.cols[field]; ok {
+				// FIXME: This third for loop works on individual items,
+				// and so this too can be done concurrently
+				switch col.GetDatatype() {
+				case internal.IntType:
+					for i, v := range col.Items().([]int) {
+						col.Insert(i, tx(v))
+					}
+
+				case internal.FloatType:
+					for i, v := range col.Items().([]float64) {
+						col.Insert(i, tx(v))
+					}
+
+				case internal.StringType:
+					for i, v := range col.Items().([]string) {
+						col.Insert(i, tx(v))
+					}
+
+				case internal.BoolType:
+					for i, v := range col.Items().([]bool) {
+						col.Insert(i, tx(v))
+					}
+				}
+			}	
+		}			
+	}
+	return nil
+}

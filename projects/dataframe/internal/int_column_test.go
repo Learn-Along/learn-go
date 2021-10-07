@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-// insert for IntColumns should fill any gaps in keys and Items with "", nil respectively
+// Insert for IntColumns should fill any gaps in keys and Items with "", nil respectively
 func TestIntColumn_insert(t *testing.T)  {
-	col := IntColumn{name: "hi", items: OrderedIntMapType{0: 6, 1: 70}}
-	col.insert(4, 60)
+	col := IntColumn{Title: "hi", Values: OrderedIntMapType{0: 6, 1: 70}}
+	col.Insert(4, 60)
 	expectedItems := []int{6, 70, 0, 0, 60}
 	gotItems := col.Items().([]int)
 	
@@ -22,10 +22,10 @@ func TestIntColumn_insert(t *testing.T)  {
 }
 
 func BenchmarkIntColumn_insert(b *testing.B)  {
-	col := IntColumn{name: "hi", items: OrderedIntMapType{0: 6, 1: 70}}
+	col := IntColumn{Title: "hi", Values: OrderedIntMapType{0: 6, 1: 70}}
 
 	for i := 0; i < b.N; i++ {
-		col.insert(4, 60)
+		col.Insert(4, 60)
 	}
 
 	// Results:
@@ -42,34 +42,34 @@ func TestIntColumn_GreaterThan(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedIntMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{true, true, false, false, false, true},
+			expected: FilterType{true, true, false, false, false, true},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 690, 4: -2, 5: 67},
-			expected: filterType{false, false, false, true, false, false},
+			expected: FilterType{false, false, false, true, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, false, true, false, true},
+			expected: FilterType{true, true, false, true, false, true},
 		},
 	}
 
 	for index, tr := range testData {
-		col := IntColumn{name: "hi", items: tr.items}
+		col := IntColumn{Title: "hi", Values: tr.items}
 		output := col.GreaterThan(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -88,7 +88,7 @@ func BenchmarkIntColumn_GreaterThan(b *testing.B)  {
 		items[i] = i
 	}
 
-	col := IntColumn{name: "hi", items: items}
+	col := IntColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.GreaterThan(1000)
@@ -109,34 +109,34 @@ func TestIntColumn_GreaterOrEquals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedIntMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{true, true, true, false, true, true},
+			expected: FilterType{true, true, true, false, true, true},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, false, true, false, true},
+			expected: FilterType{true, true, false, true, false, true},
 		},
 	}
 
 	for index, tr := range testData {
-		col := IntColumn{name: "hi", items: tr.items}
+		col := IntColumn{Title: "hi", Values: tr.items}
 		output := col.GreaterOrEquals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -155,7 +155,7 @@ func BenchmarkIntColumn_GreaterOrEquals(b *testing.B)  {
 		items[i] = i
 	}
 
-	col := IntColumn{name: "hi", items: items}
+	col := IntColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.GreaterOrEquals(1000)
@@ -176,34 +176,34 @@ func TestIntColumn_LessThan(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedIntMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{false, false, false, true, false, false},
+			expected: FilterType{false, false, false, true, false, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{false, true, false, false, false, false},
+			expected: FilterType{false, true, false, false, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, true, false, true, false},
+			expected: FilterType{false, false, true, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := IntColumn{name: "hi", items: tr.items}
+		col := IntColumn{Title: "hi", Values: tr.items}
 		output := col.LessThan(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -222,7 +222,7 @@ func BenchmarkIntColumn_LessThan(b *testing.B)  {
 		items[i] = i
 	}
 
-	col := IntColumn{name: "hi", items: items}
+	col := IntColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.LessThan(1000)
@@ -243,34 +243,34 @@ func TestIntColumn_LessOrEquals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedIntMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{false, false, true, true, true, false},
+			expected: FilterType{false, false, true, true, true, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedIntMapType{0: 23, 1: 690, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, true, false, true, false},
+			expected: FilterType{false, false, true, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := IntColumn{name: "hi", items: tr.items}
+		col := IntColumn{Title: "hi", Values: tr.items}
 		output := col.LessOrEquals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -289,7 +289,7 @@ func BenchmarkIntColumn_LessOrEquals(b *testing.B)  {
 		items[i] = i
 	}
 
-	col := IntColumn{name: "hi", items: items}
+	col := IntColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.LessOrEquals(1000)
@@ -310,34 +310,34 @@ func TestIntColumn_Equals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedIntMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{false, false, true, false, true, false},
+			expected: FilterType{false, false, true, false, true, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedIntMapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
 			operand: 0, 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, true, false},
+			expected: FilterType{false, false, false, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := IntColumn{name: "hi", items: tr.items}
+		col := IntColumn{Title: "hi", Values: tr.items}
 		output := col.Equals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -357,7 +357,7 @@ func BenchmarkIntColumn_Equals(b *testing.B)  {
 		items[i] = i
 	}
 
-	col := IntColumn{name: "hi", items: items}
+	col := IntColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.Equals(1000)
@@ -379,29 +379,29 @@ func TestIntColumn_IsLike(t *testing.T)  {
 	type testRecord struct {
 		operand *regexp.Regexp;
 		items OrderedIntMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: regexp.MustCompile("(?i)^L"), 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: regexp.MustCompile(`^\d`), 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, true, true, true, true},
+			expected: FilterType{true, true, true, true, true, true},
 		},
 		{
 			operand: regexp.MustCompile("^Duhaga"), 
 			items: OrderedIntMapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := IntColumn{name: "hi", items: tr.items}
+		col := IntColumn{Title: "hi", Values: tr.items}
 		output := col.IsLike(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -421,7 +421,7 @@ func BenchmarkIntColumn_IsLike(b *testing.B)  {
 		items[i] = i
 	}
 
-	col := IntColumn{name: "hi", items: items}
+	col := IntColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.IsLike(regexp.MustCompile("^10"))

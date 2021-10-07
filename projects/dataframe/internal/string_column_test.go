@@ -8,10 +8,10 @@ import (
 	"github.com/learn-along/learn-go/projects/dataframe/internal/utils"
 )
 
-// insert for StringColumns should fill any gaps in keys and Items with "", nil respectively
+// Insert for StringColumns should fill any gaps in keys and Items with "", nil respectively
 func TestStringColumn_insert(t *testing.T)  {
-	col := StringColumn{name: "hi", items: OrderedStringMapType{0: "6", 1: "70"}}
-	col.insert(4, "60")
+	col := StringColumn{Title: "hi", Values: OrderedStringMapType{0: "6", 1: "70"}}
+	col.Insert(4, "60")
 	expectedItems := []string{"6", "70", "", "", "60"}
 
 	if !utils.AreStringSliceEqual(expectedItems, col.Items().([]string)) {
@@ -20,10 +20,10 @@ func TestStringColumn_insert(t *testing.T)  {
 }
 
 func BenchmarkStringColumn_insert(b *testing.B)  {
-	col := StringColumn{name: "hi", items: OrderedStringMapType{0: "6", 1: "70"}}
+	col := StringColumn{Title: "hi", Values: OrderedStringMapType{0: "6", 1: "70"}}
 
 	for i := 0; i < b.N; i++ {
-		col.insert(4, "60")
+		col.Insert(4, "60")
 	}
 
 	// Results:
@@ -40,29 +40,29 @@ func TestStringColumn_GreaterThan(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedStringMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "4", 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{false, false, true, false, true, false},
+			expected: FilterType{false, true, false, true, false, true},
 		},
 		{
 			operand: -2, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "-69", 4: "-2", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
-			operand: StringColumn{name: "foo", items: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
+			operand: StringColumn{Title: "foo", Values: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "68"}}, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "69", 4: "-2", 5: "67"},
-			expected: filterType{true, true, false, false, false, false},
+			expected: FilterType{false, false, false, true, false, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := StringColumn{name: "hi", items: tr.items}
+		col := StringColumn{Title: "hi", Values: tr.items}
 		output := col.GreaterThan(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -81,7 +81,7 @@ func BenchmarkStringColumn_GreaterThan(b *testing.B)  {
 		items[i] = fmt.Sprintf("%v", i)
 	}
 
-	col := StringColumn{name: "hi", items: items}
+	col := StringColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.GreaterThan("1000")
@@ -102,34 +102,34 @@ func TestStringColumn_GreaterOrEquals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedStringMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "-69", 4: "-2", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
-			operand: StringColumn{name: "foo", items: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
+			operand: StringColumn{Title: "foo", Values: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "69", 4: "-2", 5: "67"},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
 			operand: "4", 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{false, true, false, true, false, true},
+			expected: FilterType{false, true, false, true, false, true},
 		},
 	}
 
 	for index, tr := range testData {
-		col := StringColumn{name: "hi", items: tr.items}
+		col := StringColumn{Title: "hi", Values: tr.items}
 		output := col.GreaterOrEquals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -148,7 +148,7 @@ func BenchmarkStringColumn_GreaterOrEquals(b *testing.B)  {
 		items[i] = fmt.Sprintf("%v", i)
 	}
 
-	col := StringColumn{name: "hi", items: items}
+	col := StringColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.GreaterOrEquals("1000")
@@ -169,34 +169,34 @@ func TestStringColumn_LessThan(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedStringMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{true, true, true, true, true, true},
+			expected: FilterType{true, true, true, true, true, true},
 		},
 		{
 			operand: -2, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "-69", 4: "-2", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
-			operand: StringColumn{name: "foo", items: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
+			operand: StringColumn{Title: "foo", Values: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "69", 4: "-2", 5: "67"},
-			expected: filterType{false, true, false, false, false, false},
+			expected: FilterType{false, true, false, false, false, false},
 		},
 		{
 			operand: "4", 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{true, false, true, false, true, false},
+			expected: FilterType{true, false, true, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := StringColumn{name: "hi", items: tr.items}
+		col := StringColumn{Title: "hi", Values: tr.items}
 		output := col.LessThan(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -215,7 +215,7 @@ func BenchmarkStringColumn_LessThan(b *testing.B)  {
 		items[i] = fmt.Sprintf("%v", i)
 	}
 
-	col := StringColumn{name: "hi", items: items}
+	col := StringColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.LessThan("1000")
@@ -236,34 +236,34 @@ func TestStringColumn_LessOrEquals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedStringMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{true, true, true, true, true, true},
+			expected: FilterType{true, true, true, true, true, true},
 		},
 		{
 			operand: -2, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "-69", 4: "-2", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
-			operand: StringColumn{name: "foo", items: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
+			operand: StringColumn{Title: "foo", Values: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "690", 4: "-2", 5: "67"},
-			expected: filterType{true, true, true, false, false, false},
+			expected: FilterType{true, true, true, false, false, false},
 		},
 		{
 			operand: "4", 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{true, false, true, false, true, false},
+			expected: FilterType{true, false, true, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := StringColumn{name: "hi", items: tr.items}
+		col := StringColumn{Title: "hi", Values: tr.items}
 		output := col.LessOrEquals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -282,7 +282,7 @@ func BenchmarkStringColumn_LessOrEquals(b *testing.B)  {
 		items[i] = fmt.Sprintf("%v", i)
 	}
 
-	col := StringColumn{name: "hi", items: items}
+	col := StringColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.LessOrEquals("1000")
@@ -303,34 +303,34 @@ func TestStringColumn_Equals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedStringMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "69", 4: "-2", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
-			operand: StringColumn{name: "foo", items: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
+			operand: StringColumn{Title: "foo", Values: OrderedStringMapType{0: "23", 1: "60", 2: "-2", 3: "69"}}, 
 			items: OrderedStringMapType{0: "23", 1: "6", 2: "-2", 3: "69", 4: "-2", 5: "67"},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
 			operand: "0", 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{false, false, false, false, true, false},
+			expected: FilterType{false, false, false, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := StringColumn{name: "hi", items: tr.items}
+		col := StringColumn{Title: "hi", Values: tr.items}
 		output := col.Equals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -350,7 +350,7 @@ func BenchmarkStringColumn_Equals(b *testing.B)  {
 		items[i] = fmt.Sprintf("%v", i)
 	}
 
-	col := StringColumn{name: "hi", items: items}
+	col := StringColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.Equals("1000")
@@ -372,29 +372,29 @@ func TestStringColumn_IsLike(t *testing.T)  {
 	type testRecord struct {
 		operand *regexp.Regexp;
 		items OrderedStringMapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: regexp.MustCompile("(?i)^L"), 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: regexp.MustCompile(`^\d`), 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{true, true, true, true, true, true},
+			expected: FilterType{true, true, true, true, true, true},
 		},
 		{
 			operand: regexp.MustCompile("^69"), 
 			items: OrderedStringMapType{0: "23", 1: "500", 2: "2", 3: "69", 4: "0", 5: "67"},
-			expected: filterType{false, false, false, true, false, false},
+			expected: FilterType{false, false, false, true, false, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := StringColumn{name: "hi", items: tr.items}
+		col := StringColumn{Title: "hi", Values: tr.items}
 		output := col.IsLike(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -414,7 +414,7 @@ func BenchmarkStringColumn_IsLike(b *testing.B)  {
 		items[i] = fmt.Sprintf("%v", i)
 	}
 
-	col := StringColumn{name: "hi", items: items}
+	col := StringColumn{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.IsLike(regexp.MustCompile("^10"))

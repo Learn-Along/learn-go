@@ -9,18 +9,18 @@ var (
 	_divideByTen = func (i interface{}) interface{}  {return i.(int) / 10 }
 )
 
-// mergeTransformations should merge an transformation list into a map of slices of rowWiseFunc functions
+// MergeTransformations should merge an Transformation list into a map of slices of RowWiseFunc functions
 func TestMergeTransformations(t *testing.T)  {
 	type testRecord struct {
-		input []transformation;
-		expected map[string][]rowWiseFunc
+		input []Transformation;
+		expected map[string][]RowWiseFunc
 	}
 
 	sampleValue := 20
 
 	testData := []testRecord{
 		{
-			input: []transformation{
+			input: []Transformation{
 				{k: "hi", v: _addTen}, 
 				{k: "hi", v: _minusTen},
 				{k: "yoo", v: _multiplyByTen}, 
@@ -28,7 +28,7 @@ func TestMergeTransformations(t *testing.T)  {
 				{k: "an", v: _multiplyByTen}, 
 				{k: "an", v: _minusTen},
 			},
-			expected: map[string][]rowWiseFunc{
+			expected: map[string][]RowWiseFunc{
 				"hi": {_addTen, _minusTen, _divideByTen},
 				"yoo": {_multiplyByTen},
 				"an": {_multiplyByTen, _minusTen},
@@ -38,7 +38,7 @@ func TestMergeTransformations(t *testing.T)  {
 
 
 	for _, tr := range testData {
-		res := mergeTransformations(tr.input)
+		res := MergeTransformations(tr.input)
 
 		for key, v := range tr.expected {
 			for i, agg := range v {
@@ -58,7 +58,7 @@ func TestMergeTransformations(t *testing.T)  {
 */
 
 func Benchmark_mergeTransformations(b *testing.B) {
-	input := []transformation{
+	input := []Transformation{
 		{k: "hi", v: _addTen}, 
 		{k: "hi", v: _minusTen},
 		{k: "yoo", v: _multiplyByTen}, 
@@ -68,7 +68,7 @@ func Benchmark_mergeTransformations(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		mergeTransformations(input)
+		MergeTransformations(input)
 	}
 
 	// Results:
@@ -76,7 +76,7 @@ func Benchmark_mergeTransformations(b *testing.B) {
 	// 
 	// | Change 					| time				 | memory 				 | allocations			 | Choice  |
 	// |----------------------------|--------------------|-----------------------|-----------------------|---------|
-	// | transformation as map  	| 1073 ns/op         | 488 B/op              | 8 allocs/op           |    	   |
-	// | transformation as struct  	| 766.5 ns/op        | 488 B/op              | 8 allocs/op           | x	   |
+	// | Transformation as map  	| 1073 ns/op         | 488 B/op              | 8 allocs/op           |    	   |
+	// | Transformation as struct  	| 766.5 ns/op        | 488 B/op              | 8 allocs/op           | x	   |
 	// | Add goroutine in for loop	| 3689 ns/op	     | 632 B/op	      		 | 10 allocs/op   		 |		   |
 }

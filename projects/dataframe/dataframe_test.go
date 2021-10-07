@@ -1,4 +1,4 @@
-package internal
+package dataframe
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/learn-along/learn-go/projects/dataframe/internal"
 	"github.com/learn-along/learn-go/projects/dataframe/internal/utils"
 )
 
@@ -194,15 +195,15 @@ func BenchmarkFromMap(b *testing.B)  {
 	// | None					    	| 8,609 ns/op	    	| 2244 B/op	      		 | 51 allocs/op		 	 | x  	   |
 }
 
-// Insert should insert more records to the dataframe, overwriting any of the same key
+// Insert should Insert more records to the dataframe, overwriting any of the same key
 func TestDataframe_Insert(t *testing.T)  {
 	df := Dataframe{
 		pkFields: primaryFields,
-		cols: map[string]Column{},
+		cols: map[string]internal.Column{},
 		index: map[interface{}]int{},
 	}
 
-	// insert thrice, but still have the same data due to the primary keys...treat this like a db
+	// Insert thrice, but still have the same data due to the primary keys...treat this like a db
 	df.Insert(dataArray)
 	df.Insert(dataArray)
 	df.Insert(dataArray)
@@ -281,7 +282,7 @@ func TestDataframe_InsertNonExistingCols(t *testing.T)  {
 
 	df := Dataframe{
 		pkFields: primaryFields,
-		cols: map[string]Column{},
+		cols: map[string]internal.Column{},
 		index: map[interface{}]int{},
 	}
 
@@ -473,7 +474,7 @@ func TestDataframe_Delete(t *testing.T)  {
 	}
 
 	type testRecord struct {
-		filter filterType;
+		filter internal.FilterType;
 		expected []map[string]interface{};
 	}
 
@@ -557,7 +558,7 @@ func TestDataframe_Delete(t *testing.T)  {
 	}
 }
 
-// Insert, delete, insert should update only those records that don't exist
+// Insert, delete, Insert should update only those records that don't exist
 func TestDataframe_DeleteReinsert(t *testing.T)  {
 	df, err := FromArray(dataArray, primaryFields)
 	if err != nil {
@@ -565,7 +566,7 @@ func TestDataframe_DeleteReinsert(t *testing.T)  {
 	}
 
 	type testRecord struct {
-		filter filterType;
+		filter internal.FilterType;
 		onReinsert []map[string]interface{};
 	}
 
@@ -744,7 +745,7 @@ func TestDataframe_Update(t *testing.T)  {
 	}
 
 	type testRecord struct {
-		filter filterType;
+		filter internal.FilterType;
 		newData map[string]interface{};
 		expected []map[string]interface{};
 	}
@@ -1021,7 +1022,7 @@ func TestDataframe_Select(t *testing.T)  {
 			q: df.Select("age", "last name", "first name").GroupBy("last name").Agg(
                 df.Col("age").Agg(MEAN),
 				// even a custom agggregate functions are possible
-                df.Col("location").Agg(func(arr ItemSlice) Item {return "random"}),
+                df.Col("location").Agg(func(arr internal.ItemSlice) internal.Item {return "random"}),
             ), 
 			expected: []map[string]interface{}{
 				{"last name": "Doe", "age": float64(33) },
@@ -1142,7 +1143,7 @@ func BenchmarkDataframe_Select_Groupby(b *testing.B)  {
 	for i := 0; i < b.N; i++ {
 		df.Select("age", "last name", "first name").GroupBy("last name").Agg(
 			df.Col("age").Agg(MEAN),
-			df.Col("location").Agg(func(arr ItemSlice) Item {return "random"}),
+			df.Col("location").Agg(func(arr internal.ItemSlice) internal.Item {return "random"}),
 		).Execute()
 	}
 
@@ -1477,14 +1478,14 @@ func ExampleDataframe_PrettyPrintRecords()  {
 	// ]
 }
 
-func benchmarkDelete(df *Dataframe, filter filterType, b *testing.B)  {
+func benchmarkDelete(df *Dataframe, filter internal.FilterType, b *testing.B)  {
 	for i := 0; i < b.N; i++ {
 		df.Delete(filter)
 		df.Insert(dataArray)
 	}
 }
 
-func benchmarkUpdate(df *Dataframe, filter filterType, data map[string]interface{}, b *testing.B)  {
+func benchmarkUpdate(df *Dataframe, filter internal.FilterType, data map[string]interface{}, b *testing.B)  {
 	for i := 0; i < b.N; i++ {
 		df.Update(filter, data)
 		df.Insert(dataArray)

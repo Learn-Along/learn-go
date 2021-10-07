@@ -5,10 +5,10 @@ import (
 	"testing"
 )
 
-// insert for Float64Columns should fill any gaps in keys and Items with "", nil respectively
+// Insert for Float64Columns should fill any gaps in keys and Items with "", nil respectively
 func TestFloat64Column_insert(t *testing.T)  {
-	col := Float64Column{name: "hi", items: OrderedFloat64MapType{0: 6, 1: 70}}
-	col.insert(4, 60)
+	col := Float64Column{Title: "hi", Values: OrderedFloat64MapType{0: 6, 1: 70}}
+	col.Insert(4, 60)
 	expectedItems := []float64{6.0, 70.0, 0.0, 0.0, 60.0}
 	gotItems := col.Items().([]float64)
 	
@@ -22,10 +22,10 @@ func TestFloat64Column_insert(t *testing.T)  {
 }
 
 func BenchmarkFloat64Column_insert(b *testing.B)  {
-	col := Float64Column{name: "hi", items: OrderedFloat64MapType{0: 6, 1: 70}}
+	col := Float64Column{Title: "hi", Values: OrderedFloat64MapType{0: 6, 1: 70}}
 
 	for i := 0; i < b.N; i++ {
-		col.insert(4, 60)
+		col.Insert(4, 60)
 	}
 
 	// Results:
@@ -42,39 +42,39 @@ func TestFloat64Column_GreaterThan(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedFloat64MapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{true, true, false, false, false, true},
+			expected: FilterType{true, true, false, false, false, true},
 		},
 		{
-			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: Float64Column{Title: "foo", Values: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 690, 4: -2, 5: 67},
-			expected: filterType{false, false, false, true, false, false},
+			expected: FilterType{false, false, false, true, false, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 690, 4: -2, 5: 67},
-			expected: filterType{false, false, false, true, false, false},
+			expected: FilterType{false, false, false, true, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, false, true, false, true},
+			expected: FilterType{true, true, false, true, false, true},
 		},
 	}
 
 	for index, tr := range testData {
-		col := Float64Column{name: "hi", items: tr.items}
+		col := Float64Column{Title: "hi", Values: tr.items}
 		output := col.GreaterThan(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -93,7 +93,7 @@ func BenchmarkFloat64Column_GreaterThan(b *testing.B)  {
 		items[i] = float64(i)
 	}
 
-	col := Float64Column{name: "hi", items: items}
+	col := Float64Column{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.GreaterThan(1000)
@@ -114,34 +114,34 @@ func TestFloat64Column_GreaterOrEquals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedFloat64MapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{true, true, true, false, true, true},
+			expected: FilterType{true, true, true, false, true, true},
 		},
 		{
-			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: Float64Column{Title: "foo", Values: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, false, true, false, true},
+			expected: FilterType{true, true, false, true, false, true},
 		},
 	}
 
 	for index, tr := range testData {
-		col := Float64Column{name: "hi", items: tr.items}
+		col := Float64Column{Title: "hi", Values: tr.items}
 		output := col.GreaterOrEquals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -160,7 +160,7 @@ func BenchmarkFloat64Column_GreaterOrEquals(b *testing.B)  {
 		items[i] = float64(i)
 	}
 
-	col := Float64Column{name: "hi", items: items}
+	col := Float64Column{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.GreaterOrEquals(1000)
@@ -181,39 +181,39 @@ func TestFloat64Column_LessThan(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedFloat64MapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{false, false, false, true, false, false},
+			expected: FilterType{false, false, false, true, false, false},
 		},
 		{
-			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: Float64Column{Title: "foo", Values: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{false, true, false, false, false, false},
+			expected: FilterType{false, true, false, false, false, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{false, true, false, false, false, false},
+			expected: FilterType{false, true, false, false, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, true, false, true, false},
+			expected: FilterType{false, false, true, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := Float64Column{name: "hi", items: tr.items}
+		col := Float64Column{Title: "hi", Values: tr.items}
 		output := col.LessThan(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -232,7 +232,7 @@ func BenchmarkFloat64Column_LessThan(b *testing.B)  {
 		items[i] = float64(i)
 	}
 
-	col := Float64Column{name: "hi", items: items}
+	col := Float64Column{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.LessThan(1000)
@@ -253,39 +253,39 @@ func TestFloat64Column_LessOrEquals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedFloat64MapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: -69, 4: -2, 5: 67},
-			expected: filterType{false, false, true, true, true, false},
+			expected: FilterType{false, false, true, true, true, false},
 		},
 		{
-			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: Float64Column{Title: "foo", Values: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedFloat64MapType{0: 23, 1: 690, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
-			operand: IntColumn{name: "foo", items: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: IntColumn{Title: "foo", Values: OrderedIntMapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedFloat64MapType{0: 23, 1: 690, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
 			operand: 4, 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, true, false, true, false},
+			expected: FilterType{false, false, true, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := Float64Column{name: "hi", items: tr.items}
+		col := Float64Column{Title: "hi", Values: tr.items}
 		output := col.LessOrEquals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -304,7 +304,7 @@ func BenchmarkFloat64Column_LessOrEquals(b *testing.B)  {
 		items[i] = float64(i)
 	}
 
-	col := Float64Column{name: "hi", items: items}
+	col := Float64Column{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.LessOrEquals(1000)
@@ -325,34 +325,34 @@ func TestFloat64Column_Equals(t *testing.T)  {
 	type testRecord struct {
 		operand interface{};
 		items OrderedFloat64MapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: "hi", 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: -2, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{false, false, true, false, true, false},
+			expected: FilterType{false, false, true, false, true, false},
 		},
 		{
-			operand: Float64Column{name: "foo", items: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
+			operand: Float64Column{Title: "foo", Values: OrderedFloat64MapType{0: 23, 1: 60, 2: -2, 3: 69}}, 
 			items: OrderedFloat64MapType{0: 23, 1: 6, 2: -2, 3: 69, 4: -2, 5: 67},
-			expected: filterType{true, false, true, true, false, false},
+			expected: FilterType{true, false, true, true, false, false},
 		},
 		{
 			operand: 0, 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, true, false},
+			expected: FilterType{false, false, false, false, true, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := Float64Column{name: "hi", items: tr.items}
+		col := Float64Column{Title: "hi", Values: tr.items}
 		output := col.Equals(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -371,7 +371,7 @@ func BenchmarkFloat64Column_Equals(b *testing.B)  {
 		items[i] = float64(i)
 	}
 
-	col := Float64Column{name: "hi", items: items}
+	col := Float64Column{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.Equals(1000)
@@ -393,29 +393,29 @@ func TestFloat64Column_IsLike(t *testing.T)  {
 	type testRecord struct {
 		operand *regexp.Regexp;
 		items OrderedFloat64MapType;
-		expected filterType
+		expected FilterType
 	}
 
 	testData := []testRecord{
 		{
 			operand: regexp.MustCompile("(?i)^L"), 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 		{
 			operand: regexp.MustCompile(`^\d`), 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{true, true, true, true, true, true},
+			expected: FilterType{true, true, true, true, true, true},
 		},
 		{
 			operand: regexp.MustCompile("^Duhaga"), 
 			items: OrderedFloat64MapType{0: 23, 1: 500, 2: 2, 3: 69, 4: 0, 5: 67},
-			expected: filterType{false, false, false, false, false, false},
+			expected: FilterType{false, false, false, false, false, false},
 		},
 	}
 
 	for index, tr := range testData {
-		col := Float64Column{name: "hi", items: tr.items}
+		col := Float64Column{Title: "hi", Values: tr.items}
 		output := col.IsLike(tr.operand)
 	
 		for i := 0; i < 6; i++ {
@@ -435,7 +435,7 @@ func BenchmarkFloat64Column_IsLike(b *testing.B)  {
 		items[i] = float64(i)
 	}
 
-	col := Float64Column{name: "hi", items: items}
+	col := Float64Column{Title: "hi", Values: items}
 
 	for i := 0; i < b.N; i++ {
 		col.IsLike(regexp.MustCompile("^10"))

@@ -1,7 +1,9 @@
-package internal
+package dataframe
+
+import "github.com/learn-along/learn-go/projects/dataframe/internal"
 
 const (
-	ASC sortOrder = iota
+	ASC internal.SortOrder = iota
 	DESC
 )
 
@@ -19,6 +21,16 @@ const (
 	SELECT_ACTION
 )
 
+var (
+	MAX internal.AggregateFunc = internal.GetMax
+	MIN internal.AggregateFunc = internal.GetMin
+	SUM internal.AggregateFunc = internal.GetSum
+	MEAN internal.AggregateFunc = internal.GetMean
+	COUNT internal.AggregateFunc = internal.GetCount
+	RANGE internal.AggregateFunc = internal.GetRange
+	// PERCENTILE(int) etc.
+)
+
 type action struct {
 	_type actionType
 	payload interface{}
@@ -26,23 +38,17 @@ type action struct {
 
 type actionType int
 
-type sortOrder int
-
-type sortOption map[string]sortOrder
-
-type filterType []bool
-
 /*
 * GroupBy Options 
 */
 type groupByOption struct {
 	fields []string
-	aggs []aggregation
+	aggs []internal.Aggregation
 	q *query
 }
 
 // aggregates the different groups
-func (g *groupByOption) Agg(aggs...aggregation) *query {
+func (g *groupByOption) Agg(aggs...internal.Aggregation) *query {
 	g.aggs = append(g.aggs, aggs...)
 	g.q.ops = append(g.q.ops, action{_type: GROUPBY_ACTION, payload: g})
 	return g.q
@@ -60,22 +66,22 @@ type query struct{
 func (q *query) Execute() ([]map[string]interface{}, error) {
 	// may need to add a recover defer
 	var gopt *groupByOption
-	filters := []filterType{}
-	sortOptions := []sortOption{}
-	txList := []transformation{}
+	filters := []internal.FilterType{}
+	sortOptions := []internal.SortOption{}
+	txList := []internal.Transformation{}
 	selectedFields := []string{}
 
 	// combine similar actions together
 	for _, act := range q.ops {
 		switch act._type {
 		case FILTER_ACTION:
-			filters = append(filters, act.payload.(filterType))
+			filters = append(filters, act.payload.(internal.FilterType))
 		case GROUPBY_ACTION:
 			gopt = act.payload.(*groupByOption)
 		case SORT_ACTION:
-			sortOptions = append(sortOptions, act.payload.([]sortOption)...)
+			sortOptions = append(sortOptions, act.payload.([]internal.SortOption)...)
 		case APPLY_ACTION:
-			txList = append(txList, act.payload.([]transformation)...)
+			txList = append(txList, act.payload.([]internal.Transformation)...)
 		case SELECT_ACTION:
 			selectedFields = append(selectedFields, act.payload.([]string)...)
 		}
@@ -101,7 +107,7 @@ func (q *query) Execute() ([]map[string]interface{}, error) {
 	}
 
 	if len(txList) > 0 {
-		mergedTxs := mergeTransformations(txList)	
+		mergedTxs := internal.MergeTransformations(txList)	
 		err = df.apply(mergedTxs)
 		if err != nil {
 			return nil, err
@@ -116,24 +122,24 @@ func (q *query) Execute() ([]map[string]interface{}, error) {
 // Given a list of boolean corresponding to indices of the items,
 // true meaning the item should be included, false meaning that item should be excluded
 // the method then returns a query instance
-func (q *query) Where(filter filterType) *query {
+func (q *query) Where(filter internal.FilterType) *query {
 	q.ops = append(q.ops, action{_type: FILTER_ACTION, payload: filter})
 	return q
 }
 
 // Sorts the data by the col provided in the sort option, and int he order given
-func (q *query) SortBy(options ...sortOption) *query {
+func (q *query) SortBy(options ...internal.SortOption) *query {
 	q.ops = append(q.ops, action{_type: SORT_ACTION, payload: options})
 	return q
 }
 
 // Groups the data into groups that have same values for the given columns/fields
 func (q *query) GroupBy(fields ...string) *groupByOption {
-	return &groupByOption{q: q, fields: fields, aggs: []aggregation{}}
+	return &groupByOption{q: q, fields: fields, aggs: []internal.Aggregation{}}
 }
 
 // Applies the col transforms to the query
-func (q *query) Apply(ops ...transformation) *query {
+func (q *query) Apply(ops ...internal.Transformation) *query {
 	q.ops = append(q.ops, action{_type: APPLY_ACTION, payload: ops})
 	return q
 }
@@ -142,11 +148,11 @@ func (q *query) Apply(ops ...transformation) *query {
 // Logic combinations
 
 // Combines a list of filters to produce a combined AND logical filter
-func AND(filters ...filterType) filterType{
+func AND(filters ...internal.FilterType) internal.FilterType{
 	// FIXME: What if I got the maximum length of the filters,
-	// used make to create a filterType of that length (values default to false),
+	// used make to create a FilterType of that length (values default to false),
 	// and then got rid of append at the bottom
-	combinedFilter := filterType{}
+	combinedFilter := internal.FilterType{}
 
 	for _, filter := range filters {
 		currentLength := len(combinedFilter)
@@ -175,11 +181,11 @@ func AND(filters ...filterType) filterType{
 }
 
 // Combines a list of filters to produce a combined OR logical filter
-func OR(filters ...filterType) filterType {
+func OR(filters ...internal.FilterType) internal.FilterType {
 	// FIXME: What if I got the maximum length of the filters, (use a utility from slices.go)
-	// used make to create a filterType of that length (values default to false),
+	// used make to create a FilterType of that length (values default to false),
 	// and then got rid of append at the bottom
-	combinedFilter := filterType{}
+	combinedFilter := internal.FilterType{}
 
 	for _, filter := range filters {
 		currentLength := len(combinedFilter)
@@ -207,9 +213,9 @@ func OR(filters ...filterType) filterType {
 }
 
 // Inverts a given filter to produce a NOT logical filter
-func NOT(filter filterType) filterType {
+func NOT(filter internal.FilterType) internal.FilterType {
 	count := len(filter)
-	combinedFilter := make(filterType, count)
+	combinedFilter := make(internal.FilterType, count)
 
 	for i, value := range filter {
 		// FIXME: concurrency possible

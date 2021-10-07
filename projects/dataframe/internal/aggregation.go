@@ -5,25 +5,15 @@ import (
 	"strconv"
 )
 
-var (
-	MAX aggregateFunc = getMax
-	MIN aggregateFunc = getMin
-	SUM aggregateFunc = getSum
-	MEAN aggregateFunc = getMean
-	COUNT aggregateFunc = getCount
-	RANGE aggregateFunc = getRange
-	// PERCENTILE(int) etc.
-)
+// map of column name and the AggregateFunc function to apply to its values
+type Aggregation map[string]AggregateFunc
 
-// map of column name and the aggregateFunc function to apply to its values
-type aggregation map[string]aggregateFunc
-
-// aggregation function to convert array of values into single value especially during grouping
-type aggregateFunc func(ItemSlice) Item
+// Aggregation function to convert array of values into single value especially during grouping
+type AggregateFunc func(ItemSlice) Item
 
 
 // Aggregation function to get the maximum value in the list of values
-func getMax(values ItemSlice) Item {
+func GetMax(values ItemSlice) Item {
 	switch records := values.(type) {
 	case []string:
 		var maxV string
@@ -71,7 +61,7 @@ func getMax(values ItemSlice) Item {
 }
 
 // Aggregation function to get the minimum value in the list of values
-func getMin(values ItemSlice) Item {
+func GetMin(values ItemSlice) Item {
 	switch records := values.(type) {
 	case []string:
 		var minV string
@@ -124,7 +114,7 @@ func getMin(values ItemSlice) Item {
 }
 
 // Aggregation function to get the sum of the values
-func getSum(values ItemSlice) Item {
+func GetSum(values ItemSlice) Item {
 	switch records := values.(type) {
 	case []int:
 		var a int = 0
@@ -149,8 +139,8 @@ func getSum(values ItemSlice) Item {
 
 // Aggregation function to get the mean value in the list of values 
 // It returns nil if there are some nil values
-func getMean(values ItemSlice) Item {
-	a := getSum(values)
+func GetMean(values ItemSlice) Item {
+	a := GetSum(values)
 
 	if a != nil {
 		var count float64 = 0
@@ -174,7 +164,7 @@ func getMean(values ItemSlice) Item {
 }
 
 // Returns the number of items in the values array
-func getCount(values ItemSlice) Item {
+func GetCount(values ItemSlice) Item {
 	switch records := values.(type) {
 	case []float64:
 		return len(records)
@@ -191,7 +181,7 @@ func getCount(values ItemSlice) Item {
 
 // Returns the difference between the biggest and the smallest value in the values array,
 // if all values are numbers (or nil which are ignored), else it returns nil
-func getRange(values ItemSlice) Item {
+func GetRange(values ItemSlice) Item {
 	switch records := values.(type) {
 	case []int:
 		var max int
@@ -235,17 +225,17 @@ func getRange(values ItemSlice) Item {
 */
 
 // Converts a given value of unknown type to float64
-func convertToFloat64(value interface{}) float64 {
+func ConvertToFloat64(value interface{}) float64 {
 	v := fmt.Sprintf("%v", value)
 	valueAsFloat, _ := strconv.ParseFloat(v, 64)
 	return valueAsFloat
 }
 
-// Merges a slice of aggregations into one aggregation.
-// Inorder to have only one aggregation per column, only the last aggregateFunc passed for that column
+// Merges a slice of aggregations into one Aggregation.
+// Inorder to have only one Aggregation per column, only the last AggregateFunc passed for that column
 // is kept
-func mergeAggregations(aggs []aggregation) aggregation {
-	res := aggregation{}
+func MergeAggregations(aggs []Aggregation) Aggregation {
+	res := Aggregation{}
 
 	for _, agg 	:= range aggs {
 		for key, v := range agg {

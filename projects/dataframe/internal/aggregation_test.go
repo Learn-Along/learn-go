@@ -2,8 +2,8 @@ package internal
 
 import "testing"
 
-// MAX should return the maximum value (as a float64 value) in a given list of items
-func TestMAX(t *testing.T)  {
+// GetMax should return the maximum value (as a float64 value) in a given list of items
+func TestGetMax(t *testing.T)  {
 	type testRecord struct {
 		input ItemSlice;
 		expected Item
@@ -25,18 +25,18 @@ func TestMAX(t *testing.T)  {
 	}
 
 	for _, tr := range testData {
-		got := MAX(tr.input)
+		got := GetMax(tr.input)
 		if got != tr.expected {
 			t.Fatalf("expected %v; got %v", tr.expected, got)
 		}
 	}
 }
 
-func BenchmarkMAX(b *testing.B)  {
+func BenchmarkGetMax(b *testing.B)  {
 	input := []float64{1.9, 2.3, 4.8, 0.8}
 
 	for i := 0; i < b.N; i++ {
-		MAX(input)
+		GetMax(input)
 	}
 
 	// Results:
@@ -47,8 +47,8 @@ func BenchmarkMAX(b *testing.B)  {
 	// | None  						| 57.17 ns/op	     | 32 B/op	       		 | 2 allocs/op           |  x  	   |
 }
 
-// MIN should return the minimum value (as a float64 value) in a given list of items
-func TestMIN(t *testing.T)  {
+// GetMin should return the minimum value (as a float64 value) in a given list of items
+func TestGetMin(t *testing.T)  {
 	type testRecord struct {
 		input ItemSlice;
 		expected Item
@@ -73,18 +73,18 @@ func TestMIN(t *testing.T)  {
 	}
 
 	for loop, tr := range testData {
-		got := MIN(tr.input)
+		got := GetMin(tr.input)
 		if got != tr.expected {
 			t.Fatalf("loop %d: expected %v; got %v", loop, tr.expected, got)
 		}
 	}
 }
 
-func BenchmarkMIN(b *testing.B)  {
+func BenchmarkGetMin(b *testing.B)  {
 	input := []float64{1.9, 2.3, 4.8, 0.8}
 
 	for i := 0; i < b.N; i++ {
-		MIN(input)
+		GetMin(input)
 	}
 
 	// Results:
@@ -95,9 +95,9 @@ func BenchmarkMIN(b *testing.B)  {
 	// | None  						| 66.58 ns/op	     | 32 B/op	       		 | 2 allocs/op           |  x  	   |
 }
 
-// SUM should return the sum (as a float64 value) of the given list of items, but will return nil if 
+// GetSum should return the sum (as a float64 value) of the given list of items, but will return nil if 
 // the values are not all numbers (nil values are treated as zero)
-func TestSUM(t *testing.T)  {
+func TestGetSum(t *testing.T)  {
 	type testRecord struct {
 		input ItemSlice;
 		expected Item;
@@ -124,18 +124,18 @@ func TestSUM(t *testing.T)  {
 	}
 
 	for _, tr := range testData {
-		got := SUM(tr.input)
+		got := GetSum(tr.input)
 		if got != tr.expected {
 			t.Fatalf("expected %v; got %v", tr.expected, got)
 		}
 	}
 }
 
-func BenchmarkSUM(b *testing.B)  {
+func BenchmarkGetSum(b *testing.B)  {
 	input := []float64{1.9, 2.3, 4.8, 0.8}
 
 	for i := 0; i < b.N; i++ {
-		SUM(input)
+		GetSum(input)
 	}
 
 	// Results:
@@ -146,9 +146,9 @@ func BenchmarkSUM(b *testing.B)  {
 	// | None  						| 63.92 ns/op	     | 32 B/op	       		 | 2 allocs/op           |  x  	   |
 }
 
-// MEAN should return the mean (as a float64 value) of the given list of items.
+// GetMean should return the mean (as a float64 value) of the given list of items.
 // It returns nil if the values are not numbers (nil values are treated as zero)
-func TestMEAN(t *testing.T)  {
+func TestGetMean(t *testing.T)  {
 	type testRecord struct {
 		input ItemSlice;
 		expected Item
@@ -174,18 +174,18 @@ func TestMEAN(t *testing.T)  {
 	}
 
 	for _, tr := range testData {
-		got := MEAN(tr.input)
+		got := GetMean(tr.input)
 		if got != tr.expected {
 			t.Fatalf("expected %v; got %v", tr.expected, got)
 		}
 	}
 }
 
-func BenchmarkMEAN(b *testing.B)  {
+func BenchmarkGetMean(b *testing.B)  {
 	input := []float64{1.9, 2.3, 4.8, 0.8}
 
 	for i := 0; i < b.N; i++ {
-		MEAN(input)
+		GetMean(input)
 	}
 
 	// Results:
@@ -196,8 +196,8 @@ func BenchmarkMEAN(b *testing.B)  {
 	// | None  						| 85.74 ns/op	     | 40 B/op	       		 | 3 allocs/op           |  x  	   |
 }
 
-// COUNT should return the number of items in the list of values, including nils
-func TestCOUNT(t *testing.T)  {
+// GetCount should return the number of items in the list of values, including nils
+func TestGetCount(t *testing.T)  {
 	type testRecord struct {
 		input ItemSlice;
 		expected Item;
@@ -222,18 +222,18 @@ func TestCOUNT(t *testing.T)  {
 	}
 
 	for _, tr := range testData {
-		got := COUNT(tr.input)
+		got := GetCount(tr.input)
 		if got != tr.expected {
 			t.Fatalf("expected %v; got %v", tr.expected, got)
 		}
 	}
 }
 
-func BenchmarkCOUNT(b *testing.B)  {
+func BenchmarkGetCount(b *testing.B)  {
 	input := []float64{1.9, 2.3, 4.8, 0.8}
 
 	for i := 0; i < b.N; i++ {
-		COUNT(input)
+		GetCount(input)
 	}
 
 	// Results:
@@ -244,10 +244,10 @@ func BenchmarkCOUNT(b *testing.B)  {
 	// | None  						| 42.17 ns/op	     | 24 B/op	       		 | 1 allocs/op           |  x  	   |
 }
 
-// RANGE should return the range (as a float64 value) of the given list of items
+// GetRange should return the range (as a float64 value) of the given list of items
 // i.e. maximum minus minimum.
 // It returns nil if the values are not numbers (nil values are ignored)
-func TestRANGE(t *testing.T)  {
+func TestGetRange(t *testing.T)  {
 	type testRecord struct {
 		input ItemSlice;
 		expected Item
@@ -274,18 +274,18 @@ func TestRANGE(t *testing.T)  {
 	}
 
 	for loop, tr := range testData {
-		got := RANGE(tr.input)
+		got := GetRange(tr.input)
 		if got != tr.expected {
 			t.Fatalf("loop %d: expected %v; got %v", loop, tr.expected, got)
 		}
 	}
 }
 
-func BenchmarkRANGE(b *testing.B)  {
+func BenchmarkGetRange(b *testing.B)  {
 	input := []float64{1.9, 2.3, 4.8, 0.8}
 
 	for i := 0; i < b.N; i++ {
-		RANGE(input)
+		GetRange(input)
 	}
 
 	// Results:
@@ -296,22 +296,22 @@ func BenchmarkRANGE(b *testing.B)  {
 	// | None  						| 70.68 ns/op	     | 32 B/op	       		 | 2 allocs/op           |  x  	   |
 }
 
-// mergeAggregations should merge an aggregation list into a single aggregation 
-// ensuring that the last aggregateFunc to be attached to a given column is the one kept,
+// MergeAggregations should merge an Aggregation list into a single Aggregation 
+// ensuring that the last AggregateFunc to be attached to a given column is the one kept,
 // the previous ones are overwritten, to avoid ambiguity
 func TestMergeAggregations(t *testing.T)  {
 	type testRecord struct {
-		input []aggregation;
-		expected aggregation
+		input []Aggregation;
+		expected Aggregation
 	}
 
 	testData := []testRecord{
 		{
-			input: []aggregation{{"hi": MAX}, {"hi": MIN, "yoo": RANGE}, {"hi": SUM, "an": RANGE}, {"an": MIN}},
-			expected: aggregation{
-				"hi": SUM,
-				"yoo": RANGE,
-				"an": MIN,
+			input: []Aggregation{{"hi": GetMax}, {"hi": GetMin, "yoo": GetRange}, {"hi": GetSum, "an": GetRange}, {"an": GetMin}},
+			expected: Aggregation{
+				"hi": GetSum,
+				"yoo": GetRange,
+				"an": GetMin,
 			},
 		},		
 	}
@@ -319,7 +319,7 @@ func TestMergeAggregations(t *testing.T)  {
 	sampleArray := []interface{}{2, 1, 45, 6}
 
 	for _, tr := range testData {
-		res := mergeAggregations(tr.input)
+		res := MergeAggregations(tr.input)
 
 		for key, agg := range tr.expected {
 			got := res[key](sampleArray)
@@ -333,15 +333,15 @@ func TestMergeAggregations(t *testing.T)  {
 }
 
 func Benchmark_mergeAggregations(b *testing.B)  {
-	input := []aggregation{
-		{"hi": MAX}, 
-		{"hi": MIN, "yoo": RANGE},
-		{"hi": SUM, "an": RANGE},
-		{"an": MIN},
+	input := []Aggregation{
+		{"hi": GetMax}, 
+		{"hi": GetMin, "yoo": GetRange},
+		{"hi": GetSum, "an": GetRange},
+		{"an": GetMin},
 	}
 
 	for i := 0; i < b.N; i++ {
-		mergeAggregations(input)
+		MergeAggregations(input)
 	}
 	
 	// Results:
@@ -349,5 +349,5 @@ func Benchmark_mergeAggregations(b *testing.B)  {
 	// 
 	// | Change 					| time				 | memory 				 | allocations			 | Choice  |
 	// |----------------------------|--------------------|-----------------------|-----------------------|---------|
-	// | aggregation as map  		| 560.1 ns/op	     | 256 B/op	             | 2 allocs/op           |  x  	   |
+	// | Aggregation as map  		| 560.1 ns/op	     | 256 B/op	             | 2 allocs/op           |  x  	   |
 }

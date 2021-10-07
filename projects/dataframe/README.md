@@ -77,6 +77,7 @@ Go: [Go 1.17.1](https://golang.org/dl/)
   package main
 
   import (
+    "bytes"
     "encoding/json"
     "fmt"
     "log"
@@ -170,7 +171,7 @@ Go: [Go 1.17.1](https://golang.org/dl/)
   go run main.go
   ```
 
-_Side note: Or...you can copy the [example.go.txt](./example.go.txt) file and rename it to `main.go` in your project as `go run main.go`_
+_Side note: Or...you can clone this repository and enter the example folder and run the `main.go` in your project as `go run main.go`_
 
 ## How to Test
 
@@ -228,7 +229,7 @@ err = df1.Delete(AND(df1.Col("age").GreaterThan(3), df1.Col("name").IsLike(regex
 * Selection methods
 */
 
-// select a few fields, with apply to transformation the data accordingly and return the map of records
+// select a few fields, with apply to Transformation the data accordingly and return the map of records
 data, err = df1.Select("age", "name", "date").Apply(
     df1.Col("age").Tx(func(v int) {return v*8  }),
     df1.Col("name").Tx(func(v string) { return fmt.Sprintf("name is %s", v) }),
