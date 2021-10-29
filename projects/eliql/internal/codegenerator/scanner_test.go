@@ -25,44 +25,60 @@ func TestNewScanner(t *testing.T) {
 }
 
 func TestScanner_ScanTokens(t *testing.T) {
-	testData := map[string][]Token{
-		`SELECT "bar".foo" FROM "bar";`: {
-			Token{
+	testData := map[string][]*Token{
+		`SELECT "bar"."foo" 
+         FROM "bar";`: {
+			{
 				Type:    Select,
 				Lexeme:  "SELECT",
 				Literal: nil,
-				Line:    0,
+				Line:    1,
 			},
-			Token{
+			{
 				Type:    Column,
-				Lexeme:  `"bar".foo"`,
-				Literal: nil,
-				Line:    0,
+				Lexeme:  `"bar"."foo"`,
+				Literal: ColumnLiteral{
+					Table:  "bar",
+					Column: "foo",
+				},
+				Line:    1,
 			},
-			Token{
+			{
 				Type:    From,
 				Lexeme:  "FROM",
 				Literal: nil,
-				Line:    0,
+				Line:    2,
 			},
-			Token{
+			{
 				Type:    Table,
 				Lexeme:  `"bar"`,
-				Literal: nil,
-				Line:    0,
+				Literal: StringLiteral("bar"),
+				Line:    2,
 			},
-			Token{
+			{
 				Type:    SemiColon,
 				Lexeme:  ";",
 				Literal: nil,
-				Line:    0,
+				Line:    2,
+			},
+			{
+				Type:    Eof,
+				Lexeme:  "",
+				Literal: nil,
+				Line:    2,
 			},
 		},
 	}
 	ql := &Eliql{}
-	for source, datum := range testData {
+
+	for source, expectedTokens := range testData {
 		sc := NewScanner(ql, source)
-		assert.ElementsMatchf(t, datum, sc.tokens, "Mismatched tokens")
+		sc.ScanTokens()
+
+		assert.True(t,
+			areTokenSlicesEqual(expectedTokens, sc.tokens),
+			"expected \n%#v or \n%v; got \n%#v or \n%v",
+			expectedTokens, expectedTokens, sc.tokens, sc.tokens)
 	}
 }
 
