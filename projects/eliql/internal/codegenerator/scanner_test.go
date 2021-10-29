@@ -252,6 +252,54 @@ func TestScanner_scanToken(t *testing.T) {
 				expectedTokens, expectedTokens, sc.tokens, sc.tokens)
 		}
 	})
+
+	t.Run("Literals can be extracted", func(t *testing.T) {
+		floatNumber := Token{
+			Type:    Number,
+			Lexeme:  "67.89",
+			Literal: NumberLiteral(67.89),
+			Line:    1,
+		}
+
+		literalExpectedTokenSliceMap := map[string][]*Token{
+			// String
+			`'foo'`:  []*Token{testTokens[String]},
+			`'foo' `: []*Token{testTokens[String]},
+			`'foo';`: []*Token{testTokens[String]},
+
+			// Number
+			`67`:  []*Token{testTokens[Number]},
+			`67 `: []*Token{testTokens[Number]},
+			`67;`: []*Token{testTokens[Number]},
+
+			// Float Number
+			`67.89`:  []*Token{&floatNumber},
+			`67.89 `: []*Token{&floatNumber},
+			`67.89;`: []*Token{&floatNumber},
+
+			// Table
+			`"foo"`:  []*Token{testTokens[Table]},
+			`"foo" `: []*Token{testTokens[Table]},
+			`"foo";`: []*Token{testTokens[Table]},
+
+			// Column
+			`"foo"."bar"`:  []*Token{testTokens[Column]},
+			`"foo"."bar" `: []*Token{testTokens[Column]},
+			`"foo"."bar";`: []*Token{testTokens[Column]},
+		}
+
+		for source, expectedTokens := range literalExpectedTokenSliceMap {
+			ql := &Eliql{}
+			sc := NewScanner(ql, source)
+			sc.scanToken()
+
+			assert.True(t, areTokenSlicesEqual(sc.tokens, expectedTokens))
+			assert.True(t,
+				areTokenSlicesEqual(expectedTokens, sc.tokens),
+				"expected \n%#v or \n%v; got \n%#v or \n%v",
+				expectedTokens, expectedTokens, sc.tokens, sc.tokens)
+		}
+	})
 }
 
 func TestScanner_extractFunction(t *testing.T) {
@@ -553,6 +601,70 @@ func TestScanner_extractString(t *testing.T) {
 		sc := NewScanner(ql, source)
 		sc.current = int64(strings.Index(source, `'`)) + 1
 		sc.extractString()
+
+		assert.Equal(t, testDatum.expectedCurrent, sc.current)
+		assert.True(t,
+			areTokenSlicesEqual(testDatum.tokens, sc.tokens),
+			"expected \n%#v or \n%v; got \n%#v or \n%v",
+			testDatum.tokens, testDatum.tokens, sc.tokens, sc.tokens)
+	}
+}
+
+func TestScanner_extractNumber(t *testing.T) {
+	type testData struct {
+		err             error
+		tokens          []*Token
+		expectedCurrent int64
+	}
+
+	floatNumber := Token{
+		Type:    Number,
+		Lexeme:  "67.89",
+		Literal: NumberLiteral(67.89),
+		Line:    1,
+	}
+
+	sourceTestDataMap := map[string]testData{
+		// FIXME: Add data for erroneous data
+		// Integer
+		`67`:  {
+			err:             nil,
+			tokens:          []*Token{testTokens[Number]},
+			expectedCurrent: 2,
+		},
+		`67  `:   {
+			err:             nil,
+			tokens:          []*Token{testTokens[Number]},
+			expectedCurrent: 2,
+		},
+		`67;`:   {
+			err:             nil,
+			tokens:          []*Token{testTokens[Number]},
+			expectedCurrent: 2,
+		},
+
+		// Float
+		`67.89`:  {
+			err:             nil,
+			tokens:          []*Token{&floatNumber},
+			expectedCurrent: 5,
+		},
+		`67.89  `:   {
+			err:             nil,
+			tokens:          []*Token{&floatNumber},
+			expectedCurrent: 5,
+		},
+		`67.89;`:   {
+			err:             nil,
+			tokens:          []*Token{&floatNumber},
+			expectedCurrent: 5,
+		},
+	}
+
+	for source, testDatum := range sourceTestDataMap {
+		ql := &Eliql{}
+		sc := NewScanner(ql, source)
+		sc.extractNumber()
 
 		assert.Equal(t, testDatum.expectedCurrent, sc.current)
 		assert.True(t,
