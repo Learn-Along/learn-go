@@ -225,7 +225,7 @@ func (s *Scanner) extractColumnNameOrTableName() {
 	tableStart := s.current
 	columnStart := s.current
 
-	for isDone := false; !isDone; {
+	for {
 		nextRune, err := s.peek(1)
 		if err == ErrEof {
 			s.eliql.Error(s.line, "Unterminated column name")
@@ -249,12 +249,12 @@ func (s *Scanner) extractColumnNameOrTableName() {
 				columnLiteral.Column = string(s.source[columnStart:s.current])
 				s.advance(1)
 				s.addToken(Column, columnLiteral)
-				isDone = true
+				break
 			} else {
 				tableName := StringLiteral(s.source[tableStart:s.current])
 				s.advance(1)
 				s.addToken(Table, tableName)
-				isDone = true
+				break
 			}
 		}
 
