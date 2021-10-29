@@ -6,7 +6,6 @@ const (
 	LeftParen TokenType = iota
 	RightParen
 	Comma
-	Period
 	Minus
 	Plus
 	Slash

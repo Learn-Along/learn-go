@@ -88,8 +88,6 @@ func (s *Scanner) scanToken() error {
 		s.addToken(RightParen, nil)
 	case ',':
 		s.addToken(Comma, nil)
-	case '.':
-		s.addToken(Period, nil)
 	case '+':
 		s.addToken(Plus, nil)
 	case '/':

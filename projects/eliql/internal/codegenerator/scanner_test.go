@@ -339,6 +339,61 @@ func TestScanner_scanToken(t *testing.T) {
 				expectedTokens, expectedTokens, sc.tokens, sc.tokens)
 		}
 	})
+
+	t.Run("Symbols can be extracted", func(t *testing.T) {
+		symbolsExpectedTokenSliceMap := map[string][]*Token{
+			// LeftParen
+			`(`:  {testTokens[LeftParen]},
+			`( `: {testTokens[LeftParen]},
+			`(;`: {testTokens[LeftParen]},
+
+			// RightParen
+			`)`:  {testTokens[RightParen]},
+			`) `: {testTokens[RightParen]},
+			`);`: {testTokens[RightParen]},
+
+			// Comma
+			`,`:  {testTokens[Comma]},
+			`, `: {testTokens[Comma]},
+			`,;`: {testTokens[Comma]},
+
+			// Minus
+			`-`:  {testTokens[Minus]},
+			`- `: {testTokens[Minus]},
+			`-;`: {testTokens[Minus]},
+
+			// Plus
+			`+`:  {testTokens[Plus]},
+			`+ `: {testTokens[Plus]},
+			`+;`: {testTokens[Plus]},
+
+			// Slash
+			`/`:  {testTokens[Slash]},
+			`/ `: {testTokens[Slash]},
+			`/;`: {testTokens[Slash]},
+
+			// Star
+			`*`:  {testTokens[Star]},
+			`* `: {testTokens[Star]},
+			`*;`: {testTokens[Star]},
+
+			// SemiColon
+			`;`:  {testTokens[SemiColon]},
+			`; `: {testTokens[SemiColon]},
+			`;;`: {testTokens[SemiColon]},
+		}
+
+		for source, expectedTokens := range symbolsExpectedTokenSliceMap {
+			ql := &Eliql{}
+			sc := NewScanner(ql, source)
+			sc.scanToken()
+
+			assert.True(t,
+				areTokenSlicesEqual(expectedTokens, sc.tokens),
+				"expected \n%#v or \n%v; got \n%#v or \n%v",
+				expectedTokens, expectedTokens, sc.tokens, sc.tokens)
+		}
+	})
 }
 
 func TestScanner_extractFunction(t *testing.T) {
@@ -1165,6 +1220,56 @@ func generateTestTokens() map[TokenType]*Token {
 		LessEqual: {
 			Type:    LessEqual,
 			Lexeme:  "<=",
+			Literal: nil,
+			Line:    1,
+		},
+
+		// Symbols
+		LeftParen: {
+			Type:    LeftParen,
+			Lexeme:  "(",
+			Literal: nil,
+			Line:    1,
+		},
+		RightParen: {
+			Type:    RightParen,
+			Lexeme:  ")",
+			Literal: nil,
+			Line:    1,
+		},
+		Comma: {
+			Type:    Comma,
+			Lexeme:  ",",
+			Literal: nil,
+			Line:    1,
+		},
+		Minus: {
+			Type:    Minus,
+			Lexeme:  "-",
+			Literal: nil,
+			Line:    1,
+		},
+		Plus: {
+			Type:    Plus,
+			Lexeme:  "+",
+			Literal: nil,
+			Line:    1,
+		},
+		Slash: {
+			Type:    Slash,
+			Lexeme:  "/",
+			Literal: nil,
+			Line:    1,
+		},
+		Star: {
+			Type:    Star,
+			Lexeme:  "*",
+			Literal: nil,
+			Line:    1,
+		},
+		SemiColon: {
+			Type:    SemiColon,
+			Lexeme:  ";",
 			Literal: nil,
 			Line:    1,
 		},
