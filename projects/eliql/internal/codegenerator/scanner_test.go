@@ -177,8 +177,9 @@ func TestScanner_scanToken(t *testing.T) {
 			sc.scanToken()
 
 			assert.True(t,
-				areTokenSlicesEqual(sc.tokens, expectedTokens),
-				"expected %#v; got %#v", expectedTokens, sc.tokens)
+				areTokenSlicesEqual(expectedTokens, sc.tokens),
+				"expected \n%#v or \n%v; got \n%#v or \n%v",
+				expectedTokens, expectedTokens, sc.tokens, sc.tokens)
 		}
 	})
 
@@ -245,7 +246,6 @@ func TestScanner_scanToken(t *testing.T) {
 			sc := NewScanner(ql, source)
 			sc.scanToken()
 
-			assert.True(t, areTokenSlicesEqual(sc.tokens, expectedTokens))
 			assert.True(t,
 				areTokenSlicesEqual(expectedTokens, sc.tokens),
 				"expected \n%#v or \n%v; got \n%#v or \n%v",
@@ -293,7 +293,46 @@ func TestScanner_scanToken(t *testing.T) {
 			sc := NewScanner(ql, source)
 			sc.scanToken()
 
-			assert.True(t, areTokenSlicesEqual(sc.tokens, expectedTokens))
+			assert.True(t,
+				areTokenSlicesEqual(expectedTokens, sc.tokens),
+				"expected \n%#v or \n%v; got \n%#v or \n%v",
+				expectedTokens, expectedTokens, sc.tokens, sc.tokens)
+		}
+	})
+
+	t.Run("Comparators can be extracted", func(t *testing.T) {
+		comparatorExpectedTokenSliceMap := map[string][]*Token{
+			// Equal
+			`=`:  []*Token{testTokens[Equal]},
+			`= `: []*Token{testTokens[Equal]},
+			`=;`: []*Token{testTokens[Equal]},
+
+			// Greater
+			`>`:  []*Token{testTokens[Greater]},
+			`> `: []*Token{testTokens[Greater]},
+			`>;`: []*Token{testTokens[Greater]},
+
+			// GreaterEqual
+			`>=`:  []*Token{testTokens[GreaterEqual]},
+			`>= `: []*Token{testTokens[GreaterEqual]},
+			`>=;`: []*Token{testTokens[GreaterEqual]},
+
+			// Less
+			`<`:  []*Token{testTokens[Less]},
+			`< `: []*Token{testTokens[Less]},
+			`<;`: []*Token{testTokens[Less]},
+
+			// LessEqual
+			`<=`:  []*Token{testTokens[LessEqual]},
+			`<= `: []*Token{testTokens[LessEqual]},
+			`<=;`: []*Token{testTokens[LessEqual]},
+		}
+
+		for source, expectedTokens := range comparatorExpectedTokenSliceMap {
+			ql := &Eliql{}
+			sc := NewScanner(ql, source)
+			sc.scanToken()
+
 			assert.True(t,
 				areTokenSlicesEqual(expectedTokens, sc.tokens),
 				"expected \n%#v or \n%v; got \n%#v or \n%v",
@@ -1095,6 +1134,38 @@ func generateTestTokens() map[TokenType]*Token {
 				Table:  "foo",
 				Column: "bar",
 			},
+			Line:    1,
+		},
+
+		// Comparators
+		Equal: {
+			Type:    Equal,
+			Lexeme:  "=",
+			Literal: nil,
+			Line:    1,
+		},
+		Greater: {
+			Type:    Greater,
+			Lexeme:  ">",
+			Literal: nil,
+			Line:    1,
+		},
+		GreaterEqual: {
+			Type:    GreaterEqual,
+			Lexeme:  ">=",
+			Literal: nil,
+			Line:    1,
+		},
+		Less: {
+			Type:    Less,
+			Lexeme:  "<",
+			Literal: nil,
+			Line:    1,
+		},
+		LessEqual: {
+			Type:    LessEqual,
+			Lexeme:  "<=",
+			Literal: nil,
 			Line:    1,
 		},
 	}
