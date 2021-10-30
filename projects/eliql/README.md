@@ -190,10 +190,10 @@ Here is the current syntax grammar to be followed as shown in [syntax.txt](./syn
 ```
 expression              -> unionExpr | selectExpr;
 unionExpr               -> selectExpr (union selectExpr)+;
-selectExpr              -> "SELECT" columnExpr ("," columnExpr)* "FROM" NAME join* where? groupBy? orderBy?;
+selectExpr              -> "SELECT" columnExpr ("," columnExpr)* "FROM" TABLE join* where? groupBy? orderBy?;
 union                   -> "UNION" "ALL"?;
 columnExpr              -> (arithmetic | COLUMN | FUNCTION) "AS" NAME;
-join                    -> ("LEFT" | "RIGHT" | "FULL")? "JOIN" NAME
+join                    -> ("LEFT" | "RIGHT" | "FULL")? "JOIN" TABLE
                             "ON" columnEqualToColumn ("AND" columnEqualToColumn)*;
 where                   -> "WHERE" comparison (logicalOperator comparison)*;
 groupBy                 -> "GROUP" "BY" COLUMN ("," COLUMN)*;
