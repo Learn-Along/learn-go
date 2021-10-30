@@ -1,0 +1,17 @@
+expression              -> unionExpr | selectExpr;
+unionExpr               -> selectExpr (union selectExpr)+;
+selectExpr              -> "SELECT" columnExpr ("," columnExpr)* "FROM" NAME join* where? groupBy? orderBy?;
+union                   -> "UNION" "ALL"?;
+columnExpr              -> (arithmetic | COLUMN | FUNCTION) "AS" NAME;
+join                    -> ("LEFT" | "RIGHT" | "FULL")? "JOIN" NAME
+                            "ON" columnEqualToColumn ("AND" columnEqualToColumn)*;
+where                   -> "WHERE" comparison (logicalOperator comparison)*;
+groupBy                 -> "GROUP" "BY" COLUMN ("," COLUMN)*;
+orderBy                 -> "ORDER" "BY" columnOrder ("," columnOrder)*;
+arithmetic              -> "(" COLUMN (arithmeticOperator (COLUMN | NUMBER | STRING))+ ")";
+columnEqualToColumn     -> COLUMN "=" COLUMN
+comparison              -> "NOT"? COLUMN comparator (COLUMN | NUMBER | STRING);
+logicalOperator         -> "AND" | "OR";
+comparator              -> ">" | ">=" | "=" | "<" | "<=";
+columnOrder             -> COLUMN ("ASC" | "DESC")
+arithmeticOperator      -> "/" | "-" | "+" | "*"

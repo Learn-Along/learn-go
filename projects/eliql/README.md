@@ -158,7 +158,7 @@ FROM `foo`
 
 ### Joins
 
-EliQL supports `INNER JOIN`, `LEFT JOIN`, `RIGHT JOIN`, `FULL OUTER JOIN`. More details on these can be found in the tutorial at [w3schools.com](https://www.w3schools.com/sql/sql_join.asp)
+EliQL supports `JOIN`, `LEFT JOIN`, `RIGHT JOIN`, `FULL JOIN`. More details on these can be found in the tutorial at [w3schools.com](https://www.w3schools.com/sql/sql_join.asp)
 
 ### Unions
 
@@ -181,6 +181,30 @@ e.g.
 ```SQL
 -- This is a comment
 SELECT * FROM "db"
+```
+
+## Syntax
+
+Here is the current syntax grammar to be followed as shown in [syntax.txt](./syntax.txt).
+
+```
+expression              -> unionExpr | selectExpr;
+unionExpr               -> selectExpr (union selectExpr)+;
+selectExpr              -> "SELECT" columnExpr ("," columnExpr)* "FROM" NAME join* where? groupBy? orderBy?;
+union                   -> "UNION" "ALL"?;
+columnExpr              -> (arithmetic | COLUMN | FUNCTION) "AS" NAME;
+join                    -> ("LEFT" | "RIGHT" | "FULL")? "JOIN" NAME
+                            "ON" columnEqualToColumn ("AND" columnEqualToColumn)*;
+where                   -> "WHERE" comparison (logicalOperator comparison)*;
+groupBy                 -> "GROUP" "BY" COLUMN ("," COLUMN)*;
+orderBy                 -> "ORDER" "BY" columnOrder ("," columnOrder)*;
+arithmetic              -> "(" COLUMN (arithmeticOperator (COLUMN | NUMBER | STRING))+ ")";
+columnEqualToColumn     -> COLUMN "=" COLUMN
+comparison              -> "NOT"? COLUMN comparator (COLUMN | NUMBER | STRING);
+logicalOperator         -> "AND" | "OR";
+comparator              -> ">" | ">=" | "=" | "<" | "<=";
+columnOrder             -> COLUMN ("ASC" | "DESC")
+arithmeticOperator      -> "/" | "-" | "+" | "*"
 ```
 
 ## How to Use
