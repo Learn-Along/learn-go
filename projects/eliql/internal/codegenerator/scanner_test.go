@@ -785,7 +785,8 @@ func TestScanner_extractNumber(t *testing.T) {
 }
 
 func TestScanner_advance(t *testing.T) {
-	type testData struct {
+	type testRecord struct {
+		step int64
 		err             error
 		nextRune        rune
 		expectedCurrent int64
@@ -795,16 +796,16 @@ func TestScanner_advance(t *testing.T) {
 	ql := &Eliql{}
 	sc := NewScanner(ql, source)
 
-	stepCurrentMap := map[int64]testData{
-		1: {err: nil, nextRune: 'S', expectedCurrent: 1},
-		3: {err: nil, nextRune: 'E', expectedCurrent: 4},
+	testData := []testRecord{
+		{step: 1, err: nil, nextRune: 'S', expectedCurrent: 1},
+		{step: 3, err: nil, nextRune: 'E', expectedCurrent: 4},
 		// no advancing as 2 steps take it out of bounds of the slice
-		2: {err: nil, nextRune: 'C', expectedCurrent: 6},
-		0: {err: ErrEof, nextRune: 0, expectedCurrent: 6},
+		{step: 2, err: nil, nextRune: 'C', expectedCurrent: 6},
+		{step: 0, err: ErrEof, nextRune: 0, expectedCurrent: 6},
 	}
 
-	for step, testDatum := range stepCurrentMap {
-		actualNextRune, actualError := sc.advance(step)
+	for _, testDatum := range testData {
+		actualNextRune, actualError := sc.advance(testDatum.step)
 
 		assert.Equal(t, testDatum.expectedCurrent, sc.current)
 		assert.Equal(t, testDatum.nextRune, actualNextRune)
@@ -972,6 +973,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   MinFunc,
 			Lexeme: `MIN("foo"."bar")`,
 			Literal: FunctionLiteral{
+				Name: "min",
 				Type: MinFunc,
 				Parameters: []*Token{
 					{
@@ -991,6 +993,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   MaxFunc,
 			Lexeme: `MAX("foo"."bar")`,
 			Literal: FunctionLiteral{
+				Name: "max",
 				Type: MaxFunc,
 				Parameters: []*Token{
 					{
@@ -1010,6 +1013,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   AvgFunc,
 			Lexeme: `AVG("foo"."bar")`,
 			Literal: FunctionLiteral{
+				Name: "avg",
 				Type: AvgFunc,
 				Parameters: []*Token{
 					{
@@ -1029,6 +1033,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   RangeFunc,
 			Lexeme: `RANGE("foo"."bar")`,
 			Literal: FunctionLiteral{
+				Name: "range",
 				Type: RangeFunc,
 				Parameters: []*Token{
 					{
@@ -1048,6 +1053,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   SumFunc,
 			Lexeme: `SUM("foo"."bar")`,
 			Literal: FunctionLiteral{
+				Name: "sum",
 				Type: SumFunc,
 				Parameters: []*Token{
 					{
@@ -1067,6 +1073,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   CountFunc,
 			Lexeme: `COUNT("foo"."bar")`,
 			Literal: FunctionLiteral{
+				Name: "count",
 				Type: CountFunc,
 				Parameters: []*Token{
 					{
@@ -1086,6 +1093,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   NowFunc,
 			Lexeme: `NOW()`,
 			Literal: FunctionLiteral{
+				Name: "now",
 				Type:       NowFunc,
 				Parameters: []*Token{},
 			},
@@ -1095,6 +1103,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   ToTimezoneFunc,
 			Lexeme: `TO_TIMEZONE('Africa/Kampala')`,
 			Literal: FunctionLiteral{
+				Name: "to_timezone",
 				Type: ToTimezoneFunc,
 				Parameters: []*Token{
 					{
@@ -1111,6 +1120,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   TodayFunc,
 			Lexeme: `TODAY()`,
 			Literal: FunctionLiteral{
+				Name: "today",
 				Type:       TodayFunc,
 				Parameters: []*Token{},
 			},
@@ -1120,6 +1130,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   ConcatFunc,
 			Lexeme: `CONCAT("foo"."bar", '-', "foo"."doe")`,
 			Literal: FunctionLiteral{
+				Name: "concat",
 				Type: ConcatFunc,
 				Parameters: []*Token{
 					{
@@ -1166,6 +1177,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   IntervalFunc,
 			Lexeme: `INTERVAL('1 day')`,
 			Literal: FunctionLiteral{
+				Name: "interval",
 				Type: IntervalFunc,
 				Parameters: []*Token{
 					{

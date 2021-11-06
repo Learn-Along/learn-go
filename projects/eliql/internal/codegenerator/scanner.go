@@ -211,7 +211,7 @@ func (s *Scanner) extractFunction() {
 			numberOfTokens := len(nestedScanner.tokens)
 			parameters := nestedScanner.tokens[:numberOfTokens-1]
 			s.start = startOfFunc
-			s.addToken(function, FunctionLiteral{Type: function, Parameters: parameters})
+			s.addToken(function, FunctionLiteral{Name: word, Type: function, Parameters: parameters})
 			return
 		}
 	}
