@@ -273,6 +273,14 @@ func main() {
 }
 ```
 
+## How to Generate Mocks
+
+- Run the command below in the root folder of eliql
+
+```sh 
+make generate-mocks
+```
+
 ## License
 
 Copyright (c) 2021 [Martin Ahindura](https://github.com/Tinitto) Licensed under the [MIT License](./LICENSE)
