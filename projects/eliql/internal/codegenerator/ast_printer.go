@@ -147,8 +147,24 @@ func (a *AstPrinter) visitColumnOrderExpression(c *ColumnOrderExpression) Output
 	return fmt.Sprintf("(%s %s)", c.Order.Lexeme, c.Column.Literal.(ColumnLiteral))
 }
 
+func (a *AstPrinter) visitPrimaryExpression(p *PrimaryExpression) Output {
+	if p.Token == nil {
+		return "nil"
+	}
+
+	if p.Token.Type == Column {
+		return fmt.Sprintf("%s", p.Token.Literal.(ColumnLiteral))
+	}
+
+	if p.Token.Type == Column || p.Token.Type == String  {
+		return fmt.Sprintf("%s", p.Token.Literal)
+	}
+
+	return ""
+}
+
 func (a *AstPrinter) visitArithmeticExpression(ar *ArithmeticExpression) Output {
-	return fmt.Sprintf("(%s %s %s)", ar.Operator.Lexeme, ar.Left.Literal, ar.Right.Literal)
+	return fmt.Sprintf("(%s %s %s)", ar.Operator.Lexeme, ar.Left, ar.Right)
 }
 
 func (a *AstPrinter) parenthesize(s string, exprs ...Expression) Output {

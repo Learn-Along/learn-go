@@ -17,6 +17,7 @@ type Visitor interface {
 	visitComparisonExpression(c *ComparisonExpression) Output
 	visitColumnOrderExpression(c *ColumnOrderExpression) Output
 	visitArithmeticExpression(a *ArithmeticExpression) Output
+	visitPrimaryExpression(p *PrimaryExpression) Output
 }
 
 type Output interface {}
@@ -101,7 +102,7 @@ type ComparisonExpression struct {
 	Not *Token
 	Left *Token
 	Comparator *Token
-	Right *ColumnExpression
+	Right Expression
 }
 func (c *ComparisonExpression) accept(visitor Visitor) Output {
 	return visitor.visitComparisonExpression(c)
@@ -116,10 +117,17 @@ func (c *ColumnOrderExpression) accept(visitor Visitor) Output {
 }
 
 type ArithmeticExpression struct {
-	Left *Token
+	Left Expression
 	Operator *Token
-	Right *Token
+	Right *PrimaryExpression
 }
 func (a *ArithmeticExpression) accept(visitor Visitor) Output {
 	return visitor.visitArithmeticExpression(a)
+}
+
+type PrimaryExpression struct {
+	Token *Token
+}
+func (p *PrimaryExpression) accept(visitor Visitor) Output {
+	return visitor.visitPrimaryExpression(p)
 }

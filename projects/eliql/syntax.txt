@@ -1,17 +1,13 @@
 expression              -> unionExpr | selectExpr;
-unionExpr               -> selectExpr (union selectExpr)+;
-selectExpr              -> "SELECT" columnExpr ("," columnExpr)* "FROM" TABLE join* where? groupBy? orderBy?;
-union                   -> "UNION" "ALL"?;
-columnExpr              -> (arithmetic | COLUMN | FUNCTION) "AS" NAME;
-join                    -> ("LEFT" | "RIGHT" | "FULL")? "JOIN" TABLE
-                            "ON" columnEqualToColumn ("AND" columnEqualToColumn)*;
-where                   -> "WHERE" comparison (logicalOperator comparison)*;
-groupBy                 -> "GROUP" "BY" COLUMN ("," COLUMN)*;
-orderBy                 -> "ORDER" "BY" columnOrder ("," columnOrder)*;
-arithmetic              -> "(" COLUMN (arithmeticOperator (COLUMN | NUMBER | STRING))+ ")";
-columnEqualToColumn     -> COLUMN "=" COLUMN
-comparison              -> "NOT"? COLUMN comparator (COLUMN | NUMBER | STRING);
-logicalOperator         -> "AND" | "OR";
-comparator              -> ">" | ">=" | "=" | "<" | "<=";
-columnOrder             -> COLUMN ("ASC" | "DESC")
-arithmeticOperator      -> "/" | "-" | "+" | "*"
+unionExpr               -> selectExpr ("UNION" "ALL"? selectExpr)+;
+selectExpr              -> "SELECT" columnExpr ("," columnExpr)* "FROM" TABLE joinExpr* whereExpr? groupByExpr? orderByExpr?;
+columnExpr              -> (arithmeticExpr | COLUMN | FUNCTION) "AS" NAME;
+joinExpr                -> ("LEFT" | "RIGHT" | "FULL")? "JOIN" TABLE "ON" joinConditionExpr ("AND" joinConditionExpr)*;
+whereExpr               -> "WHERE" comparisonExpr (("AND" | "OR") comparisonExpr)*;
+groupByExpr             -> "GROUP" "BY" COLUMN ("," COLUMN)*;
+orderByExpr             -> "ORDER" "BY" columnOrderExpr ("," columnOrderExpr)*;
+arithmeticExpr          -> "(" primaryExpr ( ("/" | "-" | "+" | "*") primaryExpr )+ ")";
+joinConditionExpr       -> COLUMN "=" COLUMN
+comparisonExpr          -> "NOT"? Column (">" | ">=" | "=" | "<" | "<=") (primaryExpr | arithmeticExpr);
+columnOrderExpr         -> COLUMN ("ASC" | "DESC")
+primaryExpr             -> COLUMN | NUMBER | STRING
