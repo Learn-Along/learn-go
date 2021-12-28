@@ -39,7 +39,6 @@ func (p *Parser) expression() Expression {
 		return p.unionExpr(expr)
 	}
 
-
 	return expr
 }
 
@@ -75,8 +74,17 @@ func (p *Parser) selectExpr() *SelectExpression {
 	}
 
 	if p.match(Select) {
-		for colExpr := p.columnExpr(); p.match(Comma); colExpr = p.columnExpr() {
+		//for colExpr := p.columnExpr(); p.match(Comma); colExpr = p.columnExpr() {
+		//	expr.ColumnExprs = append(expr.ColumnExprs, colExpr)
+		//}
+
+		for {
+			colExpr := p.columnExpr()
 			expr.ColumnExprs = append(expr.ColumnExprs, colExpr)
+
+			if !p.match(Comma) {
+				break
+			}
 		}
 
 		if p.match(From) {
@@ -99,7 +107,6 @@ func (p *Parser) selectExpr() *SelectExpression {
 		if p.match(Order) {
 			expr.OrderByExpr = p.orderByExpr()
 		}
-
 	}
 
 	return expr
