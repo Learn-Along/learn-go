@@ -20,23 +20,25 @@ type Visitor interface {
 	visitPrimaryExpression(p *PrimaryExpression) Output
 }
 
-type Output interface {}
+type Output interface{}
 
 type UnionExpression struct {
 	SelectExprs []*UnionSelectExpression
 }
+
 func (u *UnionExpression) accept(visitor Visitor) Output {
 	return visitor.visitUnionExpression(u)
 }
 
 type SelectExpression struct {
 	ColumnExprs []*ColumnExpression
-	Table *Token
-	JoinExprs []*JoinExpression
-	WhereExpr *WhereExpression
+	Table       *Token
+	JoinExprs   []*JoinExpression
+	WhereExpr   *WhereExpression
 	GroupByExpr *GroupByExpression
 	OrderByExpr *OrderByExpression
 }
+
 func (s *SelectExpression) accept(visitor Visitor) Output {
 	return visitor.visitSelectExpression(s)
 }
@@ -45,25 +47,28 @@ type UnionSelectExpression struct {
 	All        *Token
 	SelectExpr *SelectExpression
 }
+
 func (u *UnionSelectExpression) accept(visitor Visitor) Output {
 	return visitor.visitUnionSelectExpression(u)
 }
 
 type ColumnExpression struct {
-	Column *Token
+	Column         *Token
 	ArithmeticExpr *ArithmeticExpression
-	Function *Token
-	Name *Token
+	Function       *Token
+	Name           *Token
 }
+
 func (c *ColumnExpression) accept(visitor Visitor) Output {
 	return visitor.visitColumnExpression(c)
 }
 
 type JoinExpression struct {
-	Type *Token
-	Table *Token
+	Type       *Token
+	Table      *Token
 	Conditions []*JoinCondition
 }
+
 func (j *JoinExpression) accept(visitor Visitor) Output {
 	return visitor.visitJoinExpression(j)
 }
@@ -71,6 +76,7 @@ func (j *JoinExpression) accept(visitor Visitor) Output {
 type WhereExpression struct {
 	Comparisons []*ComparisonExpression
 }
+
 func (w *WhereExpression) accept(visitor Visitor) Output {
 	return visitor.visitWhereExpression(w)
 }
@@ -78,6 +84,7 @@ func (w *WhereExpression) accept(visitor Visitor) Output {
 type GroupByExpression struct {
 	Columns []*Token
 }
+
 func (g *GroupByExpression) accept(visitor Visitor) Output {
 	return visitor.visitGroupByExpression(g)
 }
@@ -85,42 +92,47 @@ func (g *GroupByExpression) accept(visitor Visitor) Output {
 type OrderByExpression struct {
 	ColumnOrderExprs []*ColumnOrderExpression
 }
+
 func (o *OrderByExpression) accept(visitor Visitor) Output {
 	return visitor.visitOrderByExpression(o)
 }
 
 type JoinCondition struct {
-	Left *Token
+	Left  *Token
 	Right *Token
 }
+
 func (j *JoinCondition) accept(visitor Visitor) Output {
 	return visitor.visitJoinCondition(j)
 }
 
 type ComparisonExpression struct {
 	LogicalOperator *Token
-	Not *Token
-	Left *Token
-	Comparator *Token
-	Right Expression
+	Not             *Token
+	Left            *Token
+	Comparator      *Token
+	Right           Expression
 }
+
 func (c *ComparisonExpression) accept(visitor Visitor) Output {
 	return visitor.visitComparisonExpression(c)
 }
 
 type ColumnOrderExpression struct {
-	Order *Token
+	Order  *Token
 	Column *Token
 }
+
 func (c *ColumnOrderExpression) accept(visitor Visitor) Output {
 	return visitor.visitColumnOrderExpression(c)
 }
 
 type ArithmeticExpression struct {
-	Left Expression
+	Left     Expression
 	Operator *Token
-	Right *PrimaryExpression
+	Right    *PrimaryExpression
 }
+
 func (a *ArithmeticExpression) accept(visitor Visitor) Output {
 	return visitor.visitArithmeticExpression(a)
 }
@@ -128,6 +140,7 @@ func (a *ArithmeticExpression) accept(visitor Visitor) Output {
 type PrimaryExpression struct {
 	Token *Token
 }
+
 func (p *PrimaryExpression) accept(visitor Visitor) Output {
 	return visitor.visitPrimaryExpression(p)
 }

@@ -56,7 +56,7 @@ func (a *AstPrinter) visitUnionSelectExpression(u *UnionSelectExpression) Output
 	if u.All != nil {
 		all = "ALL"
 	}
-	
+
 	return a.parenthesize(all, u.SelectExpr)
 }
 
@@ -156,7 +156,7 @@ func (a *AstPrinter) visitPrimaryExpression(p *PrimaryExpression) Output {
 		return fmt.Sprintf("%s", p.Token.Literal.(ColumnLiteral))
 	}
 
-	if p.Token.Type == Column || p.Token.Type == String  {
+	if p.Token.Type == Column || p.Token.Type == String {
 		return fmt.Sprintf("%s", p.Token.Literal)
 	}
 

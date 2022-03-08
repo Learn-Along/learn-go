@@ -176,7 +176,7 @@ func (s *Scanner) extractKeywordOrFunction() {
 		}
 	}
 
-	word := strings.ToLower(string(s.source[s.start : s.current]))
+	word := strings.ToLower(string(s.source[s.start:s.current]))
 	keyword, ok := keywordMap[word]
 	if !ok {
 		s.eliql.Error(s.line, fmt.Sprintf("Unknown keyword '%s'", word))
@@ -334,7 +334,7 @@ func (s *Scanner) advance(step int64) (rune, error) {
 }
 
 func (s *Scanner) addToken(tokenType TokenType, literal TokenLiteral) {
-	text := string(s.source[s.start : s.current])
+	text := string(s.source[s.start:s.current])
 	s.tokens = append(s.tokens, NewToken(tokenType, text, literal, s.line))
 }
 
@@ -391,4 +391,3 @@ func areScannerEqual(expected Scanner, scanner Scanner) bool {
 		expected.current == scanner.current &&
 		expected.line == scanner.line
 }
-
