@@ -207,6 +207,10 @@ columnOrder             -> COLUMN ("ASC" | "DESC")
 arithmeticOperator      -> "/" | "-" | "+" | "*"
 ```
 
+## Design
+
+More information about the design can be found in the [DESIGN.md](./docs/DESIGN.md) file.
+
 ## How to Use
 
 - Install the package
