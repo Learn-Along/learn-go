@@ -20,14 +20,14 @@ Parser converts sequence of tokens into EliQL expressions
 
 */
 type Parser struct {
-	tokens []Token
+	tokens  []Token
 	current int
 }
 
 // NewParser creates a new Parser with given Tokens
 func NewParser(tokens []Token) *Parser {
 	return &Parser{
-		tokens: tokens,
+		tokens:  tokens,
 		current: 0,
 	}
 }
@@ -35,7 +35,7 @@ func NewParser(tokens []Token) *Parser {
 func (p *Parser) expression() Expression {
 	expr := p.selectExpr()
 
-	if p.match(Union) {
+	if p.check(Union) {
 		return p.unionExpr(expr)
 	}
 
@@ -44,19 +44,20 @@ func (p *Parser) expression() Expression {
 
 func (p *Parser) unionExpr(left Expression) *UnionExpression {
 	expr := &UnionExpression{
-		SelectExprs: []*UnionSelectExpression{},
+		SelectExprs: []*UnionSelectExpression{{
+			SelectExpr: left.(*SelectExpression),
+		}},
 	}
 
-	for selectExpr := left; p.match(Union); selectExpr = p.selectExpr(){
-		unionSelect := &UnionSelectExpression{
-			SelectExpr: selectExpr.(*SelectExpression),
-		}
+	for p.match(Union) {
+		unionSelect := &UnionSelectExpression{}
 
 		if p.match(All) {
 			prev := p.previous()
 			unionSelect.All = &prev
 		}
 
+		unionSelect.SelectExpr = p.selectExpr()
 		expr.SelectExprs = append(expr.SelectExprs, unionSelect)
 	}
 
@@ -92,7 +93,7 @@ func (p *Parser) selectExpr() *SelectExpression {
 			expr.Table = &table
 		}
 
-		for j := p.joinExpr(); p.match(Join); j = p.joinExpr(){
+		for j := p.joinExpr(); p.match(Join); j = p.joinExpr() {
 			expr.JoinExprs = append(expr.JoinExprs, j)
 		}
 
@@ -173,7 +174,7 @@ func (p *Parser) joinExpr() *JoinExpression {
 	}
 
 	if p.match(On) {
-		for ; p.match(And); {
+		for p.match(And) {
 			expr.Conditions = append(expr.Conditions, p.joinConditionExpr())
 		}
 	}
@@ -186,7 +187,7 @@ func (p *Parser) whereExpr() *WhereExpression {
 		Comparisons: []*ComparisonExpression{p.comparisonExpr(nil)},
 	}
 
-	for ; p.match(And, Or); {
+	for p.match(And, Or) {
 		logicalOperator := p.previous()
 		comp := p.comparisonExpr(&logicalOperator)
 		expr.Comparisons = append(expr.Comparisons, comp)
@@ -226,18 +227,18 @@ func (p *Parser) orderByExpr() *OrderByExpression {
 func (p *Parser) arithmeticExpr() *ArithmeticExpression {
 	expr := &ArithmeticExpression{}
 	expr.Left = p.primaryExpr()
-	
-		for ; p.match(Slash, Star, Plus, Minus); {
-			operator := p.previous()
-			right := p.primaryExpr()
 
-			if expr.Right != nil {
-				expr.Left = expr
-			}
-			
-			expr.Operator = &operator
-			expr.Right = right
+	for p.match(Slash, Star, Plus, Minus) {
+		operator := p.previous()
+		right := p.primaryExpr()
+
+		if expr.Right != nil {
+			expr.Left = expr
 		}
+
+		expr.Operator = &operator
+		expr.Right = right
+	}
 
 	return expr
 }
@@ -350,20 +351,9 @@ func (p *Parser) peek() Token {
 }
 
 func (p *Parser) previous() Token {
-	return p.tokens[p.current - 1]
+	return p.tokens[p.current-1]
 }
 
 func (p *Parser) backPeek(places int) Token {
-	return p.tokens[p.current - places]
+	return p.tokens[p.current-places]
 }
-
-
-
-
-
-
-
-
-
-
-

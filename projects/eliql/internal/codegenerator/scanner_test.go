@@ -35,13 +35,13 @@ func TestScanner_ScanTokens(t *testing.T) {
 				Line:    1,
 			},
 			{
-				Type:    Column,
-				Lexeme:  `"bar"."foo"`,
+				Type:   Column,
+				Lexeme: `"bar"."foo"`,
 				Literal: ColumnLiteral{
 					Table:  "bar",
 					Column: "foo",
 				},
-				Line:    1,
+				Line: 1,
 			},
 			{
 				Type:    From,
@@ -87,104 +87,104 @@ func TestScanner_scanToken(t *testing.T) {
 	t.Run("Keywords can be extracted", func(t *testing.T) {
 		keywordExpectedTokenSliceMap := map[string][]*Token{
 			// Select
-			`SELECT`:  []*Token{testTokens[Select]},
-			`SELECT `: []*Token{testTokens[Select]},
-			`SELECT;`: []*Token{testTokens[Select]},
+			`SELECT`:  {testTokens[Select]},
+			`SELECT `: {testTokens[Select]},
+			`SELECT;`: {testTokens[Select]},
 
 			// From
-			`FROM`:  []*Token{testTokens[From]},
-			`FROM `: []*Token{testTokens[From]},
-			`FROM;`: []*Token{testTokens[From]},
+			`FROM`:  {testTokens[From]},
+			`FROM `: {testTokens[From]},
+			`FROM;`: {testTokens[From]},
 
 			// As
-			`AS`:  []*Token{testTokens[As]},
-			`AS `: []*Token{testTokens[As]},
-			`AS;`: []*Token{testTokens[As]},
+			`AS`:  {testTokens[As]},
+			`AS `: {testTokens[As]},
+			`AS;`: {testTokens[As]},
 
 			// Inner
-			`INNER`:  []*Token{testTokens[Inner]},
-			`INNER `: []*Token{testTokens[Inner]},
-			`INNER;`: []*Token{testTokens[Inner]},
+			`INNER`:  {testTokens[Inner]},
+			`INNER `: {testTokens[Inner]},
+			`INNER;`: {testTokens[Inner]},
 
 			// Left
-			`LEFT`:  []*Token{testTokens[Left]},
-			`LEFT `: []*Token{testTokens[Left]},
-			`LEFT;`: []*Token{testTokens[Left]},
+			`LEFT`:  {testTokens[Left]},
+			`LEFT `: {testTokens[Left]},
+			`LEFT;`: {testTokens[Left]},
 
 			// Right
-			`RIGHT`:  []*Token{testTokens[Right]},
-			`RIGHT `: []*Token{testTokens[Right]},
-			`RIGHT;`: []*Token{testTokens[Right]},
+			`RIGHT`:  {testTokens[Right]},
+			`RIGHT `: {testTokens[Right]},
+			`RIGHT;`: {testTokens[Right]},
 
 			// Full
-			`FULL`:  []*Token{testTokens[Full]},
-			`FULL `: []*Token{testTokens[Full]},
-			`FULL;`: []*Token{testTokens[Full]},
+			`FULL`:  {testTokens[Full]},
+			`FULL `: {testTokens[Full]},
+			`FULL;`: {testTokens[Full]},
 
 			// Join
-			`JOIN`:  []*Token{testTokens[Join]},
-			`JOIN `: []*Token{testTokens[Join]},
-			`JOIN;`: []*Token{testTokens[Join]},
+			`JOIN`:  {testTokens[Join]},
+			`JOIN `: {testTokens[Join]},
+			`JOIN;`: {testTokens[Join]},
 
 			// On
-			`ON`:  []*Token{testTokens[On]},
-			`ON `: []*Token{testTokens[On]},
-			`ON;`: []*Token{testTokens[On]},
+			`ON`:  {testTokens[On]},
+			`ON `: {testTokens[On]},
+			`ON;`: {testTokens[On]},
 
 			// Group
-			`GROUP`:  []*Token{testTokens[Group]},
-			`GROUP `: []*Token{testTokens[Group]},
-			`GROUP;`: []*Token{testTokens[Group]},
+			`GROUP`:  {testTokens[Group]},
+			`GROUP `: {testTokens[Group]},
+			`GROUP;`: {testTokens[Group]},
 
 			// By
-			`BY`:  []*Token{testTokens[By]},
-			`BY `: []*Token{testTokens[By]},
-			`BY;`: []*Token{testTokens[By]},
+			`BY`:  {testTokens[By]},
+			`BY `: {testTokens[By]},
+			`BY;`: {testTokens[By]},
 
 			// Order
-			`ORDER`:  []*Token{testTokens[Order]},
-			`ORDER `: []*Token{testTokens[Order]},
-			`ORDER;`: []*Token{testTokens[Order]},
+			`ORDER`:  {testTokens[Order]},
+			`ORDER `: {testTokens[Order]},
+			`ORDER;`: {testTokens[Order]},
 
 			// Desc
-			`DESC`:  []*Token{testTokens[Desc]},
-			`DESC `: []*Token{testTokens[Desc]},
-			`DESC;`: []*Token{testTokens[Desc]},
+			`DESC`:  {testTokens[Desc]},
+			`DESC `: {testTokens[Desc]},
+			`DESC;`: {testTokens[Desc]},
 
 			// Asc
-			`ASC`:  []*Token{testTokens[Asc]},
-			`ASC `: []*Token{testTokens[Asc]},
-			`ASC;`: []*Token{testTokens[Asc]},
+			`ASC`:  {testTokens[Asc]},
+			`ASC `: {testTokens[Asc]},
+			`ASC;`: {testTokens[Asc]},
 
 			// All
-			`ALL`:  []*Token{testTokens[All]},
-			`ALL `: []*Token{testTokens[All]},
-			`ALL;`: []*Token{testTokens[All]},
+			`ALL`:  {testTokens[All]},
+			`ALL `: {testTokens[All]},
+			`ALL;`: {testTokens[All]},
 
 			// Union
-			`UNION`:  []*Token{testTokens[Union]},
-			`UNION `: []*Token{testTokens[Union]},
-			`UNION;`: []*Token{testTokens[Union]},
+			`UNION`:  {testTokens[Union]},
+			`UNION `: {testTokens[Union]},
+			`UNION;`: {testTokens[Union]},
 
 			//Where
-			`WHERE`:  []*Token{testTokens[Where]},
-			`WHERE `: []*Token{testTokens[Where]},
-			`WHERE;`: []*Token{testTokens[Where]},
+			`WHERE`:  {testTokens[Where]},
+			`WHERE `: {testTokens[Where]},
+			`WHERE;`: {testTokens[Where]},
 
 			//Or
-			`OR`:  []*Token{testTokens[Or]},
-			`OR `: []*Token{testTokens[Or]},
-			`OR;`: []*Token{testTokens[Or]},
+			`OR`:  {testTokens[Or]},
+			`OR `: {testTokens[Or]},
+			`OR;`: {testTokens[Or]},
 
 			// And
-			`AND`:  []*Token{testTokens[And]},
-			`AND `: []*Token{testTokens[And]},
-			`AND;`: []*Token{testTokens[And]},
+			`AND`:  {testTokens[And]},
+			`AND `: {testTokens[And]},
+			`AND;`: {testTokens[And]},
 
 			// Not
-			`NOT`:  []*Token{testTokens[Not]},
-			`NOT `: []*Token{testTokens[Not]},
-			`NOT;`: []*Token{testTokens[Not]},
+			`NOT`:  {testTokens[Not]},
+			`NOT `: {testTokens[Not]},
+			`NOT;`: {testTokens[Not]},
 		}
 
 		for source, expectedTokens := range keywordExpectedTokenSliceMap {
@@ -202,59 +202,59 @@ func TestScanner_scanToken(t *testing.T) {
 	t.Run("Functions can be extracted", func(t *testing.T) {
 		functionExpectedTokenSliceMap := map[string][]*Token{
 			// MIN
-			`MIN("foo"."bar")`:  []*Token{testTokens[MinFunc]},
-			`MIN("foo"."bar") `: []*Token{testTokens[MinFunc]},
-			`MIN("foo"."bar");`: []*Token{testTokens[MinFunc]},
+			`MIN("foo"."bar")`:  {testTokens[MinFunc]},
+			`MIN("foo"."bar") `: {testTokens[MinFunc]},
+			`MIN("foo"."bar");`: {testTokens[MinFunc]},
 
 			// MAX
-			`MAX("foo"."bar")`: []*Token{testTokens[MaxFunc]},
-			`MAX("foo"."bar") `: []*Token{testTokens[MaxFunc]},
-			`MAX("foo"."bar");`: []*Token{testTokens[MaxFunc]},
+			`MAX("foo"."bar")`:  {testTokens[MaxFunc]},
+			`MAX("foo"."bar") `: {testTokens[MaxFunc]},
+			`MAX("foo"."bar");`: {testTokens[MaxFunc]},
 
 			// AVG
-			`AVG("foo"."bar")`: []*Token{testTokens[AvgFunc]},
-			`AVG("foo"."bar") `: []*Token{testTokens[AvgFunc]},
-			`AVG("foo"."bar");`: []*Token{testTokens[AvgFunc]},
+			`AVG("foo"."bar")`:  {testTokens[AvgFunc]},
+			`AVG("foo"."bar") `: {testTokens[AvgFunc]},
+			`AVG("foo"."bar");`: {testTokens[AvgFunc]},
 
 			// RANGE
-			`RANGE("foo"."bar")`: []*Token{testTokens[RangeFunc]},
-			`RANGE("foo"."bar") `: []*Token{testTokens[RangeFunc]},
-			`RANGE("foo"."bar");`: []*Token{testTokens[RangeFunc]},
+			`RANGE("foo"."bar")`:  {testTokens[RangeFunc]},
+			`RANGE("foo"."bar") `: {testTokens[RangeFunc]},
+			`RANGE("foo"."bar");`: {testTokens[RangeFunc]},
 
 			// SUM
-			`SUM("foo"."bar")`: []*Token{testTokens[SumFunc]},
-			`SUM("foo"."bar") `: []*Token{testTokens[SumFunc]},
-			`SUM("foo"."bar");`: []*Token{testTokens[SumFunc]},
+			`SUM("foo"."bar")`:  {testTokens[SumFunc]},
+			`SUM("foo"."bar") `: {testTokens[SumFunc]},
+			`SUM("foo"."bar");`: {testTokens[SumFunc]},
 
 			// COUNT
-			`COUNT("foo"."bar")`: []*Token{testTokens[CountFunc]},
-			`COUNT("foo"."bar") `: []*Token{testTokens[CountFunc]},
-			`COUNT("foo"."bar");`: []*Token{testTokens[CountFunc]},
+			`COUNT("foo"."bar")`:  {testTokens[CountFunc]},
+			`COUNT("foo"."bar") `: {testTokens[CountFunc]},
+			`COUNT("foo"."bar");`: {testTokens[CountFunc]},
 
 			// NOW
-			`NOW()`: []*Token{testTokens[NowFunc]},
-			`NOW() `: []*Token{testTokens[NowFunc]},
-			`NOW();`: []*Token{testTokens[NowFunc]},
+			`NOW()`:  {testTokens[NowFunc]},
+			`NOW() `: {testTokens[NowFunc]},
+			`NOW();`: {testTokens[NowFunc]},
 
 			// TO_TIMEZONE
-			`TO_TIMEZONE('Africa/Kampala')`: []*Token{testTokens[ToTimezoneFunc]},
-			`TO_TIMEZONE('Africa/Kampala') `: []*Token{testTokens[ToTimezoneFunc]},
-			`TO_TIMEZONE('Africa/Kampala');`: []*Token{testTokens[ToTimezoneFunc]},
+			`TO_TIMEZONE('Africa/Kampala')`:  {testTokens[ToTimezoneFunc]},
+			`TO_TIMEZONE('Africa/Kampala') `: {testTokens[ToTimezoneFunc]},
+			`TO_TIMEZONE('Africa/Kampala');`: {testTokens[ToTimezoneFunc]},
 
 			// TODAY
-			`TODAY()`: []*Token{testTokens[TodayFunc]},
-			`TODAY() `: []*Token{testTokens[TodayFunc]},
-			`TODAY();`: []*Token{testTokens[TodayFunc]},
+			`TODAY()`:  {testTokens[TodayFunc]},
+			`TODAY() `: {testTokens[TodayFunc]},
+			`TODAY();`: {testTokens[TodayFunc]},
 
 			// CONCAT
-			`CONCAT("foo"."bar", '-', "foo"."doe")`: []*Token{testTokens[ConcatFunc]},
-			`CONCAT("foo"."bar", '-', "foo"."doe") `: []*Token{testTokens[ConcatFunc]},
-			`CONCAT("foo"."bar", '-', "foo"."doe");`: []*Token{testTokens[ConcatFunc]},
+			`CONCAT("foo"."bar", '-', "foo"."doe")`:  {testTokens[ConcatFunc]},
+			`CONCAT("foo"."bar", '-', "foo"."doe") `: {testTokens[ConcatFunc]},
+			`CONCAT("foo"."bar", '-', "foo"."doe");`: {testTokens[ConcatFunc]},
 
 			// INTERVAL
-			`INTERVAL('1 day')`: []*Token{testTokens[IntervalFunc]},
-			`INTERVAL('1 day') `: []*Token{testTokens[IntervalFunc]},
-			`INTERVAL('1 day');`: []*Token{testTokens[IntervalFunc]},
+			`INTERVAL('1 day')`:  {testTokens[IntervalFunc]},
+			`INTERVAL('1 day') `: {testTokens[IntervalFunc]},
+			`INTERVAL('1 day');`: {testTokens[IntervalFunc]},
 		}
 
 		for source, expectedTokens := range functionExpectedTokenSliceMap {
@@ -279,29 +279,29 @@ func TestScanner_scanToken(t *testing.T) {
 
 		literalExpectedTokenSliceMap := map[string][]*Token{
 			// String
-			`'foo'`:  []*Token{testTokens[String]},
-			`'foo' `: []*Token{testTokens[String]},
-			`'foo';`: []*Token{testTokens[String]},
+			`'foo'`:  {testTokens[String]},
+			`'foo' `: {testTokens[String]},
+			`'foo';`: {testTokens[String]},
 
 			// Number
-			`67`:  []*Token{testTokens[Number]},
-			`67 `: []*Token{testTokens[Number]},
-			`67;`: []*Token{testTokens[Number]},
+			`67`:  {testTokens[Number]},
+			`67 `: {testTokens[Number]},
+			`67;`: {testTokens[Number]},
 
 			// Float Number
-			`67.89`:  []*Token{&floatNumber},
-			`67.89 `: []*Token{&floatNumber},
-			`67.89;`: []*Token{&floatNumber},
+			`67.89`:  {&floatNumber},
+			`67.89 `: {&floatNumber},
+			`67.89;`: {&floatNumber},
 
 			// Table
-			`"foo"`:  []*Token{testTokens[Table]},
-			`"foo" `: []*Token{testTokens[Table]},
-			`"foo";`: []*Token{testTokens[Table]},
+			`"foo"`:  {testTokens[Table]},
+			`"foo" `: {testTokens[Table]},
+			`"foo";`: {testTokens[Table]},
 
 			// Column
-			`"foo"."bar"`:  []*Token{testTokens[Column]},
-			`"foo"."bar" `: []*Token{testTokens[Column]},
-			`"foo"."bar";`: []*Token{testTokens[Column]},
+			`"foo"."bar"`:  {testTokens[Column]},
+			`"foo"."bar" `: {testTokens[Column]},
+			`"foo"."bar";`: {testTokens[Column]},
 		}
 
 		for source, expectedTokens := range literalExpectedTokenSliceMap {
@@ -319,29 +319,29 @@ func TestScanner_scanToken(t *testing.T) {
 	t.Run("Comparators can be extracted", func(t *testing.T) {
 		comparatorExpectedTokenSliceMap := map[string][]*Token{
 			// Equal
-			`=`:  []*Token{testTokens[Equal]},
-			`= `: []*Token{testTokens[Equal]},
-			`=;`: []*Token{testTokens[Equal]},
+			`=`:  {testTokens[Equal]},
+			`= `: {testTokens[Equal]},
+			`=;`: {testTokens[Equal]},
 
 			// Greater
-			`>`:  []*Token{testTokens[Greater]},
-			`> `: []*Token{testTokens[Greater]},
-			`>;`: []*Token{testTokens[Greater]},
+			`>`:  {testTokens[Greater]},
+			`> `: {testTokens[Greater]},
+			`>;`: {testTokens[Greater]},
 
 			// GreaterEqual
-			`>=`:  []*Token{testTokens[GreaterEqual]},
-			`>= `: []*Token{testTokens[GreaterEqual]},
-			`>=;`: []*Token{testTokens[GreaterEqual]},
+			`>=`:  {testTokens[GreaterEqual]},
+			`>= `: {testTokens[GreaterEqual]},
+			`>=;`: {testTokens[GreaterEqual]},
 
 			// Less
-			`<`:  []*Token{testTokens[Less]},
-			`< `: []*Token{testTokens[Less]},
-			`<;`: []*Token{testTokens[Less]},
+			`<`:  {testTokens[Less]},
+			`< `: {testTokens[Less]},
+			`<;`: {testTokens[Less]},
 
 			// LessEqual
-			`<=`:  []*Token{testTokens[LessEqual]},
-			`<= `: []*Token{testTokens[LessEqual]},
-			`<=;`: []*Token{testTokens[LessEqual]},
+			`<=`:  {testTokens[LessEqual]},
+			`<= `: {testTokens[LessEqual]},
+			`<=;`: {testTokens[LessEqual]},
 		}
 
 		for source, expectedTokens := range comparatorExpectedTokenSliceMap {
@@ -421,187 +421,187 @@ func TestScanner_extractFunction(t *testing.T) {
 
 	sourceTestDataMap := map[string]testData{
 		// MIN
-		`MIN("foo"."bar")`:  {
+		`MIN("foo"."bar")`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[MinFunc]},
 			expectedCurrent: 16,
 		},
-		`MIN("foo"."bar") `:   {
+		`MIN("foo"."bar") `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[MinFunc]},
 			expectedCurrent: 16,
 		},
-		`MIN("foo"."bar");`:   {
+		`MIN("foo"."bar");`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[MinFunc]},
 			expectedCurrent: 16,
 		},
 
 		// MAX
-		`MAX("foo"."bar")`:  {
+		`MAX("foo"."bar")`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[MaxFunc]},
 			expectedCurrent: 16,
 		},
-		`MAX("foo"."bar") `:   {
+		`MAX("foo"."bar") `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[MaxFunc]},
 			expectedCurrent: 16,
 		},
-		`MAX("foo"."bar");`:   {
+		`MAX("foo"."bar");`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[MaxFunc]},
 			expectedCurrent: 16,
 		},
 
 		//AVG
-		`AVG("foo"."bar")`:  {
+		`AVG("foo"."bar")`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[AvgFunc]},
 			expectedCurrent: 16,
 		},
-		`AVG("foo"."bar") `:   {
+		`AVG("foo"."bar") `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[AvgFunc]},
 			expectedCurrent: 16,
 		},
-		`AVG("foo"."bar");`:   {
+		`AVG("foo"."bar");`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[AvgFunc]},
 			expectedCurrent: 16,
 		},
 
 		//RANGE
-		`RANGE("foo"."bar")`:  {
+		`RANGE("foo"."bar")`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[RangeFunc]},
 			expectedCurrent: 18,
 		},
-		`RANGE("foo"."bar") `:   {
+		`RANGE("foo"."bar") `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[RangeFunc]},
 			expectedCurrent: 18,
 		},
-		`RANGE("foo"."bar");`:   {
+		`RANGE("foo"."bar");`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[RangeFunc]},
 			expectedCurrent: 18,
 		},
 
 		// SUM
-		`SUM("foo"."bar")`:  {
+		`SUM("foo"."bar")`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[SumFunc]},
 			expectedCurrent: 16,
 		},
-		`SUM("foo"."bar") `:   {
+		`SUM("foo"."bar") `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[SumFunc]},
 			expectedCurrent: 16,
 		},
-		`SUM("foo"."bar");`:   {
+		`SUM("foo"."bar");`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[SumFunc]},
 			expectedCurrent: 16,
 		},
 
 		// COUNT
-		`COUNT("foo"."bar")`:  {
+		`COUNT("foo"."bar")`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[CountFunc]},
 			expectedCurrent: 18,
 		},
-		`COUNT("foo"."bar") `:   {
+		`COUNT("foo"."bar") `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[CountFunc]},
 			expectedCurrent: 18,
 		},
-		`COUNT("foo"."bar");`:   {
+		`COUNT("foo"."bar");`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[CountFunc]},
 			expectedCurrent: 18,
 		},
 
 		// NOW
-		`NOW()`:  {
+		`NOW()`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[NowFunc]},
 			expectedCurrent: 5,
 		},
-		`NOW() `:   {
+		`NOW() `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[NowFunc]},
 			expectedCurrent: 5,
 		},
-		`NOW();`:   {
+		`NOW();`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[NowFunc]},
 			expectedCurrent: 5,
 		},
 
 		// TO_TIMEZONE
-		`TO_TIMEZONE('Africa/Kampala')`:  {
+		`TO_TIMEZONE('Africa/Kampala')`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[ToTimezoneFunc]},
 			expectedCurrent: 29,
 		},
-		`TO_TIMEZONE('Africa/Kampala') `:   {
+		`TO_TIMEZONE('Africa/Kampala') `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[ToTimezoneFunc]},
 			expectedCurrent: 29,
 		},
-		`TO_TIMEZONE('Africa/Kampala');`:   {
+		`TO_TIMEZONE('Africa/Kampala');`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[ToTimezoneFunc]},
 			expectedCurrent: 29,
 		},
 
 		// TODAY
-		`TODAY()`:  {
+		`TODAY()`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[TodayFunc]},
 			expectedCurrent: 7,
 		},
-		`TODAY() `:   {
+		`TODAY() `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[TodayFunc]},
 			expectedCurrent: 7,
 		},
-		`TODAY();`:   {
+		`TODAY();`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[TodayFunc]},
 			expectedCurrent: 7,
 		},
 
 		// INTERVAL
-		`INTERVAL('1 day')`:  {
+		`INTERVAL('1 day')`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[IntervalFunc]},
 			expectedCurrent: 17,
 		},
-		`INTERVAL('1 day') `:   {
+		`INTERVAL('1 day') `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[IntervalFunc]},
 			expectedCurrent: 17,
 		},
-		`INTERVAL('1 day');`:   {
+		`INTERVAL('1 day');`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[IntervalFunc]},
 			expectedCurrent: 17,
 		},
 
 		//ConcatFunc
-		`CONCAT("foo"."bar", '-', "foo"."doe")`:  {
+		`CONCAT("foo"."bar", '-', "foo"."doe")`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[ConcatFunc]},
 			expectedCurrent: 37,
 		},
-		`CONCAT("foo"."bar", '-', "foo"."doe") `:   {
+		`CONCAT("foo"."bar", '-', "foo"."doe") `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[ConcatFunc]},
 			expectedCurrent: 37,
 		},
-		`CONCAT("foo"."bar", '-', "foo"."doe");`:   {
+		`CONCAT("foo"."bar", '-', "foo"."doe");`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[ConcatFunc]},
 			expectedCurrent: 37,
@@ -632,34 +632,34 @@ func TestScanner_extractColumnNameOrTableName(t *testing.T) {
 	sourceTestDataMap := map[string]testData{
 		// Column
 		// FIXME: Add data for erroneous data, and add custom errors for unclosed table
-		`"foo"."bar"`:  {
+		`"foo"."bar"`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Column]},
 			expectedCurrent: 11,
 		},
-		`"foo"."bar"  `:   {
+		`"foo"."bar"  `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Column]},
 			expectedCurrent: 11,
 		},
-		`"foo"."bar";`:   {
+		`"foo"."bar";`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Column]},
 			expectedCurrent: 11,
 		},
 
 		// Table
-		`"foo"`:  {
+		`"foo"`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Table]},
 			expectedCurrent: 5,
 		},
-		`"foo" `:   {
+		`"foo" `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Table]},
 			expectedCurrent: 5,
 		},
-		`"foo";`:   {
+		`"foo";`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Table]},
 			expectedCurrent: 5,
@@ -689,17 +689,17 @@ func TestScanner_extractString(t *testing.T) {
 
 	sourceTestDataMap := map[string]testData{
 		// FIXME: Add data for erroneous data, and add custom errors for unclosed string
-		`'foo'`:  {
+		`'foo'`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[String]},
 			expectedCurrent: 5,
 		},
-		`'foo'  `:   {
+		`'foo'  `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[String]},
 			expectedCurrent: 5,
 		},
-		`'foo';`:   {
+		`'foo';`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[String]},
 			expectedCurrent: 5,
@@ -737,34 +737,34 @@ func TestScanner_extractNumber(t *testing.T) {
 	sourceTestDataMap := map[string]testData{
 		// FIXME: Add data for erroneous data
 		// Integer
-		`67`:  {
+		`67`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Number]},
 			expectedCurrent: 2,
 		},
-		`67  `:   {
+		`67  `: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Number]},
 			expectedCurrent: 2,
 		},
-		`67;`:   {
+		`67;`: {
 			err:             nil,
 			tokens:          []*Token{testTokens[Number]},
 			expectedCurrent: 2,
 		},
 
 		// Float
-		`67.89`:  {
+		`67.89`: {
 			err:             nil,
 			tokens:          []*Token{&floatNumber},
 			expectedCurrent: 5,
 		},
-		`67.89  `:   {
+		`67.89  `: {
 			err:             nil,
 			tokens:          []*Token{&floatNumber},
 			expectedCurrent: 5,
 		},
-		`67.89;`:   {
+		`67.89;`: {
 			err:             nil,
 			tokens:          []*Token{&floatNumber},
 			expectedCurrent: 5,
@@ -786,7 +786,7 @@ func TestScanner_extractNumber(t *testing.T) {
 
 func TestScanner_advance(t *testing.T) {
 	type testRecord struct {
-		step int64
+		step            int64
 		err             error
 		nextRune        rune
 		expectedCurrent int64
@@ -977,13 +977,13 @@ func generateTestTokens() map[TokenType]*Token {
 				Type: MinFunc,
 				Parameters: []*Token{
 					{
-						Type:    Column,
-						Lexeme:  `"foo"."bar"`,
+						Type:   Column,
+						Lexeme: `"foo"."bar"`,
 						Literal: ColumnLiteral{
 							Table:  "foo",
 							Column: "bar",
 						},
-						Line:    1,
+						Line: 1,
 					},
 				},
 			},
@@ -997,13 +997,13 @@ func generateTestTokens() map[TokenType]*Token {
 				Type: MaxFunc,
 				Parameters: []*Token{
 					{
-						Type:    Column,
-						Lexeme:  `"foo"."bar"`,
+						Type:   Column,
+						Lexeme: `"foo"."bar"`,
 						Literal: ColumnLiteral{
 							Table:  "foo",
 							Column: "bar",
 						},
-						Line:    1,
+						Line: 1,
 					},
 				},
 			},
@@ -1017,13 +1017,13 @@ func generateTestTokens() map[TokenType]*Token {
 				Type: AvgFunc,
 				Parameters: []*Token{
 					{
-						Type:    Column,
-						Lexeme:  `"foo"."bar"`,
+						Type:   Column,
+						Lexeme: `"foo"."bar"`,
 						Literal: ColumnLiteral{
 							Table:  "foo",
 							Column: "bar",
 						},
-						Line:    1,
+						Line: 1,
 					},
 				},
 			},
@@ -1037,13 +1037,13 @@ func generateTestTokens() map[TokenType]*Token {
 				Type: RangeFunc,
 				Parameters: []*Token{
 					{
-						Type:    Column,
-						Lexeme:  `"foo"."bar"`,
+						Type:   Column,
+						Lexeme: `"foo"."bar"`,
 						Literal: ColumnLiteral{
 							Table:  "foo",
 							Column: "bar",
 						},
-						Line:    1,
+						Line: 1,
 					},
 				},
 			},
@@ -1057,13 +1057,13 @@ func generateTestTokens() map[TokenType]*Token {
 				Type: SumFunc,
 				Parameters: []*Token{
 					{
-						Type:    Column,
-						Lexeme:  `"foo"."bar"`,
+						Type:   Column,
+						Lexeme: `"foo"."bar"`,
 						Literal: ColumnLiteral{
 							Table:  "foo",
 							Column: "bar",
 						},
-						Line:    1,
+						Line: 1,
 					},
 				},
 			},
@@ -1077,13 +1077,13 @@ func generateTestTokens() map[TokenType]*Token {
 				Type: CountFunc,
 				Parameters: []*Token{
 					{
-						Type:    Column,
-						Lexeme:  `"foo"."bar"`,
+						Type:   Column,
+						Lexeme: `"foo"."bar"`,
 						Literal: ColumnLiteral{
 							Table:  "foo",
 							Column: "bar",
 						},
-						Line:    1,
+						Line: 1,
 					},
 				},
 			},
@@ -1093,7 +1093,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   NowFunc,
 			Lexeme: `NOW()`,
 			Literal: FunctionLiteral{
-				Name: "now",
+				Name:       "now",
 				Type:       NowFunc,
 				Parameters: []*Token{},
 			},
@@ -1120,7 +1120,7 @@ func generateTestTokens() map[TokenType]*Token {
 			Type:   TodayFunc,
 			Lexeme: `TODAY()`,
 			Literal: FunctionLiteral{
-				Name: "today",
+				Name:       "today",
 				Type:       TodayFunc,
 				Parameters: []*Token{},
 			},
@@ -1134,13 +1134,13 @@ func generateTestTokens() map[TokenType]*Token {
 				Type: ConcatFunc,
 				Parameters: []*Token{
 					{
-						Type:    Column,
-						Lexeme:  `"foo"."bar"`,
+						Type:   Column,
+						Lexeme: `"foo"."bar"`,
 						Literal: ColumnLiteral{
 							Table:  "foo",
 							Column: "bar",
 						},
-						Line:    1,
+						Line: 1,
 					},
 					{
 						Type:    Comma,
@@ -1161,13 +1161,13 @@ func generateTestTokens() map[TokenType]*Token {
 						Line:    1,
 					},
 					{
-						Type:    Column,
-						Lexeme:  `"foo"."doe"`,
+						Type:   Column,
+						Lexeme: `"foo"."doe"`,
 						Literal: ColumnLiteral{
 							Table:  "foo",
 							Column: "doe",
 						},
-						Line:    1,
+						Line: 1,
 					},
 				},
 			},
@@ -1211,13 +1211,13 @@ func generateTestTokens() map[TokenType]*Token {
 			Line:    1,
 		},
 		Column: {
-			Type:    Column,
-			Lexeme:  `"foo"."bar"`,
+			Type:   Column,
+			Lexeme: `"foo"."bar"`,
 			Literal: ColumnLiteral{
 				Table:  "foo",
 				Column: "bar",
 			},
-			Line:    1,
+			Line: 1,
 		},
 
 		// Comparators

@@ -37,6 +37,18 @@ func areTokenSlicesEqual(first []*Token, second []*Token) bool {
 	return true
 }
 
+func areTokenPtrEqual(firstPtr *Token, secondPtr *Token) bool {
+	if firstPtr != nil && secondPtr != nil && !areTokenEqual(*firstPtr, *secondPtr) {
+		return false
+	}
+
+	if (firstPtr == nil || secondPtr == nil) && (firstPtr != secondPtr) {
+		return false
+	}
+
+	return true
+}
+
 func areTokenEqual(first Token, second Token) bool {
 	areLiteralsEqual := false
 	if first.Literal != nil {
