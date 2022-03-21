@@ -156,6 +156,7 @@ func (p *Parser) joinExpr() *JoinExpression {
 		Left,
 		Right,
 		Full,
+		Inner,
 	}
 	expr := &JoinExpression{
 		Conditions: []*JoinCondition{},
@@ -174,6 +175,8 @@ func (p *Parser) joinExpr() *JoinExpression {
 	}
 
 	if p.match(On) {
+		expr.Conditions = append(expr.Conditions, p.joinConditionExpr())
+
 		for p.match(And) {
 			expr.Conditions = append(expr.Conditions, p.joinConditionExpr())
 		}

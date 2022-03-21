@@ -484,6 +484,182 @@ func TestParser_columnExpr(t *testing.T) {
 	assert.True(t, areColumnExpressionsEqual(expectedExpr, actualExpr))
 }
 
+func TestParser_joinExpr(t *testing.T) {
+	// INNER JOIN "bar" ON "foo"."datetime" = "bar"."datetime" AND "foo"."name" = "bar"."fullName";
+	tokens := []Token{
+		{
+			Type:   Inner,
+			Lexeme: "INNER",
+			Line:   1,
+		},
+		{
+			Type:   Join,
+			Lexeme: "JOIN",
+			Line:   1,
+		},
+		{
+			Type:   Table,
+			Lexeme: `"bar"`,
+			Line:   1,
+		},
+		{
+			Type:   On,
+			Lexeme: "ON",
+			Line:   1,
+		},
+		{
+			Type:   Column,
+			Lexeme: `"foo"."datetime"`,
+			Literal: ColumnLiteral{
+				Table:  "foo",
+				Column: "datetime",
+			},
+			Line: 1,
+		},
+		{
+			Type:   Equal,
+			Lexeme: "=",
+			Line:   1,
+		},
+		{
+			Type:   Column,
+			Lexeme: `"bar"."datetime"`,
+			Literal: ColumnLiteral{
+				Table:  "bar",
+				Column: "datetime",
+			},
+			Line: 1,
+		},
+		{
+			Type:   And,
+			Lexeme: "AND",
+			Line:   1,
+		},
+		{
+			Type:   Column,
+			Lexeme: `"foo"."name"`,
+			Literal: ColumnLiteral{
+				Table:  "foo",
+				Column: "name",
+			},
+			Line: 1,
+		},
+		{
+			Type:   Equal,
+			Lexeme: "=",
+			Line:   1,
+		},
+		{
+			Type:   Column,
+			Lexeme: `"bar"."fullName"`,
+			Literal: ColumnLiteral{
+				Table:  "bar",
+				Column: "fullName",
+			},
+			Line: 1,
+		},
+		{
+			Type:   SemiColon,
+			Lexeme: ";",
+			Line:   1,
+		},
+	}
+	parser := Parser{
+		tokens:  tokens,
+		current: 2,
+	}
+
+	expectedExpr := &JoinExpression{
+		Type: &Token{
+			Type:   Inner,
+			Lexeme: "INNER",
+			Line:   1,
+		},
+		Table: &Token{
+			Type:   Table,
+			Lexeme: `"bar"`,
+			Line:   1,
+		},
+		Conditions: []*JoinCondition{
+			{
+				Left: &Token{
+					Type:   Column,
+					Lexeme: `"foo"."datetime"`,
+					Literal: ColumnLiteral{
+						Table:  "foo",
+						Column: "datetime",
+					},
+					Line: 1,
+				},
+				Right: &Token{
+					Type:   Column,
+					Lexeme: `"bar"."datetime"`,
+					Literal: ColumnLiteral{
+						Table:  "bar",
+						Column: "datetime",
+					},
+					Line: 1,
+				},
+			},
+			{
+				Left: &Token{
+					Type:   Column,
+					Lexeme: `"foo"."name"`,
+					Literal: ColumnLiteral{
+						Table:  "foo",
+						Column: "name",
+					},
+					Line: 1,
+				},
+				Right: &Token{
+					Type:   Column,
+					Lexeme: `"bar"."fullName"`,
+					Literal: ColumnLiteral{
+						Table:  "bar",
+						Column: "fullName",
+					},
+					Line: 1,
+				},
+			},
+		},
+	}
+
+	actualExpr := parser.joinExpr()
+	assert.True(t, areJoinExpressionsEqual(expectedExpr, actualExpr))
+}
+
+func TestParser_whereExpr(t *testing.T) {
+	// TODO
+}
+
+func TestParser_groupByExpr(t *testing.T) {
+	// TODO
+}
+
+func TestParser_orderByExpr(t *testing.T) {
+	// TODO
+}
+
+func TestParser_arithmeticExpr(t *testing.T) {
+	// TODO
+}
+
+func TestParser_joinConditionExpr(t *testing.T) {
+	// TODO
+}
+
+func TestParser_comparisonExpr(t *testing.T) {
+	// TODO
+}
+
+func TestParser_columnOrderExpr(t *testing.T) {
+	// TODO
+}
+
+func TestParser_primaryExpr(t *testing.T) {
+	// TODO
+}
+
 func areSelectExpressionsEqual(expr1 *SelectExpression, expr2 *SelectExpression) bool {
 	if *(expr1.Table) != *(expr2.Table) {
 		return false
@@ -522,4 +698,22 @@ func areUnionExpressionsEqual(expr1 *UnionExpression, expr2 *UnionExpression) bo
 func areColumnExpressionsEqual(expr1 *ColumnExpression, expr2 *ColumnExpression) bool {
 	return *(expr1.Name) == *(expr2.Name) &&
 		*(expr1.Column) == *(expr2.Column)
+}
+
+func areJoinExpressionsEqual(expr1 *JoinExpression, expr2 *JoinExpression) bool {
+	if len(expr1.Conditions) != len(expr2.Conditions) {
+		return false
+	}
+
+	for i := range expr1.Conditions {
+		if !areJoinConditionsEqual(expr1.Conditions[i], expr2.Conditions[i]) {
+			return false
+		}
+	}
+
+	return areTokenPtrEqual(expr1.Table, expr2.Table) && areTokenPtrEqual(expr1.Type, expr2.Type)
+}
+
+func areJoinConditionsEqual(cond1 *JoinCondition, cond2 *JoinCondition) bool {
+	return areTokenPtrEqual(cond1.Left, cond2.Left) && areTokenPtrEqual(cond1.Right, cond2.Right)
 }
